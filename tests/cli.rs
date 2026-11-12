@@ -53,7 +53,7 @@ fn scratch(name: &str, config: &str, files: &[(&str, &str)]) -> PathBuf {
 /// `subset check` output for `files` laid out as in the repository, under
 /// the repository's own `subset.toml`.
 fn check_repo_config(name: &str, files: &[(&str, &str)]) -> String {
-    let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join(".");
     let config = std::fs::read_to_string(repo.join("subset.toml")).unwrap();
     let config = scratch(name, &config, files);
     let (_, stdout, stderr) = subset(&["check", "--config", config.to_str().unwrap()]);
@@ -1496,10 +1496,10 @@ fn the_readme_lists_every_shape_rule() {
     );
 }
 
-/// Each rust block of `docs/subset/examples.md`, at the path its first-line
+/// Each rust block of `docs/examples.md`, at the path its first-line
 /// comment names or at `crates/examples/src/<n>.rs`.
 fn example_files() -> Vec<(String, String)> {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../docs/subset/examples.md");
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("docs/examples.md");
     let text = std::fs::read_to_string(path).expect("examples.md");
     text.split("```rust\n")
         .skip(1)

@@ -31,7 +31,7 @@ list to revisit first when one of them starts to spread.
 
 `tools/subset` checks the location rules as `[[scope]]` tables in
 `subset.toml`, the shape rules it can see in the syntax, and the interior
-mutability types (`tools/subset/README.md`). It has no type information and
+mutability types (`README.md`). It has no type information and
 doesn't expand macros, so a reviewer still checks these:
 
 - **Whose type it is.** The tool knows our types and functions only by name.

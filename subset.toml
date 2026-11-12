@@ -1,6 +1,6 @@
-# The Conductor Rust subset: the constructs code may use. `tools/subset check`
+# The Conductor Rust subset: the constructs code may use. `subset check`
 # rejects anything not listed here in the files under `include`. The list
-# grows only through accepted proposals in docs/subset/proposals/. Each id is
+# grows only through accepted proposals in docs/proposals/. Each id is
 # documented in docs/subset.md.
 
 version = 8

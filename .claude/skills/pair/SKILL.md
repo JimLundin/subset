@@ -29,15 +29,15 @@ files it owns. It works in its own worktree.
   what it wrote instead. It never works around the subset with an unlisted
   construct, a macro, or code moved outside `include`.
 
-**Done when** `tools/subset check`, `tools/check.sh` and the task's own
+**Done when** `subset check`, `tools/check.sh` and the task's own
 verification all pass, and every friction point is logged.
 
 ## 2. Review
 
 Give the reviewer the diff, the friction log, `docs/subset.md`,
-`subset.toml`, and `docs/subset/proposals/` (including the rejected ones).
+`subset.toml`, and `docs/proposals/` (including the rejected ones).
 
-1. **Compliance.** Confirm that `tools/subset check` passes and that the
+1. **Compliance.** Confirm that `subset check` passes and that the
    code honours each of the seven qualities in `docs/subset.md`. A breach
    is a required fix, not a proposal. Once `subset repeats` exists, run it
    on the change: repeated shapes the subset can already express as data
@@ -48,7 +48,7 @@ Give the reviewer the diff, the friction log, `docs/subset.md`,
 2. **Ratchet.** Pick the candidate constructs from the friction log and
    from patterns repeated in the diff. For each candidate:
    - Rewrite the affected code with the construct, in a scratch copy.
-   - Run `tools/subset score` and `tools/subset measure` on the before and
+   - Run `subset score` and `subset measure` on the before and
      after versions of the same files.
    - Judge each quality as kept or weakened, with a one-line reason.
    - Choose the tier the construct would take in `[weights]`, and whether
@@ -64,7 +64,7 @@ Give the reviewer the diff, the friction log, `docs/subset.md`,
    or a neutral one that hides a cost, propose changing it as a proposal
    of its own, with the evidence from the code and the score before and
    after. The owner decides it as for a construct.
-4. **Write each proposal** to `docs/subset/proposals/NNNN-<construct-id>.md`
+4. **Write each proposal** to `docs/proposals/NNNN-<construct-id>.md`
    using the template below.
 
 **Done when** every friction point has been considered for the ratchet:
@@ -78,7 +78,7 @@ in one line each. The owner accepts or rejects each one.
 
 - **Accepted:** add the id (and any `derives` / `macros` entry) to
   `subset.toml` and its tier to `[weights.ids]`, increase `version`, add
-  its row and rule to `docs/subset.md`, and teach `tools/subset check` the
+  its row and rule to `docs/subset.md`, and teach `subset check` the
   construct if it doesn't know it yet. Then apply the reviewer's rewrite
   to the code. For an accepted weight change, edit the tier in
   `[weights.ids]` and the Weights table in `docs/subset.md`.

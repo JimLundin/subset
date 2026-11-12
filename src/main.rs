@@ -796,7 +796,7 @@ mod tests {
     /// config allows, and every score-only id, has an explicit tier.
     #[test]
     fn every_allowed_id_has_a_weight() {
-        let config = load(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../../subset.toml"))
+        let config = load(&Path::new(env!("CARGO_MANIFEST_DIR")).join("subset.toml"))
             .unwrap_or_else(|Fatal(e)| panic!("{e}"));
         let weights = config.weights.as_ref().expect("[weights] in subset.toml");
         let scoped = config.scope.iter().flat_map(|s| &s.allowed);

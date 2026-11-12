@@ -1,12 +1,18 @@
 # subset
 
 `subset` enforces and measures the Conductor Rust subset described in
-`docs/subset.md`. The allowlist lives in `subset.toml` at the repository
-root.
+`docs/subset.md`. It started inside
+[Conductor](https://github.com/JimLundin/conductor) and was extracted here
+with its history; Conductor installs it at a pinned revision.
+
+`subset.toml` here is Conductor's allowlist, kept as the reference config
+the tests and `docs/examples.md` check against. A project using the
+checker keeps its own `subset.toml` at its root.
 
 ## Usage
 
-Run it from the repository root with `cargo run -q -p subset -- <command>`.
+Install it with `cargo install --git https://github.com/JimLundin/subset --rev <sha>`,
+and run it from the root of the project it checks.
 
 ```sh
 subset check [--config subset.toml]
@@ -546,7 +552,7 @@ commit whose files don't parse is left out, with a note on stderr.
   passes), and 0028 a `fold` that only counts (`filter_map(..).count()` is
   checked). Neither can it see what a body does: 0017's callback only
   forwards to a channel, and 0019's `main` turns its `bool` into an enum.
-  `docs/subset/compromises.md` lists these.
+  `docs/compromises.md` lists these.
 - **Ownership and receivers are approximated by name.** 0008's "a value
   that loop state owns" is a type of ours named anywhere in a field type of
   a loop-state type (`Vec<Turn>`, `Option<FrameBuffer>`), one step down.

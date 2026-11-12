@@ -8,11 +8,11 @@ not allowed. A construct joins the list only when a reviewer shows, with
 measurements, that it shrinks real code without costing any of the
 qualities below, and the owner accepts it.
 
-`subset.toml` is the source of truth. `tools/subset check` enforces it on
-the paths under `include`. `tools/subset score` and `tools/subset measure`
+`subset.toml` is the source of truth. `subset check` enforces it on
+the paths under `include`. `subset score` and `subset measure`
 give the weighted score and the token count that proposals report (see
-Weights). `tools/subset report` summarises violations by construct, and
-`tools/subset report-html` draws the score of the repository as a page,
+Weights). `subset report` summarises violations by construct, and
+`subset report-html` draws the score of the repository as a page,
 published at <https://jimlundin.github.io/conductor/report/>. A `[[scope]]` in `subset.toml` allows some ids only under the
 paths it lists, such as Dioxus only in `crates/app`.
 
@@ -48,7 +48,7 @@ is rejected, however much code it saves.
      `find(|row| user_agent.contains(row.marker))`. A lookup keyed by a
      string is written as a `match` instead, and the checker flags a table
      searched for the row whose string field equals a value: the `match`
-     measured about half the size (`docs/subset/reviews/p1-u2.md`);
+     measured about half the size (`docs/reviews/p1-u2.md`);
    - one `match` that maps a variant to its data, used by every call site,
      as in `fn label(kind: Kind) -> String { match kind { .. } }`;
    - enum variants that carry their data, as in `Exit::Code(i32)` rather
@@ -57,7 +57,7 @@ is rejected, however much code it saves.
      **4 or more cases**. Three cases written as a table cost about 20%
      more than three tests, because the named struct that 0001 requires
      for a lasting table outweighs what the shared assertion saves
-     (`docs/subset/reviews/v4-agents-proto.md`). Below four cases, the
+     (`docs/reviews/v4-agents-proto.md`). Below four cases, the
      tests stay separate. A case with more than two fields is a named
      struct, never an inline tuple (Tuples, below).
 
@@ -148,11 +148,11 @@ through proposals. Others, such as `unsafe` and interior mutability,
 conflict with the qualities and won't.
 
 Where the subset gives ground on the qualities is listed in
-[`docs/subset/compromises.md`](subset/compromises.md).
+[`docs/compromises.md`](subset/compromises.md).
 
 ## Weights
 
-`tools/subset score` measures code with a **weighted score**: each token
+`subset score` measures code with a **weighted score**: each token
 costs the weight of the innermost construct that contains it, and comments
 cost nothing. A construct's weight comes from its **tier**, so code that
 leans on what the subset encourages scores lower than code of the same
@@ -209,7 +209,7 @@ The score also rewards naming data with types.
   `crates/agents`. `crates/proto` is our own format, so the normal rules
   apply there.
 
-`tools/subset/README.md` gives the full model and the configuration.
+`README.md` gives the full model and the configuration.
 
 ## Bootstrap round
 
@@ -217,14 +217,14 @@ The code from before the subset uses constructs the core lacks, and some
 of it (such as `async` and trait impls) has no long-hand form. The first
 pass of the pair loop therefore runs on the existing code:
 
-1. `tools/subset report` lists every construct outside the subset under
+1. `subset report` lists every construct outside the subset under
    `include`, with counts and locations.
 2. The reviewer turns that report into proposals. Each proposal gives the
    minimal construct and the narrowest rule that the existing code needs,
    with before/after examples taken from that code. It also proposes
    rewrites into the core for everything the core can already express.
 3. The owner decides. The implementer then rewrites module by module in
-   the agreed subset, until `tools/subset check` passes on all of
+   the agreed subset, until `subset check` passes on all of
    `crates/`.
 
 The owner accepted 0002 to 0022 as version 2, then 0023 and the 0011
@@ -239,7 +239,7 @@ container as a primitive. Version 6 accepts 0038 (no fallible operator
 trait by name) and 0039 (no consuming reader) as checker changes that add
 no construct, and checks 0008's rule that a `mut` binding holds a value of
 our own type only as loop state or a listed endpoint. The rewrite works
-from `docs/subset/rewrite-report.txt`, now the report under version 8.
+from `docs/rewrite-report.txt`, now the report under version 8.
 Version 7 accepts 0040 (a match guard of one comparison, which replaces
 the single-comparison lifts) and 0041 (a `for` of awaited calls, which
 replaces `stream::iter(..).then(..)` for effects), both as amended by the
@@ -258,10 +258,10 @@ The pair loop (`.claude/skills/pair/SKILL.md`) is the only way in:
    the code longer or more roundabout.
 2. A **reviewer** checks compliance and the qualities. For each candidate
    construct, it rewrites the affected code with that construct, measures
-   both versions with `tools/subset score` and `tools/subset measure`, and
+   both versions with `subset score` and `subset measure`, and
    judges the qualities.
 3. A candidate that lowers the weighted score and keeps every quality
-   becomes a **proposal** in `docs/subset/proposals/NNNN-<id>.md`: the
+   becomes a **proposal** in `docs/proposals/NNNN-<id>.md`: the
    construct, the before and after code, the measurements, the quality
    assessment, the rule for when to use it, and its **weight**: the tier
    the construct takes and whether its boundary use applies.
@@ -274,5 +274,5 @@ A review may also propose **changing an existing weight**, as a proposal
 of its own with evidence from the reviewed code. The owner decides it the
 same way.
 
-Rejected proposals stay in `docs/subset/proposals/`, so a construct is
+Rejected proposals stay in `docs/proposals/`, so a construct is
 not proposed twice for the same reason.

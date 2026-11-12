@@ -1,12 +1,12 @@
 # Bootstrap review
 
-The reviewer's pass over `docs/subset/bootstrap-report.txt`, regenerated against subset version 1 after the WebRTC merge. The report lists 104 construct ids and 2,613 sites. Every id has one decision.
+The reviewer's pass over `docs/bootstrap-report.txt`, regenerated against subset version 1 after the WebRTC merge. The report lists 104 construct ids and 2,613 sites. Every id has one decision.
 
 - **A.** The current subset already expresses it. The recipe is below.
-- **B.** A proposal in `docs/subset/proposals/` (0002 to 0022), each measured or argued on necessity.
+- **B.** A proposal in `docs/proposals/` (0002 to 0022), each measured or argued on necessity.
 - **C.** Rejected. The code changes shape, as described below.
 
-Where an id splits, the table gives the main decision first, then the part that goes elsewhere. For example, `stmt.let.mut` is B inside an actor (0008) and C everywhere else. Every number comes from `subset measure`. The files measured are in `docs/subset/measurements/`, one directory per proposal or recipe, each with a `before.rs` and an `after.rs`. Rerun one with `./target/debug/subset measure docs/subset/measurements/0004/before.rs docs/subset/measurements/0004/after.rs`. 0009 is the one exception: there, `after.rs` holds the inherent-method form the rule prefers.
+Where an id splits, the table gives the main decision first, then the part that goes elsewhere. For example, `stmt.let.mut` is B inside an actor (0008) and C everywhere else. Every number comes from `subset measure`. The files measured are in `docs/measurements/`, one directory per proposal or recipe, each with a `before.rs` and an `after.rs`. Rerun one with `./target/debug/subset measure docs/measurements/0004/before.rs docs/measurements/0004/after.rs`. 0009 is the one exception: there, `after.rs` holds the inherent-method form the rule prefers.
 
 ## Decisions
 

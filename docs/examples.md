@@ -659,4 +659,4 @@ review); `split_at` panics and is flagged.
 - `if`, `if let` with an `else` or a let-chain, `while`, a `for` that
   builds or selects values, a guard with `&&`, `||` or `!`, `return` and the
   operators. They stay rewrites into the core
-  (`docs/subset/bootstrap-review.md`).
+  (`docs/bootstrap-review.md`).
