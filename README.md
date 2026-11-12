@@ -9,6 +9,9 @@ with its history; Conductor installs it at a pinned revision.
 the tests and `docs/examples.md` check against. A project using the
 checker keeps its own `subset.toml` at its root.
 
+To report friction or propose a construct from such a project, see
+`docs/presenting-a-case.md`.
+
 ## Usage
 
 Install it with `cargo install --git https://github.com/JimLundin/subset --rev <sha>`,
