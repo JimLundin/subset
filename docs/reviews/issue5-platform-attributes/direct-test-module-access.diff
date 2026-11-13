@@ -1,0 +1,13 @@
+--- a/crates/agents/src/claude/mod.rs
++++ b/crates/agents/src/claude/mod.rs
+@@ -6 +6 @@
+-mod protocol;
++pub(crate) mod protocol;
+@@ -9,2 +8,0 @@
+-#[cfg(test)]
+-pub(crate) use protocol::check_version;
+--- a/crates/agents/src/install.rs
++++ b/crates/agents/src/install.rs
+@@ -374 +374 @@
+-    use crate::claude::check_version;
++    use crate::claude::protocol::check_version;

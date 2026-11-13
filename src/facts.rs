@@ -4,11 +4,13 @@
 //! ours counts as ours.
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::rc::Rc;
 
 use proc_macro2::Span;
 use syn::{Expr, Type};
 
 use crate::checks::{self, Scan};
+use crate::syntax::Extent;
 use crate::walk::{Owner, Within};
 
 /// What one file's walk reports for the walks of every file.
@@ -85,12 +87,41 @@ pub(crate) enum CfgKind {
 }
 
 /// A `cfg` item that needs a counterpart: same kind and name, the other
-/// platform's predicate. Every `use` counts as one name.
+/// platform's predicate in its lexical container and logical impl owner.
+/// Every `use` counts as one name within its container.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct CfgItem {
     pub(crate) kind: CfgKind,
     pub(crate) name: String,
     pub(crate) predicate: String,
+    pub(crate) module: Vec<String>,
+    pub(crate) block: Option<Extent>,
+    pub(crate) owner: Option<Rc<CfgOwner>>,
+}
+
+/// A logical impl owner, including its qualified type and trait arguments.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct CfgOwner {
+    pub(crate) self_ty: Type,
+    pub(crate) trait_path: Option<syn::Path>,
+    pub(crate) type_params: usize,
+    pub(crate) lifetime_params: usize,
+}
+
+#[derive(Clone)]
+pub(crate) struct CfgName {
+    pub(crate) module: Vec<String>,
+    pub(crate) blocks: Vec<Extent>,
+    pub(crate) name: String,
+    pub(crate) target: Option<Vec<String>>,
+    pub(crate) absolute: Within,
+}
+
+/// The module, enclosing blocks, and pre-gathered bindings of one owner.
+pub(crate) struct CfgScope {
+    pub(crate) module: Vec<String>,
+    pub(crate) blocks: Vec<Extent>,
+    pub(crate) names: Rc<Vec<CfgName>>,
 }
 
 impl CfgItem {
@@ -99,6 +130,9 @@ impl CfgItem {
             kind,
             name,
             predicate: String::new(),
+            module: Vec::new(),
+            block: None,
+            owner: None,
         }
     }
 }

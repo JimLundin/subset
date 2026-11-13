@@ -548,6 +548,7 @@ fn environment(
             _ => None,
         })
         .collect::<Vec<CfgItem>>();
+    let cfg_names = Rc::new(walk::cfg_names(&p.file));
     let crate_root = match (
         parts.iter().rev().nth(1).map(String::as_str),
         parts.last().map(String::as_str),
@@ -566,6 +567,7 @@ fn environment(
         names,
         operator_methods,
         cfg_items,
+        cfg_names,
         tables: Tables::of(own),
         test_file: parts
             .iter()

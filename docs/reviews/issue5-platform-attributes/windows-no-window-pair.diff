@@ -1,0 +1,8 @@
+--- a/crates/agents/src/process.rs
++++ b/crates/agents/src/process.rs
+@@ -13 +13 @@
+-#[cfg(not(unix))]
++#[cfg(target_os = "windows")]
+@@ -22 +22 @@
+-#[cfg(unix)]
++#[cfg(not(target_os = "windows"))]

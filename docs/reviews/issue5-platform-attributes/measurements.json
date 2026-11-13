@@ -1,0 +1,5550 @@
+{
+  "conductor_commit": "79568ce8a55b266fe1cf96b17dd5b2bc2dfa0c8c",
+  "subset_baseline_commit": "64352fdd5935de3954ee06b4598789cb89f67a03",
+  "configuration_version": 14,
+  "checker_sha256": "cf948ba0c2c95e430ed9b87aec09e899b1a6c130f0e5665dfcb709bf66bac9b2",
+  "proposed_tier": "tolerated",
+  "proposed_weight": 2.0,
+  "boundary_applies": false,
+  "candidates": {
+    "sandbox-linux-pair": {
+      "friction_points": 1,
+      "new_syntax": true,
+      "affected": {
+        "before": {
+          "score": {
+            "by": "file",
+            "rows": [
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "lines": 18,
+                "name": "crates/agents/src/claude/example.rs",
+                "per_token": 0.9345238095238094,
+                "score": 157.0,
+                "tokens": 168
+              }
+            ],
+            "total": {
+              "boundary": 0.0,
+              "boundary_share": 0.0,
+              "lines": 18,
+              "name": "total",
+              "per_token": 0.9345238095238094,
+              "score": 157.0,
+              "tokens": 168
+            }
+          },
+          "constructs": {
+            "by": "construct",
+            "rows": [
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 11,
+                "lines": 7,
+                "name": "expr.path",
+                "per_token": 1.0,
+                "score": 38.0,
+                "tier": "neutral",
+                "tokens": 38
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 5,
+                "lines": 3,
+                "name": "expr.method_call",
+                "per_token": 1.0,
+                "score": 15.0,
+                "tier": "neutral",
+                "tokens": 15
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "attr.derive",
+                "per_token": 1.0,
+                "score": 13.0,
+                "tier": "neutral",
+                "tokens": 13
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 2,
+                "name": "pat.tuple",
+                "per_token": 2.0,
+                "score": 12.0,
+                "tier": "tolerated",
+                "tokens": 6
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "item.use",
+                "per_token": 1.0,
+                "score": 9.0,
+                "tier": "neutral",
+                "tokens": 9
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 4,
+                "name": "stmt.let",
+                "per_token": 1.0,
+                "score": 9.0,
+                "tier": "neutral",
+                "tokens": 9
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 2,
+                "name": "expr.method_call.adapter",
+                "per_token": 0.5,
+                "score": 6.5,
+                "tier": "encouraged",
+                "tokens": 13
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 2,
+                "name": "item.fn",
+                "per_token": 1.0,
+                "score": 6.0,
+                "tier": "neutral",
+                "tokens": 6
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 4,
+                "lines": 3,
+                "name": "type.path",
+                "per_token": 1.0,
+                "score": 6.0,
+                "tier": "neutral",
+                "tokens": 6
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "item.const",
+                "per_token": 1.0,
+                "score": 5.0,
+                "tier": "neutral",
+                "tokens": 5
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 1,
+                "name": "expr.closure.adapter",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "neutral",
+                "tokens": 4
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 4,
+                "name": "expr.match",
+                "per_token": 0.5,
+                "score": 4.0,
+                "tier": "encouraged",
+                "tokens": 8
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "expr.tuple",
+                "per_token": 2.0,
+                "score": 4.0,
+                "tier": "tolerated",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 4,
+                "name": "item.enum",
+                "per_token": 0.5,
+                "score": 3.5,
+                "tier": "encouraged",
+                "tokens": 7
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 2,
+                "name": "expr.lit",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "neutral",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 6,
+                "lines": 5,
+                "name": "pat.ident",
+                "per_token": 0.5,
+                "score": 3.0,
+                "tier": "encouraged",
+                "tokens": 6
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "expr.array",
+                "per_token": 1.0,
+                "score": 2.0,
+                "tier": "neutral",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "expr.call",
+                "per_token": 1.0,
+                "score": 2.0,
+                "tier": "neutral",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "expr.reference",
+                "per_token": 1.0,
+                "score": 2.0,
+                "tier": "neutral",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "expr.unary.not",
+                "per_token": 2.0,
+                "score": 2.0,
+                "tier": "tolerated",
+                "tokens": 1
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 1,
+                "name": "type.reference",
+                "per_token": 1.0,
+                "score": 2.0,
+                "tier": "neutral",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "vis.pub",
+                "per_token": 1.0,
+                "score": 2.0,
+                "tier": "neutral",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 2,
+                "name": "pat.wild",
+                "per_token": 0.5,
+                "score": 1.5,
+                "tier": "encouraged",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 1,
+                "name": "pat.lit",
+                "per_token": 0.5,
+                "score": 1.0,
+                "tier": "encouraged",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "type.slice",
+                "per_token": 1.0,
+                "score": 1.0,
+                "tier": "neutral",
+                "tokens": 1
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "pat.or",
+                "per_token": 0.5,
+                "score": 0.5,
+                "tier": "encouraged",
+                "tokens": 1
+              }
+            ],
+            "total": {
+              "boundary": 0.0,
+              "boundary_share": 0.0,
+              "lines": 18,
+              "name": "total",
+              "per_token": 0.9345238095238094,
+              "score": 157.0,
+              "tokens": 168
+            }
+          },
+          "measure": {
+            "files": [
+              {
+                "lines": 18,
+                "path": "crates/agents/src/claude/example.rs",
+                "tokens": 168
+              }
+            ],
+            "total": {
+              "lines": 18,
+              "tokens": 168
+            }
+          },
+          "check": {
+            "exit": 0,
+            "stdout": "",
+            "stderr": ""
+          },
+          "pricing": {
+            "raw_score": 157.0,
+            "outside_cfg_tokens": 0,
+            "arithmetic": "157.0 - (5.0 - 2.0) * 0",
+            "repriced_score": 157.0
+          }
+        },
+        "after": {
+          "score": {
+            "by": "file",
+            "rows": [
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "lines": 26,
+                "name": "crates/agents/src/claude/example.rs",
+                "per_token": 1.2085427135678393,
+                "score": 240.5,
+                "tokens": 199
+              }
+            ],
+            "total": {
+              "boundary": 0.0,
+              "boundary_share": 0.0,
+              "lines": 26,
+              "name": "total",
+              "per_token": 1.2085427135678393,
+              "score": 240.5,
+              "tokens": 199
+            }
+          },
+          "constructs": {
+            "by": "construct",
+            "rows": [
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "attr.cfg",
+                "per_token": 5.0,
+                "score": 80.0,
+                "tier": "outside",
+                "tokens": 16
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 13,
+                "lines": 10,
+                "name": "expr.path",
+                "per_token": 1.0,
+                "score": 46.0,
+                "tier": "neutral",
+                "tokens": 46
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 5,
+                "lines": 3,
+                "name": "expr.method_call",
+                "per_token": 1.0,
+                "score": 15.0,
+                "tier": "neutral",
+                "tokens": 15
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "attr.derive",
+                "per_token": 1.0,
+                "score": 13.0,
+                "tier": "neutral",
+                "tokens": 13
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 4,
+                "name": "item.fn",
+                "per_token": 1.0,
+                "score": 12.0,
+                "tier": "neutral",
+                "tokens": 12
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "item.use",
+                "per_token": 1.0,
+                "score": 9.0,
+                "tier": "neutral",
+                "tokens": 9
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 4,
+                "name": "stmt.let",
+                "per_token": 1.0,
+                "score": 9.0,
+                "tier": "neutral",
+                "tokens": 9
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 8,
+                "name": "expr.match",
+                "per_token": 0.5,
+                "score": 8.0,
+                "tier": "encouraged",
+                "tokens": 16
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 5,
+                "lines": 4,
+                "name": "type.path",
+                "per_token": 1.0,
+                "score": 7.0,
+                "tier": "neutral",
+                "tokens": 7
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 2,
+                "name": "expr.method_call.adapter",
+                "per_token": 0.5,
+                "score": 6.5,
+                "tier": "encouraged",
+                "tokens": 13
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "item.const",
+                "per_token": 1.0,
+                "score": 5.0,
+                "tier": "neutral",
+                "tokens": 5
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 1,
+                "name": "expr.closure.adapter",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "neutral",
+                "tokens": 4
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 4,
+                "name": "item.enum",
+                "per_token": 0.5,
+                "score": 3.5,
+                "tier": "encouraged",
+                "tokens": 7
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 2,
+                "name": "expr.lit",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "neutral",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 6,
+                "lines": 5,
+                "name": "pat.ident",
+                "per_token": 0.5,
+                "score": 3.0,
+                "tier": "encouraged",
+                "tokens": 6
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 3,
+                "name": "vis.pub",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "neutral",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "expr.array",
+                "per_token": 1.0,
+                "score": 2.0,
+                "tier": "neutral",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "expr.call",
+                "per_token": 1.0,
+                "score": 2.0,
+                "tier": "neutral",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "expr.reference",
+                "per_token": 1.0,
+                "score": 2.0,
+                "tier": "neutral",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "expr.unary.not",
+                "per_token": 2.0,
+                "score": 2.0,
+                "tier": "tolerated",
+                "tokens": 1
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 1,
+                "name": "type.reference",
+                "per_token": 1.0,
+                "score": 2.0,
+                "tier": "neutral",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "pat.tuple_struct",
+                "per_token": 0.5,
+                "score": 1.0,
+                "tier": "encouraged",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "pat.wild",
+                "per_token": 0.5,
+                "score": 1.0,
+                "tier": "encouraged",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "type.slice",
+                "per_token": 1.0,
+                "score": 1.0,
+                "tier": "neutral",
+                "tokens": 1
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "pat.lit",
+                "per_token": 0.5,
+                "score": 0.5,
+                "tier": "encouraged",
+                "tokens": 1
+              }
+            ],
+            "total": {
+              "boundary": 0.0,
+              "boundary_share": 0.0,
+              "lines": 26,
+              "name": "total",
+              "per_token": 1.2085427135678393,
+              "score": 240.5,
+              "tokens": 199
+            }
+          },
+          "measure": {
+            "files": [
+              {
+                "lines": 26,
+                "path": "crates/agents/src/claude/example.rs",
+                "tokens": 199
+              }
+            ],
+            "total": {
+              "lines": 26,
+              "tokens": 199
+            }
+          },
+          "check": {
+            "exit": 1,
+            "stdout": "crates/agents/src/claude/example.rs:9:1: attr.cfg: `cfg` only with `target_family = \"wasm\"`, `unix` or their `not` (proposal 0016)\ncrates/agents/src/claude/example.rs:23:1: attr.cfg: `cfg` only with `target_family = \"wasm\"`, `unix` or their `not` (proposal 0016)\n",
+            "stderr": ""
+          },
+          "pricing": {
+            "raw_score": 240.5,
+            "outside_cfg_tokens": 16,
+            "arithmetic": "240.5 - (5.0 - 2.0) * 16",
+            "repriced_score": 192.5
+          }
+        },
+        "score_drop_percent": -22.611464968152866
+      },
+      "files": {
+        "before": {
+          "score": {
+            "by": "file",
+            "rows": [
+              {
+                "boundary": 304.0,
+                "boundary_share": 7.227769852591536,
+                "lines": 715,
+                "name": "crates/agents/src/claude/session.rs",
+                "per_token": 0.9640155856062342,
+                "score": 4206.0,
+                "tokens": 4363
+              }
+            ],
+            "total": {
+              "boundary": 304.0,
+              "boundary_share": 7.227769852591536,
+              "lines": 715,
+              "name": "total",
+              "per_token": 0.9640155856062342,
+              "score": 4206.0,
+              "tokens": 4363
+            }
+          },
+          "constructs": {
+            "by": "construct",
+            "rows": [
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 357,
+                "lines": 204,
+                "name": "expr.path",
+                "per_token": 1.0,
+                "score": 617.0,
+                "tier": "neutral",
+                "tokens": 617
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 125,
+                "lines": 117,
+                "name": "expr.method_call",
+                "per_token": 1.0,
+                "score": 377.0,
+                "tier": "neutral",
+                "tokens": 377
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 31,
+                "lines": 90,
+                "name": "item.fn",
+                "per_token": 1.0,
+                "score": 268.0,
+                "tier": "neutral",
+                "tokens": 268
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 8,
+                "lines": 30,
+                "name": "expr.if_let.single",
+                "per_token": 2.0,
+                "score": 248.0,
+                "tier": "tolerated",
+                "tokens": 124
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 18,
+                "lines": 22,
+                "name": "item.use",
+                "per_token": 1.0,
+                "score": 217.0,
+                "tier": "neutral",
+                "tokens": 217
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 96,
+                "lines": 46,
+                "name": "type.path",
+                "per_token": 0.9999999999999999,
+                "score": 187.0,
+                "tier": "neutral",
+                "tokens": 187
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 9,
+                "lines": 45,
+                "name": "macro.allowed",
+                "per_token": 1.0,
+                "score": 155.0,
+                "tier": "neutral",
+                "tokens": 155
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 37,
+                "lines": 36,
+                "name": "expr.await",
+                "per_token": 2.0,
+                "score": 144.0,
+                "tier": "tolerated",
+                "tokens": 72
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 16,
+                "lines": 54,
+                "name": "expr.struct",
+                "per_token": 1.0,
+                "score": 139.0,
+                "tier": "neutral",
+                "tokens": 139
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 99,
+                "lines": 85,
+                "name": "expr.call",
+                "per_token": 1.0,
+                "score": 113.0,
+                "tier": "neutral",
+                "tokens": 113
+              },
+              {
+                "boundary": 112.0,
+                "boundary_share": 100.0,
+                "count": 10,
+                "lines": 13,
+                "name": "macro.allowed",
+                "per_token": 1.0,
+                "score": 112.0,
+                "tier": "boundary",
+                "tokens": 112
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 24,
+                "lines": 29,
+                "name": "pat.tuple",
+                "per_token": 1.9999999999999998,
+                "score": 98.0,
+                "tier": "tolerated",
+                "tokens": 49
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 20,
+                "lines": 94,
+                "name": "expr.match",
+                "per_token": 0.5,
+                "score": 85.0,
+                "tier": "encouraged",
+                "tokens": 170
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 28,
+                "lines": 43,
+                "name": "stmt.let",
+                "per_token": 1.0,
+                "score": 84.0,
+                "tier": "neutral",
+                "tokens": 84
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 61,
+                "lines": 35,
+                "name": "type.field",
+                "per_token": 0.5,
+                "score": 75.5,
+                "tier": "encouraged",
+                "tokens": 151
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 144,
+                "lines": 114,
+                "name": "pat.ident",
+                "per_token": 0.5,
+                "score": 70.5,
+                "tier": "encouraged",
+                "tokens": 141
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 40,
+                "lines": 33,
+                "name": "expr.field",
+                "per_token": 1.0,
+                "score": 70.0,
+                "tier": "neutral",
+                "tokens": 70
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 68,
+                "lines": 62,
+                "name": "expr.lit",
+                "per_token": 1.0,
+                "score": 68.0,
+                "tier": "neutral",
+                "tokens": 68
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 7,
+                "lines": 52,
+                "name": "item.enum",
+                "per_token": 0.5,
+                "score": 57.5,
+                "tier": "encouraged",
+                "tokens": 115
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 30,
+                "lines": 83,
+                "name": "expr.block",
+                "per_token": 1.0,
+                "score": 55.0,
+                "tier": "neutral",
+                "tokens": 55
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 9,
+                "lines": 10,
+                "name": "stmt.let.discard",
+                "per_token": 2.0,
+                "score": 54.0,
+                "tier": "tolerated",
+                "tokens": 27
+              },
+              {
+                "boundary": 53.0,
+                "boundary_share": 100.0,
+                "count": 10,
+                "lines": 14,
+                "name": "attr.error",
+                "per_token": 1.0,
+                "score": 53.0,
+                "tier": "boundary",
+                "tokens": 53
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 12,
+                "lines": 50,
+                "name": "expr.array",
+                "per_token": 1.0,
+                "score": 53.0,
+                "tier": "neutral",
+                "tokens": 53
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 44,
+                "lines": 33,
+                "name": "pat.tuple_struct",
+                "per_token": 0.5,
+                "score": 53.0,
+                "tier": "encouraged",
+                "tokens": 106
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 17,
+                "lines": 30,
+                "name": "pat.struct",
+                "per_token": 0.5,
+                "score": 50.5,
+                "tier": "encouraged",
+                "tokens": 101
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 6,
+                "lines": 37,
+                "name": "item.struct.named",
+                "per_token": 0.5,
+                "score": 48.0,
+                "tier": "encouraged",
+                "tokens": 96
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 4,
+                "lines": 4,
+                "name": "attr.derive",
+                "per_token": 1.0,
+                "score": 46.0,
+                "tier": "neutral",
+                "tokens": 46
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 25,
+                "lines": 24,
+                "name": "expr.method_call.adapter",
+                "per_token": 0.5,
+                "score": 44.0,
+                "tier": "encouraged",
+                "tokens": 88
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 22,
+                "lines": 20,
+                "name": "expr.closure.adapter",
+                "per_token": 1.0,
+                "score": 42.0,
+                "tier": "neutral",
+                "tokens": 42
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 21,
+                "lines": 21,
+                "name": "item.fn.async",
+                "per_token": 2.0,
+                "score": 42.0,
+                "tier": "tolerated",
+                "tokens": 21
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 31,
+                "lines": 31,
+                "name": "vis.pub",
+                "per_token": 1.0,
+                "score": 31.0,
+                "tier": "neutral",
+                "tokens": 31
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 7,
+                "lines": 7,
+                "name": "expr.tuple",
+                "per_token": 2.0,
+                "score": 28.0,
+                "tier": "tolerated",
+                "tokens": 14
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 13,
+                "lines": 11,
+                "name": "pat.path",
+                "per_token": 0.5,
+                "score": 26.0,
+                "tier": "encouraged",
+                "tokens": 52
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 4,
+                "lines": 4,
+                "name": "expr.reference.mut",
+                "per_token": 3.0,
+                "score": 24.0,
+                "tier": "costly",
+                "tokens": 8
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 8,
+                "name": "expr.for",
+                "per_token": 2.0,
+                "score": 22.0,
+                "tier": "tolerated",
+                "tokens": 11
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 26,
+                "lines": 19,
+                "name": "expr.reference",
+                "per_token": 1.0,
+                "score": 21.0,
+                "tier": "neutral",
+                "tokens": 21
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 4,
+                "lines": 6,
+                "name": "item.const",
+                "per_token": 1.0,
+                "score": 20.0,
+                "tier": "neutral",
+                "tokens": 20
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 20,
+                "lines": 12,
+                "name": "type.reference",
+                "per_token": 1.0,
+                "score": 20.0,
+                "tier": "neutral",
+                "tokens": 20
+              },
+              {
+                "boundary": 18.0,
+                "boundary_share": 100.0,
+                "count": 6,
+                "lines": 6,
+                "name": "item.fn.receiver.mut",
+                "per_token": 1.0,
+                "score": 18.0,
+                "tier": "boundary",
+                "tokens": 18
+              },
+              {
+                "boundary": 18.0,
+                "boundary_share": 100.0,
+                "count": 6,
+                "lines": 6,
+                "name": "stmt.let.mut",
+                "per_token": 1.0,
+                "score": 18.0,
+                "tier": "boundary",
+                "tokens": 18
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 7,
+                "lines": 7,
+                "name": "type.primitive",
+                "per_token": 2.0,
+                "score": 18.0,
+                "tier": "tolerated",
+                "tokens": 9
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "type.untyped",
+                "per_token": 3.0,
+                "score": 18.0,
+                "tier": "costly",
+                "tokens": 6
+              },
+              {
+                "boundary": 15.0,
+                "boundary_share": 100.0,
+                "count": 10,
+                "lines": 4,
+                "name": "type.path",
+                "per_token": 1.0,
+                "score": 15.0,
+                "tier": "boundary",
+                "tokens": 15
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 25,
+                "lines": 24,
+                "name": "pat.wild",
+                "per_token": 0.5,
+                "score": 12.5,
+                "tier": "encouraged",
+                "tokens": 25
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 4,
+                "name": "expr.async",
+                "per_token": 2.0,
+                "score": 12.0,
+                "tier": "tolerated",
+                "tokens": 6
+              },
+              {
+                "boundary": 12.0,
+                "boundary_share": 100.0,
+                "count": 6,
+                "lines": 6,
+                "name": "expr.tuple",
+                "per_token": 1.0,
+                "score": 12.0,
+                "tier": "boundary",
+                "tokens": 12
+              },
+              {
+                "boundary": 12.0,
+                "boundary_share": 100.0,
+                "count": 10,
+                "lines": 6,
+                "name": "field.wire",
+                "per_token": 1.0,
+                "score": 12.0,
+                "tier": "boundary",
+                "tokens": 12
+              },
+              {
+                "boundary": 10.0,
+                "boundary_share": 100.0,
+                "count": 1,
+                "lines": 1,
+                "name": "attr.derive",
+                "per_token": 1.0,
+                "score": 10.0,
+                "tier": "boundary",
+                "tokens": 10
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "type.impl_trait.arg",
+                "per_token": 2.0,
+                "score": 10.0,
+                "tier": "tolerated",
+                "tokens": 5
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 3,
+                "name": "expr.assign",
+                "per_token": 3.0,
+                "score": 9.0,
+                "tier": "costly",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 3,
+                "name": "expr.loop",
+                "per_token": 3.0,
+                "score": 9.0,
+                "tier": "costly",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 18,
+                "lines": 16,
+                "name": "expr.try",
+                "per_token": 0.5,
+                "score": 9.0,
+                "tier": "encouraged",
+                "tokens": 18
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "attr.cfg_test",
+                "per_token": 1.0,
+                "score": 8.0,
+                "tier": "neutral",
+                "tokens": 8
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 4,
+                "lines": 8,
+                "name": "item.impl.inherent",
+                "per_token": 1.0,
+                "score": 8.0,
+                "tier": "neutral",
+                "tokens": 8
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 4,
+                "name": "expr.struct.update",
+                "per_token": 1.0,
+                "score": 7.0,
+                "tier": "neutral",
+                "tokens": 7
+              },
+              {
+                "boundary": 7.0,
+                "boundary_share": 100.0,
+                "count": 7,
+                "lines": 7,
+                "name": "expr.unit",
+                "per_token": 1.0,
+                "score": 7.0,
+                "tier": "boundary",
+                "tokens": 7
+              },
+              {
+                "boundary": 7.0,
+                "boundary_share": 100.0,
+                "count": 7,
+                "lines": 7,
+                "name": "type.primitive",
+                "per_token": 1.0,
+                "score": 7.0,
+                "tier": "boundary",
+                "tokens": 7
+              },
+              {
+                "boundary": 6.0,
+                "boundary_share": 100.0,
+                "count": 2,
+                "lines": 2,
+                "name": "attr.from",
+                "per_token": 1.0,
+                "score": 6.0,
+                "tier": "boundary",
+                "tokens": 6
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "item.fn.receiver.mut",
+                "per_token": 3.0,
+                "score": 6.0,
+                "tier": "costly",
+                "tokens": 2
+              },
+              {
+                "boundary": 6.0,
+                "boundary_share": 100.0,
+                "count": 6,
+                "lines": 6,
+                "name": "type.unit",
+                "per_token": 1.0,
+                "score": 6.0,
+                "tier": "boundary",
+                "tokens": 6
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 11,
+                "lines": 9,
+                "name": "pat.lit",
+                "per_token": 0.5,
+                "score": 5.5,
+                "tier": "encouraged",
+                "tokens": 11
+              },
+              {
+                "boundary": 4.0,
+                "boundary_share": 100.0,
+                "count": 2,
+                "lines": 2,
+                "name": "expr.await",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "boundary",
+                "tokens": 4
+              },
+              {
+                "boundary": 4.0,
+                "boundary_share": 100.0,
+                "count": 2,
+                "lines": 2,
+                "name": "expr.closure",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "boundary",
+                "tokens": 4
+              },
+              {
+                "boundary": 4.0,
+                "boundary_share": 100.0,
+                "count": 2,
+                "lines": 2,
+                "name": "pat.ident.mut",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "boundary",
+                "tokens": 4
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 4,
+                "lines": 8,
+                "name": "pat.or",
+                "per_token": 0.5,
+                "score": 4.0,
+                "tier": "encouraged",
+                "tokens": 8
+              },
+              {
+                "boundary": 4.0,
+                "boundary_share": 100.0,
+                "count": 2,
+                "lines": 2,
+                "name": "type.reference.mut",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "boundary",
+                "tokens": 4
+              },
+              {
+                "boundary": 4.0,
+                "boundary_share": 100.0,
+                "count": 2,
+                "lines": 2,
+                "name": "type.tuple",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "boundary",
+                "tokens": 4
+              },
+              {
+                "boundary": 3.0,
+                "boundary_share": 100.0,
+                "count": 3,
+                "lines": 3,
+                "name": "expr.lit.bool",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "boundary",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 2,
+                "name": "item.mod",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "neutral",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 3,
+                "name": "type.slice",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "neutral",
+                "tokens": 3
+              },
+              {
+                "boundary": 3.0,
+                "boundary_share": 100.0,
+                "count": 3,
+                "lines": 3,
+                "name": "type.untyped",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "boundary",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "vis.restricted",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "neutral",
+                "tokens": 3
+              },
+              {
+                "boundary": 2.0,
+                "boundary_share": 100.0,
+                "count": 1,
+                "lines": 1,
+                "name": "expr.reference.mut",
+                "per_token": 1.0,
+                "score": 2.0,
+                "tier": "boundary",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "expr.unary.not",
+                "per_token": 2.0,
+                "score": 2.0,
+                "tier": "tolerated",
+                "tokens": 1
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "generics.type_param",
+                "per_token": 2.0,
+                "score": 2.0,
+                "tier": "tolerated",
+                "tokens": 1
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 46,
+                "lines": 0,
+                "name": "attr.doc",
+                "per_token": 0.0,
+                "score": 0.0,
+                "tier": "neutral",
+                "tokens": 0
+              }
+            ],
+            "total": {
+              "boundary": 304.0,
+              "boundary_share": 7.227769852591536,
+              "lines": 715,
+              "name": "total",
+              "per_token": 0.9640155856062342,
+              "score": 4206.0,
+              "tokens": 4363
+            }
+          },
+          "measure": {
+            "files": [
+              {
+                "lines": 715,
+                "path": "crates/agents/src/claude/session.rs",
+                "tokens": 4363
+              }
+            ],
+            "total": {
+              "lines": 715,
+              "tokens": 4363
+            }
+          },
+          "check": {
+            "exit": 0,
+            "stdout": "",
+            "stderr": ""
+          },
+          "pricing": {
+            "raw_score": 4206.0,
+            "outside_cfg_tokens": 0,
+            "arithmetic": "4206.0 - (5.0 - 2.0) * 0",
+            "repriced_score": 4206.0
+          }
+        },
+        "after": {
+          "score": {
+            "by": "file",
+            "rows": [
+              {
+                "boundary": 304.0,
+                "boundary_share": 7.087073085441193,
+                "lines": 723,
+                "name": "crates/agents/src/claude/session.rs",
+                "per_token": 0.9762175694128357,
+                "score": 4289.5,
+                "tokens": 4394
+              }
+            ],
+            "total": {
+              "boundary": 304.0,
+              "boundary_share": 7.087073085441193,
+              "lines": 723,
+              "name": "total",
+              "per_token": 0.9762175694128357,
+              "score": 4289.5,
+              "tokens": 4394
+            }
+          },
+          "constructs": {
+            "by": "construct",
+            "rows": [
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 359,
+                "lines": 207,
+                "name": "expr.path",
+                "per_token": 1.0,
+                "score": 625.0,
+                "tier": "neutral",
+                "tokens": 625
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 125,
+                "lines": 117,
+                "name": "expr.method_call",
+                "per_token": 1.0,
+                "score": 377.0,
+                "tier": "neutral",
+                "tokens": 377
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 32,
+                "lines": 92,
+                "name": "item.fn",
+                "per_token": 1.0,
+                "score": 274.0,
+                "tier": "neutral",
+                "tokens": 274
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 8,
+                "lines": 30,
+                "name": "expr.if_let.single",
+                "per_token": 2.0,
+                "score": 248.0,
+                "tier": "tolerated",
+                "tokens": 124
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 18,
+                "lines": 22,
+                "name": "item.use",
+                "per_token": 1.0,
+                "score": 217.0,
+                "tier": "neutral",
+                "tokens": 217
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 97,
+                "lines": 47,
+                "name": "type.path",
+                "per_token": 1.0,
+                "score": 188.0,
+                "tier": "neutral",
+                "tokens": 188
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 9,
+                "lines": 45,
+                "name": "macro.allowed",
+                "per_token": 1.0,
+                "score": 155.0,
+                "tier": "neutral",
+                "tokens": 155
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 37,
+                "lines": 36,
+                "name": "expr.await",
+                "per_token": 2.0,
+                "score": 144.0,
+                "tier": "tolerated",
+                "tokens": 72
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 16,
+                "lines": 54,
+                "name": "expr.struct",
+                "per_token": 1.0,
+                "score": 139.0,
+                "tier": "neutral",
+                "tokens": 139
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 99,
+                "lines": 85,
+                "name": "expr.call",
+                "per_token": 1.0,
+                "score": 113.0,
+                "tier": "neutral",
+                "tokens": 113
+              },
+              {
+                "boundary": 112.0,
+                "boundary_share": 100.0,
+                "count": 10,
+                "lines": 13,
+                "name": "macro.allowed",
+                "per_token": 1.0,
+                "score": 112.0,
+                "tier": "boundary",
+                "tokens": 112
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 21,
+                "lines": 98,
+                "name": "expr.match",
+                "per_token": 0.5,
+                "score": 89.0,
+                "tier": "encouraged",
+                "tokens": 178
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 21,
+                "lines": 27,
+                "name": "pat.tuple",
+                "per_token": 2.0,
+                "score": 86.0,
+                "tier": "tolerated",
+                "tokens": 43
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 28,
+                "lines": 43,
+                "name": "stmt.let",
+                "per_token": 1.0,
+                "score": 84.0,
+                "tier": "neutral",
+                "tokens": 84
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "attr.cfg",
+                "per_token": 5.0,
+                "score": 80.0,
+                "tier": "outside",
+                "tokens": 16
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 61,
+                "lines": 35,
+                "name": "type.field",
+                "per_token": 0.5,
+                "score": 75.5,
+                "tier": "encouraged",
+                "tokens": 151
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 144,
+                "lines": 114,
+                "name": "pat.ident",
+                "per_token": 0.5,
+                "score": 70.5,
+                "tier": "encouraged",
+                "tokens": 141
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 40,
+                "lines": 33,
+                "name": "expr.field",
+                "per_token": 1.0,
+                "score": 70.0,
+                "tier": "neutral",
+                "tokens": 70
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 68,
+                "lines": 62,
+                "name": "expr.lit",
+                "per_token": 1.0,
+                "score": 68.0,
+                "tier": "neutral",
+                "tokens": 68
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 7,
+                "lines": 52,
+                "name": "item.enum",
+                "per_token": 0.5,
+                "score": 57.5,
+                "tier": "encouraged",
+                "tokens": 115
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 30,
+                "lines": 83,
+                "name": "expr.block",
+                "per_token": 1.0,
+                "score": 55.0,
+                "tier": "neutral",
+                "tokens": 55
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 45,
+                "lines": 34,
+                "name": "pat.tuple_struct",
+                "per_token": 0.5,
+                "score": 54.0,
+                "tier": "encouraged",
+                "tokens": 108
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 9,
+                "lines": 10,
+                "name": "stmt.let.discard",
+                "per_token": 2.0,
+                "score": 54.0,
+                "tier": "tolerated",
+                "tokens": 27
+              },
+              {
+                "boundary": 53.0,
+                "boundary_share": 100.0,
+                "count": 10,
+                "lines": 14,
+                "name": "attr.error",
+                "per_token": 1.0,
+                "score": 53.0,
+                "tier": "boundary",
+                "tokens": 53
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 12,
+                "lines": 50,
+                "name": "expr.array",
+                "per_token": 1.0,
+                "score": 53.0,
+                "tier": "neutral",
+                "tokens": 53
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 17,
+                "lines": 30,
+                "name": "pat.struct",
+                "per_token": 0.5,
+                "score": 50.5,
+                "tier": "encouraged",
+                "tokens": 101
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 6,
+                "lines": 37,
+                "name": "item.struct.named",
+                "per_token": 0.5,
+                "score": 48.0,
+                "tier": "encouraged",
+                "tokens": 96
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 4,
+                "lines": 4,
+                "name": "attr.derive",
+                "per_token": 1.0,
+                "score": 46.0,
+                "tier": "neutral",
+                "tokens": 46
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 25,
+                "lines": 24,
+                "name": "expr.method_call.adapter",
+                "per_token": 0.5,
+                "score": 44.0,
+                "tier": "encouraged",
+                "tokens": 88
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 22,
+                "lines": 20,
+                "name": "expr.closure.adapter",
+                "per_token": 1.0,
+                "score": 42.0,
+                "tier": "neutral",
+                "tokens": 42
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 21,
+                "lines": 21,
+                "name": "item.fn.async",
+                "per_token": 2.0,
+                "score": 42.0,
+                "tier": "tolerated",
+                "tokens": 21
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 32,
+                "lines": 32,
+                "name": "vis.pub",
+                "per_token": 1.0,
+                "score": 32.0,
+                "tier": "neutral",
+                "tokens": 32
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 13,
+                "lines": 11,
+                "name": "pat.path",
+                "per_token": 0.5,
+                "score": 26.0,
+                "tier": "encouraged",
+                "tokens": 52
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 4,
+                "lines": 4,
+                "name": "expr.reference.mut",
+                "per_token": 3.0,
+                "score": 24.0,
+                "tier": "costly",
+                "tokens": 8
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 6,
+                "lines": 6,
+                "name": "expr.tuple",
+                "per_token": 2.0,
+                "score": 24.0,
+                "tier": "tolerated",
+                "tokens": 12
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 8,
+                "name": "expr.for",
+                "per_token": 2.0,
+                "score": 22.0,
+                "tier": "tolerated",
+                "tokens": 11
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 26,
+                "lines": 19,
+                "name": "expr.reference",
+                "per_token": 1.0,
+                "score": 21.0,
+                "tier": "neutral",
+                "tokens": 21
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 4,
+                "lines": 6,
+                "name": "item.const",
+                "per_token": 1.0,
+                "score": 20.0,
+                "tier": "neutral",
+                "tokens": 20
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 20,
+                "lines": 12,
+                "name": "type.reference",
+                "per_token": 1.0,
+                "score": 20.0,
+                "tier": "neutral",
+                "tokens": 20
+              },
+              {
+                "boundary": 18.0,
+                "boundary_share": 100.0,
+                "count": 6,
+                "lines": 6,
+                "name": "item.fn.receiver.mut",
+                "per_token": 1.0,
+                "score": 18.0,
+                "tier": "boundary",
+                "tokens": 18
+              },
+              {
+                "boundary": 18.0,
+                "boundary_share": 100.0,
+                "count": 6,
+                "lines": 6,
+                "name": "stmt.let.mut",
+                "per_token": 1.0,
+                "score": 18.0,
+                "tier": "boundary",
+                "tokens": 18
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 7,
+                "lines": 7,
+                "name": "type.primitive",
+                "per_token": 2.0,
+                "score": 18.0,
+                "tier": "tolerated",
+                "tokens": 9
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "type.untyped",
+                "per_token": 3.0,
+                "score": 18.0,
+                "tier": "costly",
+                "tokens": 6
+              },
+              {
+                "boundary": 15.0,
+                "boundary_share": 100.0,
+                "count": 10,
+                "lines": 4,
+                "name": "type.path",
+                "per_token": 1.0,
+                "score": 15.0,
+                "tier": "boundary",
+                "tokens": 15
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 4,
+                "name": "expr.async",
+                "per_token": 2.0,
+                "score": 12.0,
+                "tier": "tolerated",
+                "tokens": 6
+              },
+              {
+                "boundary": 12.0,
+                "boundary_share": 100.0,
+                "count": 6,
+                "lines": 6,
+                "name": "expr.tuple",
+                "per_token": 1.0,
+                "score": 12.0,
+                "tier": "boundary",
+                "tokens": 12
+              },
+              {
+                "boundary": 12.0,
+                "boundary_share": 100.0,
+                "count": 10,
+                "lines": 6,
+                "name": "field.wire",
+                "per_token": 1.0,
+                "score": 12.0,
+                "tier": "boundary",
+                "tokens": 12
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 24,
+                "lines": 24,
+                "name": "pat.wild",
+                "per_token": 0.5,
+                "score": 12.0,
+                "tier": "encouraged",
+                "tokens": 24
+              },
+              {
+                "boundary": 10.0,
+                "boundary_share": 100.0,
+                "count": 1,
+                "lines": 1,
+                "name": "attr.derive",
+                "per_token": 1.0,
+                "score": 10.0,
+                "tier": "boundary",
+                "tokens": 10
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "type.impl_trait.arg",
+                "per_token": 2.0,
+                "score": 10.0,
+                "tier": "tolerated",
+                "tokens": 5
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 3,
+                "name": "expr.assign",
+                "per_token": 3.0,
+                "score": 9.0,
+                "tier": "costly",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 3,
+                "name": "expr.loop",
+                "per_token": 3.0,
+                "score": 9.0,
+                "tier": "costly",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 18,
+                "lines": 16,
+                "name": "expr.try",
+                "per_token": 0.5,
+                "score": 9.0,
+                "tier": "encouraged",
+                "tokens": 18
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "attr.cfg_test",
+                "per_token": 1.0,
+                "score": 8.0,
+                "tier": "neutral",
+                "tokens": 8
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 4,
+                "lines": 8,
+                "name": "item.impl.inherent",
+                "per_token": 1.0,
+                "score": 8.0,
+                "tier": "neutral",
+                "tokens": 8
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 4,
+                "name": "expr.struct.update",
+                "per_token": 1.0,
+                "score": 7.0,
+                "tier": "neutral",
+                "tokens": 7
+              },
+              {
+                "boundary": 7.0,
+                "boundary_share": 100.0,
+                "count": 7,
+                "lines": 7,
+                "name": "expr.unit",
+                "per_token": 1.0,
+                "score": 7.0,
+                "tier": "boundary",
+                "tokens": 7
+              },
+              {
+                "boundary": 7.0,
+                "boundary_share": 100.0,
+                "count": 7,
+                "lines": 7,
+                "name": "type.primitive",
+                "per_token": 1.0,
+                "score": 7.0,
+                "tier": "boundary",
+                "tokens": 7
+              },
+              {
+                "boundary": 6.0,
+                "boundary_share": 100.0,
+                "count": 2,
+                "lines": 2,
+                "name": "attr.from",
+                "per_token": 1.0,
+                "score": 6.0,
+                "tier": "boundary",
+                "tokens": 6
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "item.fn.receiver.mut",
+                "per_token": 3.0,
+                "score": 6.0,
+                "tier": "costly",
+                "tokens": 2
+              },
+              {
+                "boundary": 6.0,
+                "boundary_share": 100.0,
+                "count": 6,
+                "lines": 6,
+                "name": "type.unit",
+                "per_token": 1.0,
+                "score": 6.0,
+                "tier": "boundary",
+                "tokens": 6
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 10,
+                "lines": 9,
+                "name": "pat.lit",
+                "per_token": 0.5,
+                "score": 5.0,
+                "tier": "encouraged",
+                "tokens": 10
+              },
+              {
+                "boundary": 4.0,
+                "boundary_share": 100.0,
+                "count": 2,
+                "lines": 2,
+                "name": "expr.await",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "boundary",
+                "tokens": 4
+              },
+              {
+                "boundary": 4.0,
+                "boundary_share": 100.0,
+                "count": 2,
+                "lines": 2,
+                "name": "expr.closure",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "boundary",
+                "tokens": 4
+              },
+              {
+                "boundary": 4.0,
+                "boundary_share": 100.0,
+                "count": 2,
+                "lines": 2,
+                "name": "pat.ident.mut",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "boundary",
+                "tokens": 4
+              },
+              {
+                "boundary": 4.0,
+                "boundary_share": 100.0,
+                "count": 2,
+                "lines": 2,
+                "name": "type.reference.mut",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "boundary",
+                "tokens": 4
+              },
+              {
+                "boundary": 4.0,
+                "boundary_share": 100.0,
+                "count": 2,
+                "lines": 2,
+                "name": "type.tuple",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "boundary",
+                "tokens": 4
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 7,
+                "name": "pat.or",
+                "per_token": 0.5,
+                "score": 3.5,
+                "tier": "encouraged",
+                "tokens": 7
+              },
+              {
+                "boundary": 3.0,
+                "boundary_share": 100.0,
+                "count": 3,
+                "lines": 3,
+                "name": "expr.lit.bool",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "boundary",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 2,
+                "name": "item.mod",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "neutral",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 3,
+                "name": "type.slice",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "neutral",
+                "tokens": 3
+              },
+              {
+                "boundary": 3.0,
+                "boundary_share": 100.0,
+                "count": 3,
+                "lines": 3,
+                "name": "type.untyped",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "boundary",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "vis.restricted",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "neutral",
+                "tokens": 3
+              },
+              {
+                "boundary": 2.0,
+                "boundary_share": 100.0,
+                "count": 1,
+                "lines": 1,
+                "name": "expr.reference.mut",
+                "per_token": 1.0,
+                "score": 2.0,
+                "tier": "boundary",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "expr.unary.not",
+                "per_token": 2.0,
+                "score": 2.0,
+                "tier": "tolerated",
+                "tokens": 1
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "generics.type_param",
+                "per_token": 2.0,
+                "score": 2.0,
+                "tier": "tolerated",
+                "tokens": 1
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 46,
+                "lines": 0,
+                "name": "attr.doc",
+                "per_token": 0.0,
+                "score": 0.0,
+                "tier": "neutral",
+                "tokens": 0
+              }
+            ],
+            "total": {
+              "boundary": 304.0,
+              "boundary_share": 7.087073085441193,
+              "lines": 723,
+              "name": "total",
+              "per_token": 0.9762175694128357,
+              "score": 4289.5,
+              "tokens": 4394
+            }
+          },
+          "measure": {
+            "files": [
+              {
+                "lines": 723,
+                "path": "crates/agents/src/claude/session.rs",
+                "tokens": 4394
+              }
+            ],
+            "total": {
+              "lines": 723,
+              "tokens": 4394
+            }
+          },
+          "check": {
+            "exit": 1,
+            "stdout": "crates/agents/src/claude/session.rs:353:1: attr.cfg: `cfg` only with `target_family = \"wasm\"`, `unix` or their `not` (proposal 0016)\ncrates/agents/src/claude/session.rs:367:1: attr.cfg: `cfg` only with `target_family = \"wasm\"`, `unix` or their `not` (proposal 0016)\n",
+            "stderr": ""
+          },
+          "pricing": {
+            "raw_score": 4289.5,
+            "outside_cfg_tokens": 16,
+            "arithmetic": "4289.5 - (5.0 - 2.0) * 16",
+            "repriced_score": 4241.5
+          }
+        },
+        "score_drop_percent": -0.8440323347598668
+      }
+    },
+    "windows-no-window-pair": {
+      "friction_points": 1,
+      "new_syntax": true,
+      "affected": {
+        "before": {
+          "score": {
+            "by": "file",
+            "rows": [
+              {
+                "boundary": 2.0,
+                "boundary_share": 2.1621621621621623,
+                "lines": 12,
+                "name": "crates/agents/src/claude/example.rs",
+                "per_token": 1.1419753086419753,
+                "score": 92.5,
+                "tokens": 81
+              }
+            ],
+            "total": {
+              "boundary": 2.0,
+              "boundary_share": 2.1621621621621623,
+              "lines": 12,
+              "name": "total",
+              "per_token": 1.1419753086419753,
+              "score": 92.5,
+              "tokens": 81
+            }
+          },
+          "constructs": {
+            "by": "construct",
+            "rows": [
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "attr.cfg",
+                "per_token": 2.0,
+                "score": 24.0,
+                "tier": "tolerated",
+                "tokens": 12
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "item.use",
+                "per_token": 1.0,
+                "score": 24.0,
+                "tier": "neutral",
+                "tokens": 24
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 5,
+                "name": "item.fn",
+                "per_token": 1.0,
+                "score": 15.0,
+                "tier": "neutral",
+                "tokens": 15
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 1,
+                "name": "expr.method_call",
+                "per_token": 1.0,
+                "score": 6.0,
+                "tier": "neutral",
+                "tokens": 6
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "vis.restricted",
+                "per_token": 1.0,
+                "score": 6.0,
+                "tier": "neutral",
+                "tokens": 6
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "item.const",
+                "per_token": 1.0,
+                "score": 5.0,
+                "tier": "neutral",
+                "tokens": 5
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 5,
+                "lines": 3,
+                "name": "type.path",
+                "per_token": 1.0,
+                "score": 5.0,
+                "tier": "neutral",
+                "tokens": 5
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 4,
+                "lines": 3,
+                "name": "expr.path",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "neutral",
+                "tokens": 4
+              },
+              {
+                "boundary": 2.0,
+                "boundary_share": 100.0,
+                "count": 1,
+                "lines": 1,
+                "name": "pat.ident.mut",
+                "per_token": 1.0,
+                "score": 2.0,
+                "tier": "boundary",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "expr.lit",
+                "per_token": 1.0,
+                "score": 1.0,
+                "tier": "neutral",
+                "tokens": 1
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "pat.ident",
+                "per_token": 0.5,
+                "score": 0.5,
+                "tier": "encouraged",
+                "tokens": 1
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 0,
+                "name": "attr.doc",
+                "per_token": 0.0,
+                "score": 0.0,
+                "tier": "neutral",
+                "tokens": 0
+              }
+            ],
+            "total": {
+              "boundary": 2.0,
+              "boundary_share": 2.1621621621621623,
+              "lines": 12,
+              "name": "total",
+              "per_token": 1.1419753086419753,
+              "score": 92.5,
+              "tokens": 81
+            }
+          },
+          "measure": {
+            "files": [
+              {
+                "lines": 12,
+                "path": "crates/agents/src/claude/example.rs",
+                "tokens": 81
+              }
+            ],
+            "total": {
+              "lines": 12,
+              "tokens": 81
+            }
+          },
+          "check": {
+            "exit": 0,
+            "stdout": "",
+            "stderr": ""
+          },
+          "pricing": {
+            "raw_score": 92.5,
+            "outside_cfg_tokens": 0,
+            "arithmetic": "92.5 - (5.0 - 2.0) * 0",
+            "repriced_score": 92.5
+          }
+        },
+        "after": {
+          "score": {
+            "by": "file",
+            "rows": [
+              {
+                "boundary": 2.0,
+                "boundary_share": 1.3468013468013467,
+                "lines": 12,
+                "name": "crates/agents/src/claude/example.rs",
+                "per_token": 1.7470588235294118,
+                "score": 148.5,
+                "tokens": 85
+              }
+            ],
+            "total": {
+              "boundary": 2.0,
+              "boundary_share": 1.3468013468013467,
+              "lines": 12,
+              "name": "total",
+              "per_token": 1.7470588235294118,
+              "score": 148.5,
+              "tokens": 85
+            }
+          },
+          "constructs": {
+            "by": "construct",
+            "rows": [
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "attr.cfg",
+                "per_token": 5.0,
+                "score": 80.0,
+                "tier": "outside",
+                "tokens": 16
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "item.use",
+                "per_token": 1.0,
+                "score": 24.0,
+                "tier": "neutral",
+                "tokens": 24
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 5,
+                "name": "item.fn",
+                "per_token": 1.0,
+                "score": 15.0,
+                "tier": "neutral",
+                "tokens": 15
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 1,
+                "name": "expr.method_call",
+                "per_token": 1.0,
+                "score": 6.0,
+                "tier": "neutral",
+                "tokens": 6
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "vis.restricted",
+                "per_token": 1.0,
+                "score": 6.0,
+                "tier": "neutral",
+                "tokens": 6
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "item.const",
+                "per_token": 1.0,
+                "score": 5.0,
+                "tier": "neutral",
+                "tokens": 5
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 5,
+                "lines": 3,
+                "name": "type.path",
+                "per_token": 1.0,
+                "score": 5.0,
+                "tier": "neutral",
+                "tokens": 5
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 4,
+                "lines": 3,
+                "name": "expr.path",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "neutral",
+                "tokens": 4
+              },
+              {
+                "boundary": 2.0,
+                "boundary_share": 100.0,
+                "count": 1,
+                "lines": 1,
+                "name": "pat.ident.mut",
+                "per_token": 1.0,
+                "score": 2.0,
+                "tier": "boundary",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "expr.lit",
+                "per_token": 1.0,
+                "score": 1.0,
+                "tier": "neutral",
+                "tokens": 1
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "pat.ident",
+                "per_token": 0.5,
+                "score": 0.5,
+                "tier": "encouraged",
+                "tokens": 1
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 0,
+                "name": "attr.doc",
+                "per_token": 0.0,
+                "score": 0.0,
+                "tier": "neutral",
+                "tokens": 0
+              }
+            ],
+            "total": {
+              "boundary": 2.0,
+              "boundary_share": 1.3468013468013467,
+              "lines": 12,
+              "name": "total",
+              "per_token": 1.7470588235294118,
+              "score": 148.5,
+              "tokens": 85
+            }
+          },
+          "measure": {
+            "files": [
+              {
+                "lines": 12,
+                "path": "crates/agents/src/claude/example.rs",
+                "tokens": 85
+              }
+            ],
+            "total": {
+              "lines": 12,
+              "tokens": 85
+            }
+          },
+          "check": {
+            "exit": 1,
+            "stdout": "crates/agents/src/claude/example.rs:3:1: attr.cfg: `cfg` only with `target_family = \"wasm\"`, `unix` or their `not` (proposal 0016)\ncrates/agents/src/claude/example.rs:12:1: attr.cfg: `cfg` only with `target_family = \"wasm\"`, `unix` or their `not` (proposal 0016)\n",
+            "stderr": ""
+          },
+          "pricing": {
+            "raw_score": 148.5,
+            "outside_cfg_tokens": 16,
+            "arithmetic": "148.5 - (5.0 - 2.0) * 16",
+            "repriced_score": 100.5
+          }
+        },
+        "score_drop_percent": -8.64864864864865
+      },
+      "files": {
+        "before": {
+          "score": {
+            "by": "file",
+            "rows": [
+              {
+                "boundary": 4.0,
+                "boundary_share": 1.7857142857142856,
+                "lines": 28,
+                "name": "crates/agents/src/process.rs",
+                "per_token": 1.0044843049327354,
+                "score": 224.0,
+                "tokens": 223
+              }
+            ],
+            "total": {
+              "boundary": 4.0,
+              "boundary_share": 1.7857142857142856,
+              "lines": 28,
+              "name": "total",
+              "per_token": 1.0044843049327354,
+              "score": 224.0,
+              "tokens": 223
+            }
+          },
+          "constructs": {
+            "by": "construct",
+            "rows": [
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 4,
+                "lines": 4,
+                "name": "item.use",
+                "per_token": 1.0,
+                "score": 44.0,
+                "tier": "neutral",
+                "tokens": 44
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 18,
+                "lines": 11,
+                "name": "expr.path",
+                "per_token": 1.0,
+                "score": 36.0,
+                "tier": "neutral",
+                "tokens": 36
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 8,
+                "name": "item.fn",
+                "per_token": 1.0,
+                "score": 25.0,
+                "tier": "neutral",
+                "tokens": 25
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "attr.cfg",
+                "per_token": 2.0,
+                "score": 24.0,
+                "tier": "tolerated",
+                "tokens": 12
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 6,
+                "lines": 5,
+                "name": "expr.method_call",
+                "per_token": 1.0,
+                "score": 18.0,
+                "tier": "neutral",
+                "tokens": 18
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "item.const",
+                "per_token": 1.0,
+                "score": 10.0,
+                "tier": "neutral",
+                "tokens": 10
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 9,
+                "lines": 5,
+                "name": "type.path",
+                "per_token": 1.0,
+                "score": 9.0,
+                "tier": "neutral",
+                "tokens": 9
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 3,
+                "name": "vis.restricted",
+                "per_token": 1.0,
+                "score": 9.0,
+                "tier": "neutral",
+                "tokens": 9
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "expr.await",
+                "per_token": 2.0,
+                "score": 8.0,
+                "tier": "tolerated",
+                "tokens": 4
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 8,
+                "name": "expr.match",
+                "per_token": 0.5,
+                "score": 7.5,
+                "tier": "encouraged",
+                "tokens": 15
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 6,
+                "lines": 6,
+                "name": "expr.call",
+                "per_token": 1.0,
+                "score": 7.0,
+                "tier": "neutral",
+                "tokens": 7
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 7,
+                "lines": 4,
+                "name": "pat.tuple_struct",
+                "per_token": 0.5,
+                "score": 7.0,
+                "tier": "encouraged",
+                "tokens": 14
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "stmt.let.discard",
+                "per_token": 2.0,
+                "score": 6.0,
+                "tier": "tolerated",
+                "tokens": 3
+              },
+              {
+                "boundary": 4.0,
+                "boundary_share": 100.0,
+                "count": 2,
+                "lines": 2,
+                "name": "pat.ident.mut",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "boundary",
+                "tokens": 4
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 5,
+                "lines": 5,
+                "name": "pat.ident",
+                "per_token": 0.5,
+                "score": 2.5,
+                "tier": "encouraged",
+                "tokens": 5
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "expr.lit",
+                "per_token": 1.0,
+                "score": 2.0,
+                "tier": "neutral",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "item.fn.async",
+                "per_token": 2.0,
+                "score": 2.0,
+                "tier": "tolerated",
+                "tokens": 1
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 2,
+                "name": "pat.wild",
+                "per_token": 0.5,
+                "score": 1.5,
+                "tier": "encouraged",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 2,
+                "name": "expr.block",
+                "per_token": 1.0,
+                "score": 1.0,
+                "tier": "neutral",
+                "tokens": 1
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "pat.or",
+                "per_token": 0.5,
+                "score": 0.5,
+                "tier": "encouraged",
+                "tokens": 1
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 5,
+                "lines": 0,
+                "name": "attr.doc",
+                "per_token": 0.0,
+                "score": 0.0,
+                "tier": "neutral",
+                "tokens": 0
+              }
+            ],
+            "total": {
+              "boundary": 4.0,
+              "boundary_share": 1.7857142857142856,
+              "lines": 28,
+              "name": "total",
+              "per_token": 1.0044843049327354,
+              "score": 224.0,
+              "tokens": 223
+            }
+          },
+          "measure": {
+            "files": [
+              {
+                "lines": 28,
+                "path": "crates/agents/src/process.rs",
+                "tokens": 223
+              }
+            ],
+            "total": {
+              "lines": 28,
+              "tokens": 223
+            }
+          },
+          "check": {
+            "exit": 0,
+            "stdout": "",
+            "stderr": ""
+          },
+          "pricing": {
+            "raw_score": 224.0,
+            "outside_cfg_tokens": 0,
+            "arithmetic": "224.0 - (5.0 - 2.0) * 0",
+            "repriced_score": 224.0
+          }
+        },
+        "after": {
+          "score": {
+            "by": "file",
+            "rows": [
+              {
+                "boundary": 4.0,
+                "boundary_share": 1.4285714285714286,
+                "lines": 28,
+                "name": "crates/agents/src/process.rs",
+                "per_token": 1.2334801762114538,
+                "score": 280.0,
+                "tokens": 227
+              }
+            ],
+            "total": {
+              "boundary": 4.0,
+              "boundary_share": 1.4285714285714286,
+              "lines": 28,
+              "name": "total",
+              "per_token": 1.2334801762114538,
+              "score": 280.0,
+              "tokens": 227
+            }
+          },
+          "constructs": {
+            "by": "construct",
+            "rows": [
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "attr.cfg",
+                "per_token": 5.0,
+                "score": 80.0,
+                "tier": "outside",
+                "tokens": 16
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 4,
+                "lines": 4,
+                "name": "item.use",
+                "per_token": 1.0,
+                "score": 44.0,
+                "tier": "neutral",
+                "tokens": 44
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 18,
+                "lines": 11,
+                "name": "expr.path",
+                "per_token": 1.0,
+                "score": 36.0,
+                "tier": "neutral",
+                "tokens": 36
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 8,
+                "name": "item.fn",
+                "per_token": 1.0,
+                "score": 25.0,
+                "tier": "neutral",
+                "tokens": 25
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 6,
+                "lines": 5,
+                "name": "expr.method_call",
+                "per_token": 1.0,
+                "score": 18.0,
+                "tier": "neutral",
+                "tokens": 18
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "item.const",
+                "per_token": 1.0,
+                "score": 10.0,
+                "tier": "neutral",
+                "tokens": 10
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 9,
+                "lines": 5,
+                "name": "type.path",
+                "per_token": 1.0,
+                "score": 9.0,
+                "tier": "neutral",
+                "tokens": 9
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 3,
+                "name": "vis.restricted",
+                "per_token": 1.0,
+                "score": 9.0,
+                "tier": "neutral",
+                "tokens": 9
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "expr.await",
+                "per_token": 2.0,
+                "score": 8.0,
+                "tier": "tolerated",
+                "tokens": 4
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 8,
+                "name": "expr.match",
+                "per_token": 0.5,
+                "score": 7.5,
+                "tier": "encouraged",
+                "tokens": 15
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 6,
+                "lines": 6,
+                "name": "expr.call",
+                "per_token": 1.0,
+                "score": 7.0,
+                "tier": "neutral",
+                "tokens": 7
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 7,
+                "lines": 4,
+                "name": "pat.tuple_struct",
+                "per_token": 0.5,
+                "score": 7.0,
+                "tier": "encouraged",
+                "tokens": 14
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "stmt.let.discard",
+                "per_token": 2.0,
+                "score": 6.0,
+                "tier": "tolerated",
+                "tokens": 3
+              },
+              {
+                "boundary": 4.0,
+                "boundary_share": 100.0,
+                "count": 2,
+                "lines": 2,
+                "name": "pat.ident.mut",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "boundary",
+                "tokens": 4
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 5,
+                "lines": 5,
+                "name": "pat.ident",
+                "per_token": 0.5,
+                "score": 2.5,
+                "tier": "encouraged",
+                "tokens": 5
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "expr.lit",
+                "per_token": 1.0,
+                "score": 2.0,
+                "tier": "neutral",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "item.fn.async",
+                "per_token": 2.0,
+                "score": 2.0,
+                "tier": "tolerated",
+                "tokens": 1
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 2,
+                "name": "pat.wild",
+                "per_token": 0.5,
+                "score": 1.5,
+                "tier": "encouraged",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 2,
+                "name": "expr.block",
+                "per_token": 1.0,
+                "score": 1.0,
+                "tier": "neutral",
+                "tokens": 1
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "pat.or",
+                "per_token": 0.5,
+                "score": 0.5,
+                "tier": "encouraged",
+                "tokens": 1
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 5,
+                "lines": 0,
+                "name": "attr.doc",
+                "per_token": 0.0,
+                "score": 0.0,
+                "tier": "neutral",
+                "tokens": 0
+              }
+            ],
+            "total": {
+              "boundary": 4.0,
+              "boundary_share": 1.4285714285714286,
+              "lines": 28,
+              "name": "total",
+              "per_token": 1.2334801762114538,
+              "score": 280.0,
+              "tokens": 227
+            }
+          },
+          "measure": {
+            "files": [
+              {
+                "lines": 28,
+                "path": "crates/agents/src/process.rs",
+                "tokens": 227
+              }
+            ],
+            "total": {
+              "lines": 28,
+              "tokens": 227
+            }
+          },
+          "check": {
+            "exit": 1,
+            "stdout": "crates/agents/src/process.rs:13:1: attr.cfg: `cfg` only with `target_family = \"wasm\"`, `unix` or their `not` (proposal 0016)\ncrates/agents/src/process.rs:22:1: attr.cfg: `cfg` only with `target_family = \"wasm\"`, `unix` or their `not` (proposal 0016)\n",
+            "stderr": ""
+          },
+          "pricing": {
+            "raw_score": 280.0,
+            "outside_cfg_tokens": 16,
+            "arithmetic": "280.0 - (5.0 - 2.0) * 16",
+            "repriced_score": 232.0
+          }
+        },
+        "score_drop_percent": -3.571428571428571
+      }
+    },
+    "direct-test-module-access": {
+      "friction_points": 1,
+      "new_syntax": false,
+      "affected": {
+        "before": {
+          "score": {
+            "by": "file",
+            "rows": [
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "lines": 4,
+                "name": "crates/agents/src/claude/example.rs",
+                "per_token": 1.0,
+                "score": 26.0,
+                "tokens": 26
+              }
+            ],
+            "total": {
+              "boundary": 0.0,
+              "boundary_share": 0.0,
+              "lines": 4,
+              "name": "total",
+              "per_token": 1.0,
+              "score": 26.0,
+              "tokens": 26
+            }
+          },
+          "constructs": {
+            "by": "construct",
+            "rows": [
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "item.use",
+                "per_token": 1.0,
+                "score": 15.0,
+                "tier": "neutral",
+                "tokens": 15
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "attr.cfg_test",
+                "per_token": 1.0,
+                "score": 5.0,
+                "tier": "neutral",
+                "tokens": 5
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "item.mod",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "neutral",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "vis.restricted",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "neutral",
+                "tokens": 3
+              }
+            ],
+            "total": {
+              "boundary": 0.0,
+              "boundary_share": 0.0,
+              "lines": 4,
+              "name": "total",
+              "per_token": 1.0,
+              "score": 26.0,
+              "tokens": 26
+            }
+          },
+          "measure": {
+            "files": [
+              {
+                "lines": 4,
+                "path": "crates/agents/src/claude/example.rs",
+                "tokens": 26
+              }
+            ],
+            "total": {
+              "lines": 4,
+              "tokens": 26
+            }
+          },
+          "check": {
+            "exit": 0,
+            "stdout": "",
+            "stderr": ""
+          },
+          "pricing": {
+            "raw_score": 26.0,
+            "outside_cfg_tokens": 0,
+            "arithmetic": "26.0 - (5.0 - 2.0) * 0",
+            "repriced_score": 26.0
+          }
+        },
+        "after": {
+          "score": {
+            "by": "file",
+            "rows": [
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "lines": 2,
+                "name": "crates/agents/src/claude/example.rs",
+                "per_token": 1.0,
+                "score": 18.0,
+                "tokens": 18
+              }
+            ],
+            "total": {
+              "boundary": 0.0,
+              "boundary_share": 0.0,
+              "lines": 2,
+              "name": "total",
+              "per_token": 1.0,
+              "score": 18.0,
+              "tokens": 18
+            }
+          },
+          "constructs": {
+            "by": "construct",
+            "rows": [
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "item.use",
+                "per_token": 1.0,
+                "score": 12.0,
+                "tier": "neutral",
+                "tokens": 12
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "item.mod",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "neutral",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "vis.restricted",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "neutral",
+                "tokens": 3
+              }
+            ],
+            "total": {
+              "boundary": 0.0,
+              "boundary_share": 0.0,
+              "lines": 2,
+              "name": "total",
+              "per_token": 1.0,
+              "score": 18.0,
+              "tokens": 18
+            }
+          },
+          "measure": {
+            "files": [
+              {
+                "lines": 2,
+                "path": "crates/agents/src/claude/example.rs",
+                "tokens": 18
+              }
+            ],
+            "total": {
+              "lines": 2,
+              "tokens": 18
+            }
+          },
+          "check": {
+            "exit": 0,
+            "stdout": "",
+            "stderr": ""
+          },
+          "pricing": {
+            "raw_score": 18.0,
+            "outside_cfg_tokens": 0,
+            "arithmetic": "18.0 - (5.0 - 2.0) * 0",
+            "repriced_score": 18.0
+          }
+        },
+        "score_drop_percent": 30.76923076923077
+      },
+      "files": {
+        "before": {
+          "score": {
+            "by": "file",
+            "rows": [
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "lines": 12,
+                "name": "crates/agents/src/claude/mod.rs",
+                "per_token": 1.0,
+                "score": 74.0,
+                "tokens": 74
+              },
+              {
+                "boundary": 161.0,
+                "boundary_share": 4.447513812154696,
+                "lines": 482,
+                "name": "crates/agents/src/install.rs",
+                "per_token": 1.002770083102493,
+                "score": 3620.0,
+                "tokens": 3610
+              }
+            ],
+            "total": {
+              "boundary": 161.0,
+              "boundary_share": 4.358419057931782,
+              "lines": 494,
+              "name": "total",
+              "per_token": 1.00271444082519,
+              "score": 3694.0,
+              "tokens": 3684
+            }
+          },
+          "constructs": {
+            "by": "construct",
+            "rows": [
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 335,
+                "lines": 173,
+                "name": "expr.path",
+                "per_token": 1.0,
+                "score": 714.0,
+                "tier": "neutral",
+                "tokens": 714
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 116,
+                "lines": 92,
+                "name": "expr.method_call",
+                "per_token": 1.0,
+                "score": 352.0,
+                "tier": "neutral",
+                "tokens": 352
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 18,
+                "lines": 59,
+                "name": "macro.allowed",
+                "per_token": 1.0,
+                "score": 277.0,
+                "tier": "neutral",
+                "tokens": 277
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 31,
+                "lines": 92,
+                "name": "item.fn",
+                "per_token": 1.0,
+                "score": 261.0,
+                "tier": "neutral",
+                "tokens": 261
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 19,
+                "lines": 25,
+                "name": "item.use",
+                "per_token": 1.0,
+                "score": 229.0,
+                "tier": "neutral",
+                "tokens": 229
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 110,
+                "lines": 49,
+                "name": "type.path",
+                "per_token": 1.0,
+                "score": 209.0,
+                "tier": "neutral",
+                "tokens": 209
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 135,
+                "lines": 116,
+                "name": "expr.call",
+                "per_token": 1.0,
+                "score": 185.0,
+                "tier": "neutral",
+                "tokens": 185
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 9,
+                "lines": 50,
+                "name": "expr.struct",
+                "per_token": 1.0,
+                "score": 110.0,
+                "tier": "neutral",
+                "tokens": 110
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 26,
+                "lines": 26,
+                "name": "expr.await",
+                "per_token": 2.0,
+                "score": 104.0,
+                "tier": "tolerated",
+                "tokens": 52
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 4,
+                "lines": 4,
+                "name": "type.untyped",
+                "per_token": 3.0,
+                "score": 99.0,
+                "tier": "costly",
+                "tokens": 33
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 30,
+                "lines": 42,
+                "name": "stmt.let",
+                "per_token": 1.0,
+                "score": 90.0,
+                "tier": "neutral",
+                "tokens": 90
+              },
+              {
+                "boundary": 78.0,
+                "boundary_share": 100.0,
+                "count": 4,
+                "lines": 4,
+                "name": "macro.allowed",
+                "per_token": 1.0,
+                "score": 78.0,
+                "tier": "boundary",
+                "tokens": 78
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 28,
+                "lines": 23,
+                "name": "type.primitive",
+                "per_token": 2.0,
+                "score": 76.0,
+                "tier": "tolerated",
+                "tokens": 38
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 34,
+                "lines": 34,
+                "name": "expr.closure.adapter",
+                "per_token": 1.0,
+                "score": 68.0,
+                "tier": "neutral",
+                "tokens": 68
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 115,
+                "lines": 98,
+                "name": "pat.ident",
+                "per_token": 0.5,
+                "score": 58.0,
+                "tier": "encouraged",
+                "tokens": 116
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 27,
+                "lines": 29,
+                "name": "expr.method_call.adapter",
+                "per_token": 0.5,
+                "score": 52.5,
+                "tier": "encouraged",
+                "tokens": 105
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 52,
+                "lines": 43,
+                "name": "expr.lit",
+                "per_token": 1.0,
+                "score": 52.0,
+                "tier": "neutral",
+                "tokens": 52
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 12,
+                "lines": 59,
+                "name": "expr.match",
+                "per_token": 0.5,
+                "score": 52.0,
+                "tier": "encouraged",
+                "tokens": 104
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 11,
+                "lines": 11,
+                "name": "pat.tuple",
+                "per_token": 2.0,
+                "score": 44.0,
+                "tier": "tolerated",
+                "tokens": 22
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 7,
+                "lines": 7,
+                "name": "stmt.let.discard",
+                "per_token": 2.0,
+                "score": 42.0,
+                "tier": "tolerated",
+                "tokens": 21
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 35,
+                "lines": 26,
+                "name": "expr.reference",
+                "per_token": 1.0,
+                "score": 35.0,
+                "tier": "neutral",
+                "tokens": 35
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 7,
+                "lines": 7,
+                "name": "item.const",
+                "per_token": 1.0,
+                "score": 35.0,
+                "tier": "neutral",
+                "tokens": 35
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 19,
+                "name": "item.enum",
+                "per_token": 0.5,
+                "score": 28.0,
+                "tier": "encouraged",
+                "tokens": 56
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 13,
+                "lines": 13,
+                "name": "item.fn.async",
+                "per_token": 2.0,
+                "score": 26.0,
+                "tier": "tolerated",
+                "tokens": 13
+              },
+              {
+                "boundary": 25.0,
+                "boundary_share": 100.0,
+                "count": 5,
+                "lines": 5,
+                "name": "attr.error",
+                "per_token": 1.0,
+                "score": 25.0,
+                "tier": "boundary",
+                "tokens": 25
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "attr.cfg",
+                "per_token": 2.0,
+                "score": 24.0,
+                "tier": "tolerated",
+                "tokens": 12
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 4,
+                "lines": 8,
+                "name": "expr.loop",
+                "per_token": 3.0,
+                "score": 24.0,
+                "tier": "costly",
+                "tokens": 8
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 12,
+                "lines": 34,
+                "name": "expr.block",
+                "per_token": 1.0,
+                "score": 23.0,
+                "tier": "neutral",
+                "tokens": 23
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 11,
+                "lines": 11,
+                "name": "expr.field",
+                "per_token": 1.0,
+                "score": 22.0,
+                "tier": "neutral",
+                "tokens": 22
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 21,
+                "lines": 20,
+                "name": "type.reference",
+                "per_token": 1.0,
+                "score": 21.0,
+                "tier": "neutral",
+                "tokens": 21
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 5,
+                "lines": 5,
+                "name": "expr.tuple",
+                "per_token": 2.0,
+                "score": 20.0,
+                "tier": "tolerated",
+                "tokens": 10
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 10,
+                "lines": 10,
+                "name": "pat.path",
+                "per_token": 0.5,
+                "score": 20.0,
+                "tier": "encouraged",
+                "tokens": 40
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 15,
+                "name": "item.struct.named",
+                "per_token": 0.5,
+                "score": 18.0,
+                "tier": "encouraged",
+                "tokens": 36
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 4,
+                "lines": 4,
+                "name": "attr.cfg_test",
+                "per_token": 1.0,
+                "score": 16.0,
+                "tier": "neutral",
+                "tokens": 16
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 6,
+                "name": "expr.for",
+                "per_token": 2.0,
+                "score": 16.0,
+                "tier": "tolerated",
+                "tokens": 8
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 5,
+                "lines": 5,
+                "name": "expr.break",
+                "per_token": 3.0,
+                "score": 15.0,
+                "tier": "costly",
+                "tokens": 5
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 30,
+                "lines": 30,
+                "name": "expr.try",
+                "per_token": 0.5,
+                "score": 15.0,
+                "tier": "encouraged",
+                "tokens": 30
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "attr.derive",
+                "per_token": 1.0,
+                "score": 13.0,
+                "tier": "neutral",
+                "tokens": 13
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "expr.reference.mut",
+                "per_token": 3.0,
+                "score": 12.0,
+                "tier": "costly",
+                "tokens": 4
+              },
+              {
+                "boundary": 12.0,
+                "boundary_share": 100.0,
+                "count": 12,
+                "lines": 12,
+                "name": "type.unit",
+                "per_token": 1.0,
+                "score": 12.0,
+                "tier": "boundary",
+                "tokens": 12
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 9,
+                "lines": 8,
+                "name": "pat.tuple_struct",
+                "per_token": 0.5,
+                "score": 10.5,
+                "tier": "encouraged",
+                "tokens": 21
+              },
+              {
+                "boundary": 10.0,
+                "boundary_share": 100.0,
+                "count": 1,
+                "lines": 1,
+                "name": "attr.derive",
+                "per_token": 1.0,
+                "score": 10.0,
+                "tier": "boundary",
+                "tokens": 10
+              },
+              {
+                "boundary": 10.0,
+                "boundary_share": 100.0,
+                "count": 5,
+                "lines": 5,
+                "name": "pat.ident.mut",
+                "per_token": 1.0,
+                "score": 10.0,
+                "tier": "boundary",
+                "tokens": 10
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 4,
+                "name": "item.mod",
+                "per_token": 1.0,
+                "score": 9.0,
+                "tier": "neutral",
+                "tokens": 9
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 1,
+                "name": "expr.binary.ne",
+                "per_token": 2.0,
+                "score": 8.0,
+                "tier": "tolerated",
+                "tokens": 4
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 14,
+                "lines": 8,
+                "name": "pat.lit",
+                "per_token": 0.5,
+                "score": 7.0,
+                "tier": "encouraged",
+                "tokens": 14
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 13,
+                "lines": 13,
+                "name": "pat.wild",
+                "per_token": 0.5,
+                "score": 6.5,
+                "tier": "encouraged",
+                "tokens": 13
+              },
+              {
+                "boundary": 6.0,
+                "boundary_share": 100.0,
+                "count": 1,
+                "lines": 1,
+                "name": "attr.tokio::test",
+                "per_token": 1.0,
+                "score": 6.0,
+                "tier": "boundary",
+                "tokens": 6
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 3,
+                "name": "type.field",
+                "per_token": 0.5,
+                "score": 6.0,
+                "tier": "encouraged",
+                "tokens": 12
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 6,
+                "lines": 6,
+                "name": "vis.pub",
+                "per_token": 1.0,
+                "score": 6.0,
+                "tier": "neutral",
+                "tokens": 6
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "expr.binary.and",
+                "per_token": 2.0,
+                "score": 4.0,
+                "tier": "tolerated",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "expr.binary.eq",
+                "per_token": 2.0,
+                "score": 4.0,
+                "tier": "tolerated",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "expr.repeat",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "neutral",
+                "tokens": 4
+              },
+              {
+                "boundary": 4.0,
+                "boundary_share": 100.0,
+                "count": 4,
+                "lines": 4,
+                "name": "expr.unit",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "boundary",
+                "tokens": 4
+              },
+              {
+                "boundary": 4.0,
+                "boundary_share": 100.0,
+                "count": 2,
+                "lines": 2,
+                "name": "type.reference.mut",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "boundary",
+                "tokens": 4
+              },
+              {
+                "boundary": 3.0,
+                "boundary_share": 100.0,
+                "count": 1,
+                "lines": 1,
+                "name": "attr.from",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "boundary",
+                "tokens": 3
+              },
+              {
+                "boundary": 3.0,
+                "boundary_share": 100.0,
+                "count": 1,
+                "lines": 1,
+                "name": "stmt.let.mut",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "boundary",
+                "tokens": 3
+              },
+              {
+                "boundary": 3.0,
+                "boundary_share": 100.0,
+                "count": 3,
+                "lines": 3,
+                "name": "type.primitive",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "boundary",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "vis.restricted",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "neutral",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "expr.match.guard",
+                "per_token": 2.0,
+                "score": 2.0,
+                "tier": "tolerated",
+                "tokens": 1
+              },
+              {
+                "boundary": 2.0,
+                "boundary_share": 100.0,
+                "count": 1,
+                "lines": 1,
+                "name": "expr.reference.mut",
+                "per_token": 1.0,
+                "score": 2.0,
+                "tier": "boundary",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 2,
+                "name": "item.impl.inherent",
+                "per_token": 1.0,
+                "score": 2.0,
+                "tier": "neutral",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "type.slice",
+                "per_token": 1.0,
+                "score": 2.0,
+                "tier": "neutral",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "pat.struct",
+                "per_token": 0.5,
+                "score": 1.5,
+                "tier": "encouraged",
+                "tokens": 3
+              },
+              {
+                "boundary": 1.0,
+                "boundary_share": 100.0,
+                "count": 1,
+                "lines": 1,
+                "name": "type.untyped",
+                "per_token": 1.0,
+                "score": 1.0,
+                "tier": "boundary",
+                "tokens": 1
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 48,
+                "lines": 0,
+                "name": "attr.doc",
+                "per_token": 0.0,
+                "score": 0.0,
+                "tier": "neutral",
+                "tokens": 0
+              }
+            ],
+            "total": {
+              "boundary": 161.0,
+              "boundary_share": 4.358419057931782,
+              "lines": 494,
+              "name": "total",
+              "per_token": 1.00271444082519,
+              "score": 3694.0,
+              "tokens": 3684
+            }
+          },
+          "measure": {
+            "files": [
+              {
+                "lines": 12,
+                "path": "crates/agents/src/claude/mod.rs",
+                "tokens": 74
+              },
+              {
+                "lines": 482,
+                "path": "crates/agents/src/install.rs",
+                "tokens": 3610
+              }
+            ],
+            "total": {
+              "lines": 494,
+              "tokens": 3684
+            }
+          },
+          "check": {
+            "exit": 0,
+            "stdout": "",
+            "stderr": ""
+          },
+          "pricing": {
+            "raw_score": 3694.0,
+            "outside_cfg_tokens": 0,
+            "arithmetic": "3694.0 - (5.0 - 2.0) * 0",
+            "repriced_score": 3694.0
+          }
+        },
+        "after": {
+          "score": {
+            "by": "file",
+            "rows": [
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "lines": 10,
+                "name": "crates/agents/src/claude/mod.rs",
+                "per_token": 1.0,
+                "score": 63.0,
+                "tokens": 63
+              },
+              {
+                "boundary": 161.0,
+                "boundary_share": 4.443831079216119,
+                "lines": 482,
+                "name": "crates/agents/src/install.rs",
+                "per_token": 1.0027677830058124,
+                "score": 3623.0,
+                "tokens": 3613
+              }
+            ],
+            "total": {
+              "boundary": 161.0,
+              "boundary_share": 4.367878459034183,
+              "lines": 492,
+              "name": "total",
+              "per_token": 1.0027203482045701,
+              "score": 3686.0,
+              "tokens": 3676
+            }
+          },
+          "constructs": {
+            "by": "construct",
+            "rows": [
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 335,
+                "lines": 173,
+                "name": "expr.path",
+                "per_token": 1.0,
+                "score": 714.0,
+                "tier": "neutral",
+                "tokens": 714
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 116,
+                "lines": 92,
+                "name": "expr.method_call",
+                "per_token": 1.0,
+                "score": 352.0,
+                "tier": "neutral",
+                "tokens": 352
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 18,
+                "lines": 59,
+                "name": "macro.allowed",
+                "per_token": 1.0,
+                "score": 277.0,
+                "tier": "neutral",
+                "tokens": 277
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 31,
+                "lines": 92,
+                "name": "item.fn",
+                "per_token": 1.0,
+                "score": 261.0,
+                "tier": "neutral",
+                "tokens": 261
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 18,
+                "lines": 24,
+                "name": "item.use",
+                "per_token": 1.0,
+                "score": 226.0,
+                "tier": "neutral",
+                "tokens": 226
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 110,
+                "lines": 49,
+                "name": "type.path",
+                "per_token": 1.0,
+                "score": 209.0,
+                "tier": "neutral",
+                "tokens": 209
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 135,
+                "lines": 116,
+                "name": "expr.call",
+                "per_token": 1.0,
+                "score": 185.0,
+                "tier": "neutral",
+                "tokens": 185
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 9,
+                "lines": 50,
+                "name": "expr.struct",
+                "per_token": 1.0,
+                "score": 110.0,
+                "tier": "neutral",
+                "tokens": 110
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 26,
+                "lines": 26,
+                "name": "expr.await",
+                "per_token": 2.0,
+                "score": 104.0,
+                "tier": "tolerated",
+                "tokens": 52
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 4,
+                "lines": 4,
+                "name": "type.untyped",
+                "per_token": 3.0,
+                "score": 99.0,
+                "tier": "costly",
+                "tokens": 33
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 30,
+                "lines": 42,
+                "name": "stmt.let",
+                "per_token": 1.0,
+                "score": 90.0,
+                "tier": "neutral",
+                "tokens": 90
+              },
+              {
+                "boundary": 78.0,
+                "boundary_share": 100.0,
+                "count": 4,
+                "lines": 4,
+                "name": "macro.allowed",
+                "per_token": 1.0,
+                "score": 78.0,
+                "tier": "boundary",
+                "tokens": 78
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 28,
+                "lines": 23,
+                "name": "type.primitive",
+                "per_token": 2.0,
+                "score": 76.0,
+                "tier": "tolerated",
+                "tokens": 38
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 34,
+                "lines": 34,
+                "name": "expr.closure.adapter",
+                "per_token": 1.0,
+                "score": 68.0,
+                "tier": "neutral",
+                "tokens": 68
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 115,
+                "lines": 98,
+                "name": "pat.ident",
+                "per_token": 0.5,
+                "score": 58.0,
+                "tier": "encouraged",
+                "tokens": 116
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 27,
+                "lines": 29,
+                "name": "expr.method_call.adapter",
+                "per_token": 0.5,
+                "score": 52.5,
+                "tier": "encouraged",
+                "tokens": 105
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 52,
+                "lines": 43,
+                "name": "expr.lit",
+                "per_token": 1.0,
+                "score": 52.0,
+                "tier": "neutral",
+                "tokens": 52
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 12,
+                "lines": 59,
+                "name": "expr.match",
+                "per_token": 0.5,
+                "score": 52.0,
+                "tier": "encouraged",
+                "tokens": 104
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 11,
+                "lines": 11,
+                "name": "pat.tuple",
+                "per_token": 2.0,
+                "score": 44.0,
+                "tier": "tolerated",
+                "tokens": 22
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 7,
+                "lines": 7,
+                "name": "stmt.let.discard",
+                "per_token": 2.0,
+                "score": 42.0,
+                "tier": "tolerated",
+                "tokens": 21
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 35,
+                "lines": 26,
+                "name": "expr.reference",
+                "per_token": 1.0,
+                "score": 35.0,
+                "tier": "neutral",
+                "tokens": 35
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 7,
+                "lines": 7,
+                "name": "item.const",
+                "per_token": 1.0,
+                "score": 35.0,
+                "tier": "neutral",
+                "tokens": 35
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 19,
+                "name": "item.enum",
+                "per_token": 0.5,
+                "score": 28.0,
+                "tier": "encouraged",
+                "tokens": 56
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 13,
+                "lines": 13,
+                "name": "item.fn.async",
+                "per_token": 2.0,
+                "score": 26.0,
+                "tier": "tolerated",
+                "tokens": 13
+              },
+              {
+                "boundary": 25.0,
+                "boundary_share": 100.0,
+                "count": 5,
+                "lines": 5,
+                "name": "attr.error",
+                "per_token": 1.0,
+                "score": 25.0,
+                "tier": "boundary",
+                "tokens": 25
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "attr.cfg",
+                "per_token": 2.0,
+                "score": 24.0,
+                "tier": "tolerated",
+                "tokens": 12
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 4,
+                "lines": 8,
+                "name": "expr.loop",
+                "per_token": 3.0,
+                "score": 24.0,
+                "tier": "costly",
+                "tokens": 8
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 12,
+                "lines": 34,
+                "name": "expr.block",
+                "per_token": 1.0,
+                "score": 23.0,
+                "tier": "neutral",
+                "tokens": 23
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 11,
+                "lines": 11,
+                "name": "expr.field",
+                "per_token": 1.0,
+                "score": 22.0,
+                "tier": "neutral",
+                "tokens": 22
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 21,
+                "lines": 20,
+                "name": "type.reference",
+                "per_token": 1.0,
+                "score": 21.0,
+                "tier": "neutral",
+                "tokens": 21
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 5,
+                "lines": 5,
+                "name": "expr.tuple",
+                "per_token": 2.0,
+                "score": 20.0,
+                "tier": "tolerated",
+                "tokens": 10
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 10,
+                "lines": 10,
+                "name": "pat.path",
+                "per_token": 0.5,
+                "score": 20.0,
+                "tier": "encouraged",
+                "tokens": 40
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 15,
+                "name": "item.struct.named",
+                "per_token": 0.5,
+                "score": 18.0,
+                "tier": "encouraged",
+                "tokens": 36
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 6,
+                "name": "expr.for",
+                "per_token": 2.0,
+                "score": 16.0,
+                "tier": "tolerated",
+                "tokens": 8
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 5,
+                "lines": 5,
+                "name": "expr.break",
+                "per_token": 3.0,
+                "score": 15.0,
+                "tier": "costly",
+                "tokens": 5
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 30,
+                "lines": 30,
+                "name": "expr.try",
+                "per_token": 0.5,
+                "score": 15.0,
+                "tier": "encouraged",
+                "tokens": 30
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "attr.derive",
+                "per_token": 1.0,
+                "score": 13.0,
+                "tier": "neutral",
+                "tokens": 13
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "expr.reference.mut",
+                "per_token": 3.0,
+                "score": 12.0,
+                "tier": "costly",
+                "tokens": 4
+              },
+              {
+                "boundary": 12.0,
+                "boundary_share": 100.0,
+                "count": 12,
+                "lines": 12,
+                "name": "type.unit",
+                "per_token": 1.0,
+                "score": 12.0,
+                "tier": "boundary",
+                "tokens": 12
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 3,
+                "name": "attr.cfg_test",
+                "per_token": 1.0,
+                "score": 11.0,
+                "tier": "neutral",
+                "tokens": 11
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 9,
+                "lines": 8,
+                "name": "pat.tuple_struct",
+                "per_token": 0.5,
+                "score": 10.5,
+                "tier": "encouraged",
+                "tokens": 21
+              },
+              {
+                "boundary": 10.0,
+                "boundary_share": 100.0,
+                "count": 1,
+                "lines": 1,
+                "name": "attr.derive",
+                "per_token": 1.0,
+                "score": 10.0,
+                "tier": "boundary",
+                "tokens": 10
+              },
+              {
+                "boundary": 10.0,
+                "boundary_share": 100.0,
+                "count": 5,
+                "lines": 5,
+                "name": "pat.ident.mut",
+                "per_token": 1.0,
+                "score": 10.0,
+                "tier": "boundary",
+                "tokens": 10
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 4,
+                "name": "item.mod",
+                "per_token": 1.0,
+                "score": 9.0,
+                "tier": "neutral",
+                "tokens": 9
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 1,
+                "name": "expr.binary.ne",
+                "per_token": 2.0,
+                "score": 8.0,
+                "tier": "tolerated",
+                "tokens": 4
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 14,
+                "lines": 8,
+                "name": "pat.lit",
+                "per_token": 0.5,
+                "score": 7.0,
+                "tier": "encouraged",
+                "tokens": 14
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 13,
+                "lines": 13,
+                "name": "pat.wild",
+                "per_token": 0.5,
+                "score": 6.5,
+                "tier": "encouraged",
+                "tokens": 13
+              },
+              {
+                "boundary": 6.0,
+                "boundary_share": 100.0,
+                "count": 1,
+                "lines": 1,
+                "name": "attr.tokio::test",
+                "per_token": 1.0,
+                "score": 6.0,
+                "tier": "boundary",
+                "tokens": 6
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 3,
+                "lines": 3,
+                "name": "type.field",
+                "per_token": 0.5,
+                "score": 6.0,
+                "tier": "encouraged",
+                "tokens": 12
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 6,
+                "lines": 6,
+                "name": "vis.pub",
+                "per_token": 1.0,
+                "score": 6.0,
+                "tier": "neutral",
+                "tokens": 6
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "expr.binary.and",
+                "per_token": 2.0,
+                "score": 4.0,
+                "tier": "tolerated",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "expr.binary.eq",
+                "per_token": 2.0,
+                "score": 4.0,
+                "tier": "tolerated",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "expr.repeat",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "neutral",
+                "tokens": 4
+              },
+              {
+                "boundary": 4.0,
+                "boundary_share": 100.0,
+                "count": 4,
+                "lines": 4,
+                "name": "expr.unit",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "boundary",
+                "tokens": 4
+              },
+              {
+                "boundary": 4.0,
+                "boundary_share": 100.0,
+                "count": 2,
+                "lines": 2,
+                "name": "type.reference.mut",
+                "per_token": 1.0,
+                "score": 4.0,
+                "tier": "boundary",
+                "tokens": 4
+              },
+              {
+                "boundary": 3.0,
+                "boundary_share": 100.0,
+                "count": 1,
+                "lines": 1,
+                "name": "attr.from",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "boundary",
+                "tokens": 3
+              },
+              {
+                "boundary": 3.0,
+                "boundary_share": 100.0,
+                "count": 1,
+                "lines": 1,
+                "name": "stmt.let.mut",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "boundary",
+                "tokens": 3
+              },
+              {
+                "boundary": 3.0,
+                "boundary_share": 100.0,
+                "count": 3,
+                "lines": 3,
+                "name": "type.primitive",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "boundary",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "vis.restricted",
+                "per_token": 1.0,
+                "score": 3.0,
+                "tier": "neutral",
+                "tokens": 3
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "expr.match.guard",
+                "per_token": 2.0,
+                "score": 2.0,
+                "tier": "tolerated",
+                "tokens": 1
+              },
+              {
+                "boundary": 2.0,
+                "boundary_share": 100.0,
+                "count": 1,
+                "lines": 1,
+                "name": "expr.reference.mut",
+                "per_token": 1.0,
+                "score": 2.0,
+                "tier": "boundary",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 2,
+                "name": "item.impl.inherent",
+                "per_token": 1.0,
+                "score": 2.0,
+                "tier": "neutral",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 2,
+                "lines": 2,
+                "name": "type.slice",
+                "per_token": 1.0,
+                "score": 2.0,
+                "tier": "neutral",
+                "tokens": 2
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 1,
+                "lines": 1,
+                "name": "pat.struct",
+                "per_token": 0.5,
+                "score": 1.5,
+                "tier": "encouraged",
+                "tokens": 3
+              },
+              {
+                "boundary": 1.0,
+                "boundary_share": 100.0,
+                "count": 1,
+                "lines": 1,
+                "name": "type.untyped",
+                "per_token": 1.0,
+                "score": 1.0,
+                "tier": "boundary",
+                "tokens": 1
+              },
+              {
+                "boundary": 0.0,
+                "boundary_share": 0.0,
+                "count": 48,
+                "lines": 0,
+                "name": "attr.doc",
+                "per_token": 0.0,
+                "score": 0.0,
+                "tier": "neutral",
+                "tokens": 0
+              }
+            ],
+            "total": {
+              "boundary": 161.0,
+              "boundary_share": 4.367878459034183,
+              "lines": 492,
+              "name": "total",
+              "per_token": 1.0027203482045701,
+              "score": 3686.0,
+              "tokens": 3676
+            }
+          },
+          "measure": {
+            "files": [
+              {
+                "lines": 10,
+                "path": "crates/agents/src/claude/mod.rs",
+                "tokens": 63
+              },
+              {
+                "lines": 482,
+                "path": "crates/agents/src/install.rs",
+                "tokens": 3613
+              }
+            ],
+            "total": {
+              "lines": 492,
+              "tokens": 3676
+            }
+          },
+          "check": {
+            "exit": 0,
+            "stdout": "",
+            "stderr": ""
+          },
+          "pricing": {
+            "raw_score": 3686.0,
+            "outside_cfg_tokens": 0,
+            "arithmetic": "3686.0 - (5.0 - 2.0) * 0",
+            "repriced_score": 3686.0
+          }
+        },
+        "score_drop_percent": 0.2165674066053059
+      }
+    }
+  },
+  "regression_after": {
+    "exit": 1,
+    "stdout": "crates/daemon/src/a_fail.rs:2:5: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a_fail.rs:9:5: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a_fail.rs:19:5: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a_fail.rs:26:5: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a_fail.rs:33:5: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a_fail.rs:40:5: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a_fail.rs:54:1: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a_fail.rs:61:1: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a_fail.rs:70:1: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a_fail.rs:76:5: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a_fail.rs:84:9: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a_fail.rs:90:13: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a_fail.rs:103:5: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a_fail.rs:110:5: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a_fail.rs:123:9: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a_fail.rs:130:9: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a_fail.rs:140:5: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a_fail.rs:145:5: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a_fail.rs:151:9: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a_fail.rs:157:9: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a_fail.rs:173:5: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a_fail.rs:180:5: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\n",
+    "stderr": ""
+  },
+  "regression_before": {
+    "exit": 1,
+    "stdout": "crates/daemon/src/a.rs:218:5: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\n",
+    "stderr": ""
+  },
+  "checker_matrix": {
+    "unix_pair": {
+      "path": "crates/agents/src/lib.rs",
+      "source": "#[cfg(unix)]\nfn port() -> u8 { 1 }\n#[cfg(not(unix))]\nfn port() -> u8 { 2 }\n",
+      "check": {
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    "wasm_pair": {
+      "path": "crates/agents/src/lib.rs",
+      "source": "#[cfg(target_family = \"wasm\")]\nfn port() -> u8 { 1 }\n#[cfg(not(target_family = \"wasm\"))]\nfn port() -> u8 { 2 }\n",
+      "check": {
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    "missing_pair": {
+      "path": "crates/agents/src/lib.rs",
+      "source": "#[cfg(unix)]\nfn port() -> u8 { 1 }\n",
+      "check": {
+        "exit": 1,
+        "stdout": "crates/agents/src/lib.rs:1:1: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\n",
+        "stderr": ""
+      }
+    },
+    "target_os_pair": {
+      "path": "crates/agents/src/lib.rs",
+      "source": "#[cfg(target_os = \"linux\")]\nfn port() -> u8 { 1 }\n#[cfg(not(target_os = \"linux\"))]\nfn port() -> u8 { 2 }\n",
+      "check": {
+        "exit": 1,
+        "stdout": "crates/agents/src/lib.rs:1:1: attr.cfg: `cfg` only with `target_family = \"wasm\"`, `unix` or their `not` (proposal 0016)\ncrates/agents/src/lib.rs:3:1: attr.cfg: `cfg` only with `target_family = \"wasm\"`, `unix` or their `not` (proposal 0016)\n",
+        "stderr": ""
+      }
+    },
+    "feature": {
+      "path": "crates/agents/src/lib.rs",
+      "source": "#[cfg(feature = \"web\")]\nfn port() -> u8 { 1 }\n",
+      "check": {
+        "exit": 1,
+        "stdout": "crates/agents/src/lib.rs:1:1: attr.cfg: `cfg` only with `target_family = \"wasm\"`, `unix` or their `not` (proposal 0016)\n",
+        "stderr": ""
+      }
+    },
+    "compound": {
+      "path": "crates/agents/src/lib.rs",
+      "source": "#[cfg(all(unix, test))]\nfn port() -> u8 { 1 }\n",
+      "check": {
+        "exit": 1,
+        "stdout": "crates/agents/src/lib.rs:1:1: attr.cfg: `cfg` only with `target_family = \"wasm\"`, `unix` or their `not` (proposal 0016)\n",
+        "stderr": ""
+      }
+    },
+    "double_not": {
+      "path": "crates/agents/src/lib.rs",
+      "source": "#[cfg(not(not(unix)))]\nfn port() -> u8 { 1 }\n",
+      "check": {
+        "exit": 1,
+        "stdout": "crates/agents/src/lib.rs:1:1: attr.cfg: `cfg` only with `target_family = \"wasm\"`, `unix` or their `not` (proposal 0016)\n",
+        "stderr": ""
+      }
+    },
+    "statement": {
+      "path": "crates/agents/src/lib.rs",
+      "source": "fn port() { #[cfg(unix)] let value = 1; }\n",
+      "check": {
+        "exit": 1,
+        "stdout": "crates/agents/src/lib.rs:1:13: attr.cfg: `cfg` only on a mod, use, fn or impl item, or as `#![cfg]` atop a test file (proposal 0016)\n",
+        "stderr": ""
+      }
+    },
+    "expression": {
+      "path": "crates/agents/src/lib.rs",
+      "source": "fn port() -> u8 { #[cfg(unix)] { 1 } }\n",
+      "check": {
+        "exit": 1,
+        "stdout": "crates/agents/src/lib.rs:1:19: attr.cfg: `cfg` only on a mod, use, fn or impl item, or as `#![cfg]` atop a test file (proposal 0016)\n",
+        "stderr": ""
+      }
+    },
+    "struct": {
+      "path": "crates/agents/src/lib.rs",
+      "source": "#[cfg(unix)]\nstruct Port(u8);\n",
+      "check": {
+        "exit": 1,
+        "stdout": "crates/agents/src/lib.rs:1:1: attr.cfg: `cfg` only on a mod, use, fn or impl item, or as `#![cfg]` atop a test file (proposal 0016)\n",
+        "stderr": ""
+      }
+    },
+    "production_root": {
+      "path": "crates/agents/src/lib.rs",
+      "source": "#![cfg(unix)]\nfn port() -> u8 { 1 }\n",
+      "check": {
+        "exit": 1,
+        "stdout": "crates/agents/src/lib.rs:1:1: attr.cfg: `cfg` only on a mod, use, fn or impl item, or as `#![cfg]` atop a test file (proposal 0016)\n",
+        "stderr": ""
+      }
+    },
+    "unix_test_root": {
+      "path": "crates/agents/tests/test.rs",
+      "source": "#![cfg(unix)]\nfn port() -> u8 { 1 }\n",
+      "check": {
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    "wasm_test_root_current_limit": {
+      "path": "crates/agents/tests/test.rs",
+      "source": "#![cfg(target_family = \"wasm\")]\nfn port() -> u8 { 1 }\n",
+      "check": {
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    "test_file_unpaired": {
+      "path": "crates/agents/tests/test.rs",
+      "source": "#[cfg(unix)]\nfn port() -> u8 { 1 }\n",
+      "check": {
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    "platform_only_module": {
+      "path": "crates/agents/src/lib.rs",
+      "source": "#[cfg(unix)]\nmod native {}\n",
+      "check": {
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    "test_reexport": {
+      "path": "crates/agents/src/lib.rs",
+      "source": "#[cfg(test)]\npub(crate) use protocol::check_version;\nmod protocol { pub(crate) fn check_version() -> u8 { 1 } }\n",
+      "check": {
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    }
+  },
+  "compile": {
+    "before": {
+      "native": {
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "wasm": {
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "linux_path_cases": {
+        "none": {
+          "exit": 0,
+          "stdout": "Missing\n",
+          "stderr": ""
+        },
+        "bwrap": {
+          "exit": 0,
+          "stdout": "Missing\n",
+          "stderr": ""
+        },
+        "socat": {
+          "exit": 0,
+          "stdout": "Missing\n",
+          "stderr": ""
+        },
+        "bwrap+socat": {
+          "exit": 0,
+          "stdout": "Available\n",
+          "stderr": ""
+        }
+      }
+    },
+    "after": {
+      "native": {
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "wasm": {
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "linux_path_cases": {
+        "none": {
+          "exit": 0,
+          "stdout": "Missing\n",
+          "stderr": ""
+        },
+        "bwrap": {
+          "exit": 0,
+          "stdout": "Missing\n",
+          "stderr": ""
+        },
+        "socat": {
+          "exit": 0,
+          "stdout": "Missing\n",
+          "stderr": ""
+        },
+        "bwrap+socat": {
+          "exit": 0,
+          "stdout": "Available\n",
+          "stderr": ""
+        }
+      }
+    }
+  }
+}
