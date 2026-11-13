@@ -1,0 +1,5 @@
+$ check
+exit 1
+crates/proto/src/a_fail.rs:5:5: attr.serde: `#[serde]` only with `transparent`, `tag`, `content`, `rename_all` and `rename` (proposal 0012), `untagged`, or `skip_serializing_if = "Option::is_none"` (proposal 0043)
+crates/proto/src/a_fail.rs:10:15: type.bool: `bool` only in a type argument of a type we don't define, as a flag field of a clap `Parser` struct, or as a field of a serde wire type (proposals 0019, 0023, 0043)
+crates/proto/src/a_fail.rs:14:21: expr.lit.bool: `true` / `false` only as an argument or field value of a fn, method or struct we don't define, or as a field value of a serde wire type (proposals 0023, 0043)

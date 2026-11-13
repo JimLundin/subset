@@ -70,16 +70,36 @@ fn tile(label: &str, value: String, title: &str) -> String {
 fn tiles(total: &Row, violations: usize, w: &Weights) -> String {
     format!(
         "<div class=\"tiles\">{}{}{}{}{}{}</div>",
-        tile("Score", whole(total.score(w)), "The weighted score of every token."),
+        tile(
+            "Score",
+            whole(total.score(w)),
+            "The weighted score of every token."
+        ),
         tile(
             "Score in lines",
             format!("≈ {}", whole(total.approx_lines(w))),
             "Approximate: the score over this scope's own tokens per line."
         ),
-        tile("Tokens", total.tokens().to_string(), &format!("{} lines, comments excluded", total.lines)),
-        tile("Per token", format!("{:.3}", total.per_token(w)), "Score per token: 1.0 is neutral."),
-        tile("Boundary", format!("{:.1}%", total.boundary_share(w)), "Share of the score a library fixes."),
-        tile("Violations", violations.to_string(), "Constructs outside the subset.")
+        tile(
+            "Tokens",
+            total.tokens().to_string(),
+            &format!("{} lines, comments excluded", total.lines)
+        ),
+        tile(
+            "Per token",
+            format!("{:.3}", total.per_token(w)),
+            "Score per token: 1.0 is neutral."
+        ),
+        tile(
+            "Boundary",
+            format!("{:.1}%", total.boundary_share(w)),
+            "Share of the score a library fixes."
+        ),
+        tile(
+            "Violations",
+            violations.to_string(),
+            "Constructs outside the subset."
+        )
     )
 }
 
@@ -142,22 +162,26 @@ fn crates(files: &[ScoredFile], w: &Weights) -> String {
 
 /// A non-negative score in tenths, as a whole count.
 fn scaled(x: f64) -> usize {
-    format!("{:.0}", x.mul_add(10.0, 0.0)).parse().unwrap_or_default()
+    format!("{:.0}", x.mul_add(10.0, 0.0))
+        .parse()
+        .unwrap_or_default()
 }
 
 fn typing(files: &[ScoredFile]) -> String {
     let names = CLASS_NAMES;
-    let by_crate = files.iter().fold(BTreeMap::<String, Vec<usize>>::new(), |mut map, f| {
-        let sum = map
-            .remove(&f.krate)
-            .unwrap_or_else(|| Vec::from([0; 4]))
-            .into_iter()
-            .zip(&f.typing)
-            .map(|(a, b)| a.saturating_add(b.to_owned()))
-            .collect();
-        map.insert(f.krate.clone(), sum);
-        map
-    });
+    let by_crate = files
+        .iter()
+        .fold(BTreeMap::<String, Vec<usize>>::new(), |mut map, f| {
+            let sum = map
+                .remove(&f.krate)
+                .unwrap_or_else(|| Vec::from([0; 4]))
+                .into_iter()
+                .zip(&f.typing)
+                .map(|(a, b)| a.saturating_add(b.to_owned()))
+                .collect();
+            map.insert(f.krate.clone(), sum);
+            map
+        });
     let lines = by_crate
         .iter()
         .map(|(name, counts)| {
@@ -167,7 +191,10 @@ fn typing(files: &[ScoredFile]) -> String {
                 .zip(counts)
                 .map(|(n, c)| (n.to_string(), c.to_owned(), format!("{n}: {c} tokens")))
                 .collect::<Vec<(String, usize, String)>>();
-            let cells = counts.iter().map(|c| format!("<td>{c}</td>")).collect::<String>();
+            let cells = counts
+                .iter()
+                .map(|c| format!("<td>{c}</td>"))
+                .collect::<String>();
             format!(
                 "<tr><td>{}</td><td class=\"chart\">{}</td>{cells}<td>{total}</td></tr>",
                 esc(name),
@@ -201,8 +228,15 @@ fn construct_line(r: &Row, w: &Weights) -> String {
 fn constructs(files: &[ScoredFile], w: &Weights) -> String {
     let rows = score::rows(files, Level::Construct, w);
     let head = "<tr><th>Construct</th><th>Tier</th><th>Count</th><th>Score</th><th>Tokens</th><th>Per token</th></tr>";
-    let top = rows.iter().take(TOP).map(|r| construct_line(r, w)).collect::<String>();
-    let all = rows.iter().map(|r| construct_line(r, w)).collect::<String>();
+    let top = rows
+        .iter()
+        .take(TOP)
+        .map(|r| construct_line(r, w))
+        .collect::<String>();
+    let all = rows
+        .iter()
+        .map(|r| construct_line(r, w))
+        .collect::<String>();
     format!(
         "<h3>Constructs by score</h3><table>{head}{top}</table><details><summary>All {} constructs</summary><table>{head}{all}</table></details>",
         rows.len()
@@ -343,7 +377,10 @@ fn squarify(areas: &[f64], bounds: Rect) -> Vec<Rect> {
                     ..bounds
                 },
             };
-            placed.into_iter().chain(squarify(rest, rest_bounds)).collect()
+            placed
+                .into_iter()
+                .chain(squarify(rest, rest_bounds))
+                .collect()
         }
     }
 }
@@ -360,7 +397,12 @@ fn treemap(files: &[ScoredFile], w: &Weights) -> String {
         .into_values()
         .collect::<Vec<(&ScoredFile, f64)>>();
     let total = scored.iter().map(|(_, s)| s).sum::<f64>();
-    let bounds = Rect { x: 0.0, y: 0.0, w: 960.0, h: 480.0 };
+    let bounds = Rect {
+        x: 0.0,
+        y: 0.0,
+        w: 960.0,
+        h: 480.0,
+    };
     let areas = scored
         .iter()
         .map(|(_, s)| over(s.mul_add(bounds.w.mul_add(bounds.h, 0.0), 0.0), total))
@@ -441,18 +483,29 @@ fn history_chart(snapshots: &[Snapshot]) -> String {
             )
         })
         .collect::<String>();
-    let head = names.iter().map(|n| format!("<th>{}</th>", esc(n))).collect::<String>();
+    let head = names
+        .iter()
+        .map(|n| format!("<th>{}</th>", esc(n)))
+        .collect::<String>();
     let rows = snapshots
         .iter()
         .map(|s| {
             let cells = names
                 .iter()
                 .map(|n| {
-                    let value = s.crates.iter().find(|(c, _)| c == n).map_or(String::new(), |(_, v)| whole(v.to_owned()));
+                    let value = s
+                        .crates
+                        .iter()
+                        .find(|(c, _)| c == n)
+                        .map_or(String::new(), |(_, v)| whole(v.to_owned()));
                     format!("<td>{value}</td>")
                 })
                 .collect::<String>();
-            format!("<tr><td><code>{}</code></td><td>{}</td>{cells}</tr>", s.sha.get(..8).unwrap_or_default(), s.date)
+            format!(
+                "<tr><td><code>{}</code></td><td>{}</td>{cells}</tr>",
+                s.sha.get(..8).unwrap_or_default(),
+                s.date
+            )
         })
         .collect::<String>();
     format!(
@@ -464,7 +517,13 @@ fn history_chart(snapshots: &[Snapshot]) -> String {
 fn method(w: &Weights) -> String {
     let rows = TIERS
         .iter()
-        .map(|t| format!("<tr><td>{}</td><td>{:.1}</td></tr>", t.name(), w.weight(t.to_owned())))
+        .map(|t| {
+            format!(
+                "<tr><td>{}</td><td>{:.1}</td></tr>",
+                t.name(),
+                w.weight(t.to_owned())
+            )
+        })
         .collect::<String>();
     format!(
         "<section id=\"method\"><h2>Method</h2><p class=\"note\">Every token costs the weight of the tier of the innermost construct that contains it. A violation costs <code>outside</code>; a construct whose shape a library fixes costs <code>boundary</code>.</p><table><tr><th>Tier</th><th>Weight</th></tr>{rows}</table></section>"

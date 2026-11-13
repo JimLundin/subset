@@ -122,14 +122,23 @@ pub(crate) enum Owner {
 pub(crate) enum Slot {
     Other,
     CallArg(Callee),
-    MethodArg { method: String, receiver: Owner },
-    FieldValue { owner: Owner, wire: Within },
+    MethodArg {
+        method: String,
+        receiver: Owner,
+    },
+    FieldValue {
+        owner: Owner,
+        wire: Within,
+    },
     ClosureBody(Box<Slot>),
     ConstInit,
     ConstType,
     Param,
     RefTarget(Box<Slot>),
-    GenericArg { segment: String, owner: Owner },
+    GenericArg {
+        segment: String,
+        owner: Owner,
+    },
     MainReturn,
     ClapField,
     /// A field type of a `const` table's row struct (proposal 0042).
@@ -327,27 +336,92 @@ pub(crate) fn ours(path: &syn::Path, env: &Env) -> Owner {
 
 /// Attributes of the language. Every other attribute is a library's.
 const BUILTIN_ATTRS: &[&str] = &[
-    "allow", "automatically_derived", "cfg", "cfg_attr", "cold", "deny", "deprecated", "derive",
-    "doc", "expect", "forbid", "ignore", "inline", "macro_export", "must_use", "non_exhaustive",
-    "path", "repr", "should_panic", "test", "track_caller", "warn",
+    "allow",
+    "automatically_derived",
+    "cfg",
+    "cfg_attr",
+    "cold",
+    "deny",
+    "deprecated",
+    "derive",
+    "doc",
+    "expect",
+    "forbid",
+    "ignore",
+    "inline",
+    "macro_export",
+    "must_use",
+    "non_exhaustive",
+    "path",
+    "repr",
+    "should_panic",
+    "test",
+    "track_caller",
+    "warn",
 ];
 /// Derives of the standard library; any other derive is a library's.
 const STD_DERIVES: &[&str] = &[
-    "Clone", "Copy", "Debug", "Default", "Eq", "Hash", "Ord", "PartialEq", "PartialOrd",
+    "Clone",
+    "Copy",
+    "Debug",
+    "Default",
+    "Eq",
+    "Hash",
+    "Ord",
+    "PartialEq",
+    "PartialOrd",
 ];
 /// Macros of the standard library. Every other macro is a library's.
 const STD_MACROS: &[&str] = &[
-    "assert", "assert_eq", "assert_ne", "cfg", "column", "compile_error", "concat", "dbg",
-    "debug_assert", "debug_assert_eq", "debug_assert_ne", "env", "eprint", "eprintln", "file",
-    "format", "format_args", "include_bytes", "include_str", "line", "matches", "panic", "print",
-    "println", "stringify", "todo", "unimplemented", "unreachable", "vec", "write", "writeln",
+    "assert",
+    "assert_eq",
+    "assert_ne",
+    "cfg",
+    "column",
+    "compile_error",
+    "concat",
+    "dbg",
+    "debug_assert",
+    "debug_assert_eq",
+    "debug_assert_ne",
+    "env",
+    "eprint",
+    "eprintln",
+    "file",
+    "format",
+    "format_args",
+    "include_bytes",
+    "include_str",
+    "line",
+    "matches",
+    "panic",
+    "print",
+    "println",
+    "stringify",
+    "todo",
+    "unimplemented",
+    "unreachable",
+    "vec",
+    "write",
+    "writeln",
 ];
 /// Trait impls the 0009 list allows.
 const LIBRARY_TRAITS: &[&str] = &[
-    "Drop", "Debug", "Serialize", "Deserialize", "ProtocolHandler", "Visit",
+    "Drop",
+    "Debug",
+    "Serialize",
+    "Deserialize",
+    "ProtocolHandler",
+    "Visit",
 ];
 const INTERIOR_MUT: &[&str] = &[
-    "Cell", "RefCell", "OnceCell", "OnceLock", "UnsafeCell", "Mutex", "RwLock",
+    "Cell",
+    "RefCell",
+    "OnceCell",
+    "OnceLock",
+    "UnsafeCell",
+    "Mutex",
+    "RwLock",
 ];
 
 /// The hits of one file.
@@ -422,7 +496,13 @@ impl Walk {
     }
 
     fn id(&mut self, at: Span, node: Span, name: &str) {
-        let reason = self.env.lists.reasons.get(name).cloned().unwrap_or_default();
+        let reason = self
+            .env
+            .lists
+            .reasons
+            .get(name)
+            .cloned()
+            .unwrap_or_default();
         self.named(at, node, name.to_string(), &reason);
     }
 
@@ -489,15 +569,19 @@ impl Walk {
 
     /// The type a field of `attrs`'s item fills: a serde wire type's.
     fn field_slots(&mut self, fields: &Fields, slot: &Slot) {
-        let slots = fields
-            .iter()
-            .map(|f| (key(f.ty.span()), slot.clone()));
+        let slots = fields.iter().map(|f| (key(f.ty.span()), slot.clone()));
         self.slots.extend(slots);
     }
 
     /// A fn item or method: the rules on its head and the context of its
     /// body.
-    fn function(&mut self, attrs: &[Attribute], vis: &Visibility, sig: &syn::Signature, block: &syn::Block) {
+    fn function(
+        &mut self,
+        attrs: &[Attribute],
+        vis: &Visibility,
+        sig: &syn::Signature,
+        block: &syn::Block,
+    ) {
         let func = Rc::new(checks::func(sig, block, &self.env));
         let cx = Cx {
             func: Some(func.clone()),
@@ -507,9 +591,13 @@ impl Walk {
         self.hits.extend(checks::loop_states(sig, block, &cx));
         self.hits.extend(checks::fn_attrs(attrs, sig));
         self.cfg_facts(attrs, CfgKind::Fn, &sig.ident.to_string());
-        self.hits.extend(checks::receiver(sig, &func, &cx, &self.env));
+        self.hits
+            .extend(checks::receiver(sig, &func, &cx, &self.env));
         self.hits.extend(checks::mut_params(sig, &cx, &self.env));
-        self.host(attrs, Host::Cfg(Some(CfgItem::new(CfgKind::Fn, sig.ident.to_string()))));
+        self.host(
+            attrs,
+            Host::Cfg(Some(CfgItem::new(CfgKind::Fn, sig.ident.to_string()))),
+        );
         self.cx = cx;
     }
 
@@ -523,12 +611,14 @@ impl Walk {
             },
             _ => None,
         };
-        let builds = checks::literal_rows(init).into_iter().filter_map(|e| match e {
-            Expr::Struct(s) => checks::resolve(&s.path, &self.cx.module)
-                .filter(|k| row_key.as_ref() == Some(k))
-                .map(|_| key(e.span())),
-            _ => None,
-        });
+        let builds = checks::literal_rows(init)
+            .into_iter()
+            .filter_map(|e| match e {
+                Expr::Struct(s) => checks::resolve(&s.path, &self.cx.module)
+                    .filter(|k| row_key.as_ref() == Some(k))
+                    .map(|_| key(e.span())),
+                _ => None,
+            });
         self.builds.extend(builds.collect::<Vec<(usize, usize)>>());
         let element = match (row, &row_key) {
             (Some(Type::Tuple(t)), _) => Some(Element::Tuple(
@@ -568,10 +658,13 @@ impl Walk {
         let extent = key(expr.span());
         match expr {
             Expr::Paren(e) => self.predicate(&e.expr),
-            Expr::Block(e) => match (&e.label, e.block.stmts.first(), e.block.stmts.len()) {
-                (None, Some(Stmt::Expr(tail, None)), 1) => self.predicate(tail),
-                _ => {}
-            },
+            Expr::Block(e) => {
+                if let (None, Some(Stmt::Expr(tail, None)), 1) =
+                    (&e.label, e.block.stmts.first(), e.block.stmts.len())
+                {
+                    self.predicate(tail);
+                }
+            }
             Expr::Binary(e) => match (e.op, checks::comparison_op(&e.op)) {
                 (BinOp::And(_) | BinOp::Or(_), _) => {
                     self.predicates.insert(extent);
@@ -583,17 +676,15 @@ impl Walk {
                 }
                 _ => {}
             },
-            Expr::Unary(e) => match e.op {
-                UnOp::Not(_) => {
+            Expr::Unary(e) => {
+                if let UnOp::Not(_) = e.op {
                     self.predicates.insert(extent);
                     self.predicate(&e.expr);
                 }
-                _ => {}
-            },
+            }
             Expr::Macro(e) => {
-                self.predicates.extend(
-                    Some(key(e.mac.span())).filter(|_| e.mac.path.is_ident("matches")),
-                );
+                self.predicates
+                    .extend(e.mac.path.is_ident("matches").then_some(key(e.mac.span())));
             }
             _ => {}
         }
@@ -615,7 +706,7 @@ impl Walk {
 
 /// A struct built outside a table's literal, or held by a `const` of its
 /// own type.
-fn built(path: &syn::Path, module: &Vec<String>) -> Hit {
+fn built(path: &syn::Path, module: &[String]) -> Hit {
     Hit::Fact(Fact::Built {
         key: checks::resolve(path, module),
         name: syntax::last_name(path),
@@ -731,7 +822,12 @@ fn expr_id(expr: &Expr) -> Option<(Span, String)> {
         Expr::Async(e) => token(e.async_token.span, "expr.async"),
         Expr::Await(e) => token(e.await_token.span, "expr.await"),
         Expr::Binary(e) => token(e.op.span(), binary_id(&e.op)),
-        Expr::Block(e) => token(e.span(), e.label.as_ref().map_or("expr.block", |_| "expr.block.labeled")),
+        Expr::Block(e) => token(
+            e.span(),
+            e.label
+                .as_ref()
+                .map_or("expr.block", |_| "expr.block.labeled"),
+        ),
         Expr::Break(e) => token(e.break_token.span, "expr.break"),
         Expr::Call(e) => token(e.span(), "expr.call"),
         Expr::Cast(e) => token(e.as_token.span, "expr.cast"),
@@ -743,10 +839,13 @@ fn expr_id(expr: &Expr) -> Option<(Span, String)> {
         Expr::Index(e) => token(e.bracket_token.span.open(), "expr.index"),
         Expr::Infer(e) => token(e.span(), "expr.infer"),
         Expr::Let(e) => token(e.let_token.span, "expr.let"),
-        Expr::Lit(e) => token(e.span(), match e.lit {
-            Lit::Bool(_) => "expr.lit.bool",
-            _ => "expr.lit",
-        }),
+        Expr::Lit(e) => token(
+            e.span(),
+            match e.lit {
+                Lit::Bool(_) => "expr.lit.bool",
+                _ => "expr.lit",
+            },
+        ),
         Expr::Loop(e) => token(e.loop_token.span, "expr.loop"),
         Expr::Match(e) => token(e.match_token.span, "expr.match"),
         Expr::MethodCall(e) => token(e.method.span(), "expr.method_call"),
@@ -758,19 +857,34 @@ fn expr_id(expr: &Expr) -> Option<(Span, String)> {
         },
         Expr::Range(e) => token(e.limits.span(), "expr.range"),
         Expr::RawAddr(e) => token(e.span(), "expr.raw_addr"),
-        Expr::Reference(e) => token(e.and_token.span, e.mutability.map_or("expr.reference", |_| "expr.reference.mut")),
+        Expr::Reference(e) => token(
+            e.and_token.span,
+            e.mutability
+                .map_or("expr.reference", |_| "expr.reference.mut"),
+        ),
         Expr::Repeat(e) => token(e.span(), "expr.repeat"),
         Expr::Return(e) => token(e.return_token.span, "expr.return"),
-        Expr::Struct(e) => token(e.span(), e.rest.as_ref().map_or("expr.struct", |_| "expr.struct.update")),
+        Expr::Struct(e) => token(
+            e.span(),
+            e.rest
+                .as_ref()
+                .map_or("expr.struct", |_| "expr.struct.update"),
+        ),
         Expr::Try(e) => token(e.question_token.span, "expr.try"),
         Expr::TryBlock(e) => token(e.try_token.span, "expr.try_block"),
-        Expr::Tuple(e) => token(e.span(), e.elems.first().map_or("expr.unit", |_| "expr.tuple")),
-        Expr::Unary(e) => token(e.op.span(), match e.op {
-            UnOp::Deref(_) => "expr.unary.deref",
-            UnOp::Not(_) => "expr.unary.not",
-            UnOp::Neg(_) => "expr.unary.neg",
-            _ => "unknown.expr",
-        }),
+        Expr::Tuple(e) => token(
+            e.span(),
+            e.elems.first().map_or("expr.unit", |_| "expr.tuple"),
+        ),
+        Expr::Unary(e) => token(
+            e.op.span(),
+            match e.op {
+                UnOp::Deref(_) => "expr.unary.deref",
+                UnOp::Not(_) => "expr.unary.not",
+                UnOp::Neg(_) => "expr.unary.neg",
+                _ => "unknown.expr",
+            },
+        ),
         Expr::Unsafe(e) => token(e.unsafe_token.span, "expr.unsafe"),
         Expr::Yield(e) => token(e.yield_token.span, "expr.yield"),
         Expr::Closure(_) | Expr::If(_) | Expr::Macro(_) | Expr::While(_) => None,
@@ -784,25 +898,39 @@ fn type_id(t: &Type, cx: &Cx) -> Option<(Span, String)> {
         Type::Array(a) => token(a.span(), "type.array"),
         Type::BareFn(f) => token(f.fn_token.span, "type.fn_ptr"),
         Type::Group(g) => token(g.span(), "type.group"),
-        Type::ImplTrait(i) => token(i.impl_token.span, match cx.in_return {
-            Within::In => "type.impl_trait.ret",
-            Within::Out => "type.impl_trait.arg",
-        }),
+        Type::ImplTrait(i) => token(
+            i.impl_token.span,
+            match cx.in_return {
+                Within::In => "type.impl_trait.ret",
+                Within::Out => "type.impl_trait.arg",
+            },
+        ),
         Type::Infer(i) => token(i.span(), "type.infer"),
         Type::Macro(_) => None,
         Type::Never(n) => token(n.span(), "type.never"),
         Type::Paren(p) => token(p.span(), "type.paren"),
-        Type::Path(p) => match (&p.qself, interior_mut(&p.path), p.path.get_ident().map(ToString::to_string).as_deref()) {
+        Type::Path(p) => match (
+            &p.qself,
+            interior_mut(&p.path),
+            p.path.get_ident().map(ToString::to_string).as_deref(),
+        ) {
             (None, Some(cell), _) => Some((p.span(), format!("type.interior_mut.{cell}"))),
             (Some(_), _, _) => token(p.span(), "type.path.qualified"),
             (None, None, Some("bool")) => token(p.span(), "type.bool"),
             (None, None, _) => token(p.span(), "type.path"),
         },
         Type::Ptr(p) => token(p.span(), "type.ptr"),
-        Type::Reference(r) => token(r.and_token.span, r.mutability.map_or("type.reference", |_| "type.reference.mut")),
+        Type::Reference(r) => token(
+            r.and_token.span,
+            r.mutability
+                .map_or("type.reference", |_| "type.reference.mut"),
+        ),
         Type::Slice(s) => token(s.span(), "type.slice"),
         Type::TraitObject(o) => token(o.span(), "type.dyn"),
-        Type::Tuple(tu) => token(tu.span(), tu.elems.first().map_or("type.unit", |_| "type.tuple")),
+        Type::Tuple(tu) => token(
+            tu.span(),
+            tu.elems.first().map_or("type.unit", |_| "type.tuple"),
+        ),
         _ => token(t.span(), "unknown.type"),
     }
 }
@@ -822,7 +950,8 @@ impl<'ast> Visit<'ast> for Walk {
             };
             (key(a.span()), host)
         });
-        self.hosts.extend(hosts.collect::<Vec<((usize, usize), Host)>>());
+        self.hosts
+            .extend(hosts.collect::<Vec<((usize, usize), Host)>>());
         visit::visit_file(self, file);
     }
 
@@ -844,21 +973,32 @@ impl<'ast> Visit<'ast> for Walk {
             Item::ExternCrate(i) => Some((i.extern_token.span, "item.extern_crate")),
             Item::Fn(i) => Some((i.sig.fn_token.span, "item.fn")),
             Item::ForeignMod(i) => Some((i.abi.extern_token.span, "item.foreign_mod")),
-            Item::Impl(i) => Some((i.impl_token.span, i.trait_.as_ref().map_or("item.impl.inherent", |_| "item.impl.trait"))),
+            Item::Impl(i) => Some((
+                i.impl_token.span,
+                i.trait_
+                    .as_ref()
+                    .map_or("item.impl.inherent", |_| "item.impl.trait"),
+            )),
             Item::Macro(_) => None,
             Item::Mod(i) => Some((i.mod_token.span, "item.mod")),
-            Item::Static(i) => Some((i.static_token.span, match i.mutability {
-                syn::StaticMutability::Mut(_) => "item.static.mut",
-                _ => "item.static",
-            })),
-            Item::Struct(i) => Some((i.struct_token.span, match &i.fields {
-                Fields::Named(_) => "item.struct.named",
-                Fields::Unnamed(f) => match f.unnamed.len() {
-                    1 => "item.struct.newtype",
-                    _ => "item.struct.tuple",
+            Item::Static(i) => Some((
+                i.static_token.span,
+                match i.mutability {
+                    syn::StaticMutability::Mut(_) => "item.static.mut",
+                    _ => "item.static",
                 },
-                Fields::Unit => "item.struct.unit",
-            })),
+            )),
+            Item::Struct(i) => Some((
+                i.struct_token.span,
+                match &i.fields {
+                    Fields::Named(_) => "item.struct.named",
+                    Fields::Unnamed(f) => match f.unnamed.len() {
+                        1 => "item.struct.newtype",
+                        _ => "item.struct.tuple",
+                    },
+                    Fields::Unit => "item.struct.unit",
+                },
+            )),
             Item::Trait(i) => Some((i.trait_token.span, "item.trait")),
             Item::TraitAlias(i) => Some((i.trait_token.span, "item.trait_alias")),
             Item::Type(i) => Some((i.type_token.span, "item.type")),
@@ -867,7 +1007,10 @@ impl<'ast> Visit<'ast> for Walk {
             _ => Some((item.span(), "unknown.item")),
         };
         let rules = match item {
-            Item::Macro(i) => i.ident.as_ref().filter(|_| i.mac.path.is_ident("macro_rules")),
+            Item::Macro(i) => i
+                .ident
+                .as_ref()
+                .filter(|_| i.mac.path.is_ident("macro_rules")),
             _ => None,
         };
         match (token, rules, item) {
@@ -895,7 +1038,8 @@ impl<'ast> Visit<'ast> for Walk {
             extent: syntax::extent(i.span()),
         }));
         let main = syntax::returned(&i.sig.output).filter(|_| name == "main");
-        self.slots.extend(main.map(|t| (key(t.span()), Slot::MainReturn)));
+        self.slots
+            .extend(main.map(|t| (key(t.span()), Slot::MainReturn)));
         self.function(&i.attrs, &i.vis, &i.sig, &i.block);
         visit::visit_item_fn(self, i);
     }
@@ -922,7 +1066,9 @@ impl<'ast> Visit<'ast> for Walk {
             .imp
             .as_ref()
             .map(|imp| imp.self_ty.clone().unwrap_or_else(|| "_".to_string()));
-        let name = owner.map_or(i.sig.ident.to_string(), |ty| format!("{ty}::{}", i.sig.ident));
+        let name = owner.map_or(i.sig.ident.to_string(), |ty| {
+            format!("{ty}::{}", i.sig.ident)
+        });
         self.hits.push(Hit::Function(FnSpan {
             name,
             line: i.sig.ident.span().start().line,
@@ -967,35 +1113,46 @@ impl<'ast> Visit<'ast> for Walk {
             .trait_
             .as_ref()
             .map_or(Owner::Ours, |(_, path, _)| ours(path, &self.env));
-        let kind = match i.trait_.as_ref().map(|(_, path, _)| syntax::last_name(path)) {
+        let kind = match i
+            .trait_
+            .as_ref()
+            .map(|(_, path, _)| syntax::last_name(path))
+        {
             None => ImplKind::Inherent,
-            Some(name) => Some(())
-                .filter(|_| LIBRARY_TRAITS.contains(&name.as_str()))
+            Some(name) => LIBRARY_TRAITS
+                .contains(&name.as_str())
+                .then_some(())
                 .map_or(ImplKind::OtherTrait, |_| ImplKind::Library),
         };
-        self.hits.extend(i.unsafety.map(|t| t.span).iter().map(|at| {
-            let reason = self.env.lists.reasons.get("item.impl.unsafe").cloned().unwrap_or_default();
-            Hit::Id(Occurrence {
-                id: "item.impl.unsafe".to_string(),
-                reason,
-                at: syntax::pos(at.to_owned()),
-                extent: syntax::extent(at.to_owned()),
-            })
-        }));
-        self.hits.extend(when(
-            Some(()).filter(|_| matches!(trait_owner, Owner::Theirs)),
-            mark(i.span(), Fixed::Always),
-        ));
-        self.hits.extend(when(
-            Some(()).filter(|_| matches!(kind, ImplKind::OtherTrait)),
-            flag(i.impl_token.span, Rule::ImplTrait),
-        ));
+        self.hits
+            .extend(i.unsafety.map(|t| t.span).iter().map(|at| {
+                let reason = self
+                    .env
+                    .lists
+                    .reasons
+                    .get("item.impl.unsafe")
+                    .cloned()
+                    .unwrap_or_default();
+                Hit::Id(Occurrence {
+                    id: "item.impl.unsafe".to_string(),
+                    reason,
+                    at: syntax::pos(at.to_owned()),
+                    extent: syntax::extent(at.to_owned()),
+                })
+            }));
+        if let Owner::Theirs = trait_owner {
+            self.hits.push(mark(i.span(), Fixed::Always));
+        }
+        if let ImplKind::OtherTrait = kind {
+            self.hits.push(flag(i.impl_token.span, Rule::ImplTrait));
+        }
         let visitor = i
             .trait_
             .as_ref()
             .filter(|(_, path, _)| syntax::last_name(path) == "Visit")
             .and(syntax::type_name(&i.self_ty));
-        self.hits.extend(visitor.map(|name| Hit::Fact(Fact::Visitor(name))));
+        self.hits
+            .extend(visitor.map(|name| Hit::Fact(Fact::Visitor(name))));
         let name = checks::impl_name(i);
         self.cfg_facts(&i.attrs, CfgKind::Impl, &name);
         self.host(&i.attrs, Host::Cfg(Some(CfgItem::new(CfgKind::Impl, name))));
@@ -1009,7 +1166,10 @@ impl<'ast> Visit<'ast> for Walk {
 
     fn visit_item_struct(&mut self, i: &'ast syn::ItemStruct) {
         let newtype = checks::newtype(&i.fields);
-        self.cx.item = self.kind_of(&i.attrs, newtype.map_or(ItemKind::Other, |_| ItemKind::Newtype));
+        self.cx.item = self.kind_of(
+            &i.attrs,
+            newtype.map_or(ItemKind::Other, |_| ItemKind::Newtype),
+        );
         let name = i.ident.to_string();
         let key = self
             .cx
@@ -1021,7 +1181,10 @@ impl<'ast> Visit<'ast> for Walk {
         self.defines(&i.ident, &i.attrs);
         self.fact(Fact::Fields(
             name.clone(),
-            i.fields.iter().flat_map(|f| syntax::type_segments(&f.ty)).collect(),
+            i.fields
+                .iter()
+                .flat_map(|f| syntax::type_segments(&f.ty))
+                .collect(),
         ));
         let named = match &i.fields {
             Fields::Named(f) => Some(Fact::Struct {
@@ -1045,15 +1208,21 @@ impl<'ast> Visit<'ast> for Walk {
             Fields::Named(_) => checks::ErrorHost::Named,
             _ => checks::ErrorHost::Tuple,
         };
-        self.hits.extend(checks::thiserror(&i.attrs, &i.ident, host, &self.env));
-        self.hits.extend(checks::messages(&i.attrs, &i.attrs, i.ident.span()));
-        self.hits.extend(checks::ord(&i.attrs, newtype.map_or(Within::Out, |_| Within::In)));
+        self.hits
+            .extend(checks::thiserror(&i.attrs, &i.ident, host, &self.env));
+        self.hits
+            .extend(checks::messages(&i.attrs, &i.attrs, i.ident.span()));
+        self.hits.extend(checks::ord(
+            &i.attrs,
+            newtype.map_or(Within::Out, |_| Within::In),
+        ));
         let pub_fields = i.fields.iter().filter_map(|f| match &f.vis {
             Visibility::Public(token) => Some(flag(token.span, Rule::PubField)),
             _ => None,
         });
         let pub_fields = pub_fields.collect::<Vec<Hit>>();
-        self.hits.extend(checks::pub_crate(&i.vis).map_or(Vec::new(), |_| pub_fields));
+        self.hits
+            .extend(checks::pub_crate(&i.vis).map_or(Vec::new(), |_| pub_fields));
         let clap = syntax::derive_of(&i.attrs, &["Parser", "clap::Parser"]);
         let wire = syntax::derive_named(&i.attrs, &["Serialize", "Deserialize"]);
         let slot = match (self.env.tables.rows.get(&key), clap, wire) {
@@ -1077,7 +1246,12 @@ impl<'ast> Visit<'ast> for Walk {
             .flat_map(|v| v.fields.iter().flat_map(|f| syntax::type_segments(&f.ty)))
             .collect();
         self.fact(Fact::Fields(name, payloads));
-        self.hits.extend(checks::thiserror(&i.attrs, &i.ident, checks::ErrorHost::Enum, &self.env));
+        self.hits.extend(checks::thiserror(
+            &i.attrs,
+            &i.ident,
+            checks::ErrorHost::Enum,
+            &self.env,
+        ));
         let messages = i
             .variants
             .iter()
@@ -1111,16 +1285,26 @@ impl<'ast> Visit<'ast> for Walk {
             .filter(|p| p.name.is_some())
             .flat_map(|p| checks::named(&p.segments, checks::Named::Use, p.span, &self.env));
         self.hits.extend(named.collect::<Vec<Hit>>());
-        self.hits.extend(paths.into_iter().map(|p| Hit::Fact(Fact::Use(p))));
+        self.hits
+            .extend(paths.into_iter().map(|p| Hit::Fact(Fact::Use(p))));
         self.cfg_facts(&i.attrs, CfgKind::Use, "");
-        self.host(&i.attrs, Host::Cfg(Some(CfgItem::new(CfgKind::Use, String::new()))));
+        self.host(
+            &i.attrs,
+            Host::Cfg(Some(CfgItem::new(CfgKind::Use, String::new()))),
+        );
         visit::visit_item_use(self, i);
     }
 
     fn visit_item_mod(&mut self, i: &'ast syn::ItemMod) {
         self.fact(Fact::Mod(i.ident.to_string()));
         self.host(&i.attrs, Host::Cfg(None));
-        let module = self.cx.module.iter().cloned().chain(Some(i.ident.to_string())).collect();
+        let module = self
+            .cx
+            .module
+            .iter()
+            .cloned()
+            .chain(Some(i.ident.to_string()))
+            .collect();
         self.cx.module = Rc::new(module);
         visit::visit_item_mod(self, i);
     }
@@ -1150,7 +1334,10 @@ impl<'ast> Visit<'ast> for Walk {
 
     fn visit_variant(&mut self, v: &'ast syn::Variant) {
         let discriminant = v.discriminant.as_ref().map(|(eq, value)| {
-            (eq.span, syntax::extent(eq.span).to(syntax::extent(value.span())))
+            (
+                eq.span,
+                syntax::extent(eq.span).to(syntax::extent(value.span())),
+            )
         });
         if let Some((at, node)) = discriminant {
             self.id_over(at, node, "item.enum.discriminant");
@@ -1191,16 +1378,29 @@ impl<'ast> Visit<'ast> for Walk {
             .into_iter()
             .chain(sig.asyncness.map(|t| (t.span, "item.fn.async")))
             .chain(sig.unsafety.map(|t| (t.span, "item.fn.unsafe")))
-            .chain(sig.abi.as_ref().map(|a| (a.extern_token.span, "item.fn.extern")))
-            .chain(sig.variadic.as_ref().and_then(|v| v.dots.spans.first().copied()).map(|s| (s, "item.fn.variadic")));
+            .chain(
+                sig.abi
+                    .as_ref()
+                    .map(|a| (a.extern_token.span, "item.fn.extern")),
+            )
+            .chain(
+                sig.variadic
+                    .as_ref()
+                    .and_then(|v| v.dots.spans.first().copied())
+                    .map(|s| (s, "item.fn.variadic")),
+            );
         for (at, name) in modifiers {
             self.id(at, at, name);
         }
         let last = sig.inputs.len().saturating_sub(1);
-        let typed = sig.inputs.iter().enumerate().filter_map(|(i, arg)| match arg {
-            FnArg::Typed(t) => Some((i, t)),
-            FnArg::Receiver(_) => None,
-        });
+        let typed = sig
+            .inputs
+            .iter()
+            .enumerate()
+            .filter_map(|(i, arg)| match arg {
+                FnArg::Typed(t) => Some((i, t)),
+                FnArg::Receiver(_) => None,
+            });
         let slots = typed.filter_map(|(i, t)| {
             let slot = match (self.cx.generics, i) {
                 (Generics::Ask, i) if i == last => Some(Slot::AskBuild),
@@ -1209,7 +1409,8 @@ impl<'ast> Visit<'ast> for Walk {
             };
             slot.map(|s| (key(t.ty.span()), s))
         });
-        self.slots.extend(slots.collect::<Vec<((usize, usize), Slot)>>());
+        self.slots
+            .extend(slots.collect::<Vec<((usize, usize), Slot)>>());
         self.visit_generics(&sig.generics);
         self.cx.generics = Generics::Item;
         self.cx.place = self.cx.foreign().map_or(Some(Place::Signature), |_| None);
@@ -1228,7 +1429,10 @@ impl<'ast> Visit<'ast> for Walk {
         for t in r.mutability.iter() {
             self.id(t.span, r.span(), "item.fn.receiver.mut");
         }
-        self.hits.extend(when(r.mutability.and(self.cx.foreign()).and(Some(())), mark(r.span(), Fixed::Always)));
+        self.hits.extend(when(
+            r.mutability.and(self.cx.foreign()).and(Some(())),
+            mark(r.span(), Fixed::Always),
+        ));
         let lifetime = r.reference.as_ref().and_then(|(_, l)| l.as_ref());
         for l in lifetime.iter() {
             self.id(l.span(), l.span(), "type.lifetime");
@@ -1236,7 +1440,11 @@ impl<'ast> Visit<'ast> for Walk {
         }
         match (r.colon_token, &r.reference, r.mutability) {
             (Some(_), _, _) => {
-                self.id(r.self_token.span, r.self_token.span, "item.fn.receiver.typed");
+                self.id(
+                    r.self_token.span,
+                    r.self_token.span,
+                    "item.fn.receiver.typed",
+                );
                 self.visit_type(&r.ty);
             }
             // `&mut self` stands for `&mut Self`, a `&mut` of a type that
@@ -1314,8 +1522,14 @@ impl<'ast> Visit<'ast> for Walk {
         let rules = match self.statics.get(&key(l.span())) {
             Some(_) => Vec::new(),
             None => join(Vec::from([
-                when(self.cx.foreign().and(Some(())), mark(l.span(), Fixed::Always)),
-                unless(self.cx.library().and(Some(())), flag(l.span(), Rule::Lifetime)),
+                when(
+                    self.cx.foreign().and(Some(())),
+                    mark(l.span(), Fixed::Always),
+                ),
+                unless(
+                    self.cx.library().and(Some(())),
+                    flag(l.span(), Rule::Lifetime),
+                ),
             ])),
         };
         self.hits.extend(rules);
@@ -1328,7 +1542,10 @@ impl<'ast> Visit<'ast> for Walk {
             Visibility::Public(token) => self.id(token.span, token.span, "vis.pub"),
             Visibility::Restricted(r) => {
                 self.id(r.pub_token.span, r.span(), "vis.restricted");
-                self.hits.extend(unless(checks::pub_crate(vis).and(Some(())), flag(r.pub_token.span, Rule::VisCrate)));
+                self.hits.extend(unless(
+                    checks::pub_crate(vis).and(Some(())),
+                    flag(r.pub_token.span, Rule::VisCrate),
+                ));
             }
             _ => {}
         }
@@ -1346,26 +1563,42 @@ impl<'ast> Visit<'ast> for Walk {
         let parsed = attr.parse_args_with(
             syn::punctuated::Punctuated::<syn::Path, syn::token::Comma>::parse_terminated,
         );
-        match (path.as_str(), syntax::cfg_test(attr), parsed, unlisted.first()) {
+        match (
+            path.as_str(),
+            syntax::cfg_test(attr),
+            parsed,
+            unlisted.first(),
+        ) {
             ("doc", _, _, _) => self.id(at, attr.span(), "attr.doc"),
             ("test", _, _, _) | (_, Some(_), _, _) => self.id(at, attr.span(), "attr.cfg_test"),
             ("derive", _, Err(_), _) => self.id(at, attr.span(), "unknown.attr"),
             ("derive", _, Ok(_), None) => self.id(at, attr.span(), "attr.derive"),
             ("derive", _, Ok(_), Some(_)) => {
                 for name in unlisted.iter() {
-                    self.named(at, attr.span(), format!("attr.derive.{name}"), table::UNLISTED_DERIVE);
+                    self.named(
+                        at,
+                        attr.span(),
+                        format!("attr.derive.{name}"),
+                        table::UNLISTED_DERIVE,
+                    );
                 }
             }
-            _ => self.named(at, attr.span(), format!("attr.{path}"), table::UNLISTED_ATTR),
+            _ => self.named(
+                at,
+                attr.span(),
+                format!("attr.{path}"),
+                table::UNLISTED_ATTR,
+            ),
         }
         let library = match path.as_str() {
             "derive" => derived
                 .iter()
                 .find(|p| !STD_DERIVES.contains(&syntax::last_name(p).as_str()))
                 .and(Some(())),
-            _ => Some(()).filter(|_| !BUILTIN_ATTRS.contains(&path.as_str())),
+            _ => checks::absent(BUILTIN_ATTRS.contains(&path.as_str()).then_some(())),
         };
-        self.hits.extend(when(library, mark(attr.span(), Fixed::Always)));
+        self.hits
+            .extend(when(library, mark(attr.span(), Fixed::Always)));
         let host = self
             .hosts
             .get(&key(attr.span()))
@@ -1377,7 +1610,9 @@ impl<'ast> Visit<'ast> for Walk {
             ("allow", _, _) => Vec::from([flag(at, Rule::Allow)]),
             ("serde", _, _) => checks::serde(attr),
             ("arg", _, _) => when(
-                Some(()).filter(|_| syntax::attr_tokens(attr).contains("value_parser=[")),
+                syntax::attr_tokens(attr)
+                    .contains("value_parser=[")
+                    .then_some(()),
                 flag(at, Rule::ValueParser),
             ),
             _ => Vec::new(),
@@ -1395,7 +1630,12 @@ impl<'ast> Visit<'ast> for Walk {
 
     fn visit_path_segment(&mut self, s: &'ast syn::PathSegment) {
         let name = s.ident.to_string();
-        let defined = self.env.facts.types.get(&name).or(self.env.facts.fns.get(&name));
+        let defined = self
+            .env
+            .facts
+            .types
+            .get(&name)
+            .or(self.env.facts.fns.get(&name));
         // Our `Result` aliases only fill in std's error type, so their
         // `Result<(), E>` is still 0005's.
         let owner = match (name.as_str(), defined) {
@@ -1418,7 +1658,8 @@ impl<'ast> Visit<'ast> for Walk {
             "Result" => args.get(1).and_then(|t| syntax::type_name(t)),
             _ => None,
         };
-        self.hits.extend(error.map(|e| Hit::Fact(Fact::ErrorType(e))));
+        self.hits
+            .extend(error.map(|e| Hit::Fact(Fact::ErrorType(e))));
         let slots = args.iter().map(|t| {
             let slot = Slot::GenericArg {
                 segment: name.clone(),
@@ -1426,7 +1667,8 @@ impl<'ast> Visit<'ast> for Walk {
             };
             (key(t.span()), slot)
         });
-        self.slots.extend(slots.collect::<Vec<((usize, usize), Slot)>>());
+        self.slots
+            .extend(slots.collect::<Vec<((usize, usize), Slot)>>());
         visit::visit_path_segment(self, s);
     }
 
@@ -1449,22 +1691,39 @@ impl<'ast> Visit<'ast> for Walk {
         self.statics.extend(statics.map(|l| key(l.span())));
         self.hits.extend(checks::ty(t, &cx, &self.env));
         let class = classify(t, &self.env);
-        let typed = cx.place.map(|place| Hit::Typed(Typed { extent, class, place }));
-        let noted = match (cx.typing, cx.place, class, checks::transparent(t, &self.env)) {
+        let typed = cx.place.map(|place| {
+            Hit::Typed(Typed {
+                extent,
+                class,
+                place,
+            })
+        });
+        let noted = match (
+            cx.typing,
+            cx.place,
+            class,
+            checks::transparent(t, &self.env),
+        ) {
             (Within::Out, _, _, _) => Vec::new(),
-            (Within::In, _, TypeClass::Untyped, _) => Vec::from([refine(extent, "type.untyped"), Hit::Fold(extent)])
-                .into_iter()
-                .chain(typed)
-                .collect(),
-            (Within::In, Some(_), TypeClass::Primitive, _) => Vec::from([refine(extent, "type.primitive"), Hit::Fold(extent)])
-                .into_iter()
-                .chain(typed)
-                .collect(),
+            (Within::In, _, TypeClass::Untyped, _) => {
+                Vec::from([refine(extent, "type.untyped"), Hit::Fold(extent)])
+                    .into_iter()
+                    .chain(typed)
+                    .collect()
+            }
+            (Within::In, Some(_), TypeClass::Primitive, _) => {
+                Vec::from([refine(extent, "type.primitive"), Hit::Fold(extent)])
+                    .into_iter()
+                    .chain(typed)
+                    .collect()
+            }
             (Within::In, Some(Place::Field), _, transparent) => Some(refine(extent, "type.field"))
                 .into_iter()
                 .chain(checks::absent(transparent).and(typed))
                 .collect(),
-            (Within::In, Some(Place::Signature), _, transparent) => checks::absent(transparent).and(typed).into_iter().collect(),
+            (Within::In, Some(Place::Signature), _, transparent) => {
+                checks::absent(transparent).and(typed).into_iter().collect()
+            }
             (Within::In, None, _, _) => Vec::new(),
         };
         self.hits.extend(noted);
@@ -1473,9 +1732,8 @@ impl<'ast> Visit<'ast> for Walk {
             (TypeClass::Untyped, _) | (TypeClass::Primitive, Some(_)) => Within::Out,
             _ => cx.typing,
         };
-        match t {
-            Type::Reference(r) => self.slot(r.elem.span(), Slot::RefTarget(Box::new(cx.slot))),
-            _ => {}
+        if let Type::Reference(r) = t {
+            self.slot(r.elem.span(), Slot::RefTarget(Box::new(cx.slot)));
         }
         visit::visit_type(self, t);
         self.cx = outer;
@@ -1491,17 +1749,28 @@ impl<'ast> Visit<'ast> for Walk {
         }
         let named = match e {
             Expr::Path(p) => match p.qself {
-                None => checks::named(&syntax::segments(&p.path), checks::Named::Path, p.span(), &self.env),
+                None => checks::named(
+                    &syntax::segments(&p.path),
+                    checks::Named::Path,
+                    p.span(),
+                    &self.env,
+                ),
                 Some(_) => Vec::new(),
             },
             Expr::MethodCall(m) => when(
-                self.env.operator_methods.get(&m.method.to_string()).and(Some(())),
+                self.env
+                    .operator_methods
+                    .get(&m.method.to_string())
+                    .and(Some(())),
                 flag(m.method.span(), Rule::OperatorMethod),
             ),
             _ => Vec::new(),
         };
         self.hits.extend(named);
-        self.hits.extend(when(checks::library_value(&cx.slot), mark(node, Fixed::IfRestricted)));
+        self.hits.extend(when(
+            checks::library_value(&cx.slot),
+            mark(node, Fixed::IfRestricted),
+        ));
         let rules = checks::expr(e, &cx, &self.env);
         self.hits.extend(rules);
         match e {
@@ -1524,27 +1793,29 @@ impl<'ast> Visit<'ast> for Walk {
             }
             Expr::MethodCall(m) => {
                 let method = m.method.to_string();
-                self.hits.extend(
-                    self.env
-                        .lists
-                        .adapters
-                        .iter()
-                        .find(|a| a == &&method)
-                        .map(|_| {
-                            Hit::Refine(Refinement {
-                                extent: syntax::extent(node),
-                                from: Some("expr.method_call".to_string()),
-                                to: "expr.method_call.adapter".to_string(),
-                            })
-                        }),
-                );
+                self.hits
+                    .extend(
+                        self.env
+                            .lists
+                            .adapters
+                            .iter()
+                            .find(|a| a == &&method)
+                            .map(|_| {
+                                Hit::Refine(Refinement {
+                                    extent: syntax::extent(node),
+                                    from: Some("expr.method_call".to_string()),
+                                    to: "expr.method_call.adapter".to_string(),
+                                })
+                            }),
+                    );
                 self.hits.extend(checks::method(m, &cx, &self.env));
                 // `into_iter` on a range returns the range itself, so it
                 // iterates only when its own result is iterated.
-                let iterates = checks::iterates(&method, &self.env).or(match (method.as_str(), cx.iterated) {
-                    ("into_iter", Within::In) | ("contains", _) => Some(()),
-                    _ => None,
-                });
+                let iterates =
+                    checks::iterates(&method, &self.env).or(match (method.as_str(), cx.iterated) {
+                        ("into_iter", Within::In) | ("contains", _) => Some(()),
+                        _ => None,
+                    });
                 for _ in iterates.iter() {
                     self.iterate(&m.receiver);
                 }
@@ -1553,7 +1824,13 @@ impl<'ast> Visit<'ast> for Walk {
                     _ => Owner::Theirs,
                 };
                 for a in m.args.iter() {
-                    self.slot(a.span(), Slot::MethodArg { method: method.clone(), receiver });
+                    self.slot(
+                        a.span(),
+                        Slot::MethodArg {
+                            method: method.clone(),
+                            receiver,
+                        },
+                    );
                 }
                 match method.as_str() {
                     "zip" | "chain" => {
@@ -1601,7 +1878,13 @@ impl<'ast> Visit<'ast> for Walk {
                 }
                 self.hits.extend(checks::closure(c, &cx.slot, &self.env));
                 let predicate = match &cx.slot {
-                    Slot::MethodArg { method, .. } => self.env.lists.predicate_adapters.iter().find(|m| m == &method).and(Some(())),
+                    Slot::MethodArg { method, .. } => self
+                        .env
+                        .lists
+                        .predicate_adapters
+                        .iter()
+                        .find(|m| m == &method)
+                        .and(Some(())),
                     _ => None,
                 };
                 for _ in predicate.iter() {
@@ -1613,21 +1896,17 @@ impl<'ast> Visit<'ast> for Walk {
             }
             Expr::Reference(r) => {
                 // `&[a, b]` stands where its array would.
-                match (r.mutability, &cx.slot) {
-                    (None, Slot::CallArg(_) | Slot::MethodArg { .. } | Slot::ConstInit) => {
-                        self.slot(r.expr.span(), cx.slot.clone())
-                    }
-                    _ => {}
+                if let (None, Slot::CallArg(_) | Slot::MethodArg { .. } | Slot::ConstInit) =
+                    (r.mutability, &cx.slot)
+                {
+                    self.slot(r.expr.span(), cx.slot.clone());
                 }
                 visit::visit_expr(self, e);
             }
             Expr::Binary(b) => {
-                match (cx.predicate, b.op) {
-                    (Within::In, BinOp::And(_) | BinOp::Or(_)) => {
-                        self.predicates.insert(key(b.left.span()));
-                        self.predicates.insert(key(b.right.span()));
-                    }
-                    _ => {}
+                if let (Within::In, BinOp::And(_) | BinOp::Or(_)) = (cx.predicate, b.op) {
+                    self.predicates.insert(key(b.left.span()));
+                    self.predicates.insert(key(b.right.span()));
                 }
                 visit::visit_expr(self, e);
             }
@@ -1666,13 +1945,21 @@ impl<'ast> Visit<'ast> for Walk {
             }
             Expr::If(i) => match i.cond.as_ref() {
                 Expr::Let(cond) => {
-                    let name = i.else_branch.as_ref().map_or("expr.if_let.single", |_| "expr.if_let");
+                    let name = i
+                        .else_branch
+                        .as_ref()
+                        .map_or("expr.if_let.single", |_| "expr.if_let");
                     self.id(i.if_token.span, node, name);
                     self.hits.extend(match i.else_branch {
                         Some(_) => None,
-                        None => Some(Hit::Fold(syntax::extent(i.if_token.span).to(syntax::extent(cond.expr.span())))),
+                        None => Some(Hit::Fold(
+                            syntax::extent(i.if_token.span).to(syntax::extent(cond.expr.span())),
+                        )),
                     });
-                    self.hits.extend(when(checks::filtered_once(&cond.expr), flag(i.if_token.span, Rule::LiftMatched)));
+                    self.hits.extend(when(
+                        checks::filtered_once(&cond.expr),
+                        flag(i.if_token.span, Rule::LiftMatched),
+                    ));
                     self.let_head(&i.attrs, cond);
                     self.visit_block(&i.then_branch);
                     for (_, e) in i.else_branch.iter() {
@@ -1713,10 +2000,12 @@ impl<'ast> Visit<'ast> for Walk {
 
     fn visit_stmt(&mut self, s: &'ast Stmt) {
         let discard = match s {
-            Stmt::Expr(Expr::MethodCall(m), Some(_)) => match (m.method.to_string().as_str(), m.args.first()) {
-                ("ok", None) => Some(flag(m.method.span(), Rule::OkDiscard)),
-                _ => None,
-            },
+            Stmt::Expr(Expr::MethodCall(m), Some(_)) => {
+                match (m.method.to_string().as_str(), m.args.first()) {
+                    ("ok", None) => Some(flag(m.method.span(), Rule::OkDiscard)),
+                    _ => None,
+                }
+            }
             _ => None,
         };
         self.hits.extend(discard);
@@ -1757,10 +2046,13 @@ impl<'ast> Visit<'ast> for Walk {
                 };
                 Some((i.span(), name.to_string()))
             }
-            Pat::Lit(l) => Some((l.span(), match l.lit {
-                Lit::Bool(_) => "pat.lit.bool".to_string(),
-                _ => "pat.lit".to_string(),
-            })),
+            Pat::Lit(l) => Some((
+                l.span(),
+                match l.lit {
+                    Lit::Bool(_) => "pat.lit.bool".to_string(),
+                    _ => "pat.lit".to_string(),
+                },
+            )),
             Pat::Macro(_) => None,
             Pat::Or(o) => Some((o.span(), "pat.or".to_string())),
             Pat::Paren(pa) => Some((pa.span(), "pat.paren".to_string())),
@@ -1781,16 +2073,24 @@ impl<'ast> Visit<'ast> for Walk {
         }
         match p {
             Pat::Ident(i) => {
-                self.hits.extend(i.subpat.iter().map(|(at, _)| at.span).map(|at| {
-                    let reason = self.env.lists.reasons.get("pat.ident.at").cloned().unwrap_or_default();
-                    Hit::Id(Occurrence {
-                        id: "pat.ident.at".to_string(),
-                        reason,
-                        at: syntax::pos(at),
-                        extent: syntax::extent(at),
-                    })
-                }));
+                self.hits
+                    .extend(i.subpat.iter().map(|(at, _)| at.span).map(|at| {
+                        let reason = self
+                            .env
+                            .lists
+                            .reasons
+                            .get("pat.ident.at")
+                            .cloned()
+                            .unwrap_or_default();
+                        Hit::Id(Occurrence {
+                            id: "pat.ident.at".to_string(),
+                            reason,
+                            at: syntax::pos(at),
+                            extent: syntax::extent(at),
+                        })
+                    }));
                 self.hits.extend(checks::pat_ident(i, &self.cx));
+                self.hits.extend(checks::ident_at(i));
                 visit::visit_pat(self, p);
             }
             Pat::Lit(_) | Pat::Path(_) => {}
@@ -1818,12 +2118,22 @@ impl<'ast> Visit<'ast> for Walk {
             _ => None,
         };
         match (env_var, listed) {
-            (Some(None), _) => self.named(m.path.span(), m.span(), "macro.env".to_string(), &table::message(Rule::Env)),
+            (Some(None), _) => self.named(
+                m.path.span(),
+                m.span(),
+                "macro.env".to_string(),
+                &table::message(Rule::Env),
+            ),
             (_, Some(_)) => self.id(m.path.span(), m.span(), "macro.allowed"),
-            (_, None) => self.named(m.path.span(), m.span(), format!("macro.{full}"), table::UNLISTED_MACRO),
+            (_, None) => self.named(
+                m.path.span(),
+                m.span(),
+                format!("macro.{full}"),
+                table::UNLISTED_MACRO,
+            ),
         }
         self.hits.extend(unless(
-            Some(()).filter(|_| STD_MACROS.contains(&full.as_str())),
+            STD_MACROS.contains(&full.as_str()).then_some(()),
             mark(m.span(), Fixed::Always),
         ));
         let cx = Cx {
@@ -1854,7 +2164,13 @@ impl Walk {
 
     /// An id whose node is an extent rather than a span.
     fn id_over(&mut self, at: Span, node: Extent, name: &str) {
-        let reason = self.env.lists.reasons.get(name).cloned().unwrap_or_default();
+        let reason = self
+            .env
+            .lists
+            .reasons
+            .get(name)
+            .cloned()
+            .unwrap_or_default();
         self.hits.push(Hit::Id(Occurrence {
             id: name.to_string(),
             reason,
@@ -1869,7 +2185,7 @@ impl Walk {
         self.id_over(token, node, "expr.match.guard");
         let predicate = match guard {
             Expr::Binary(b) => checks::comparison_op(&b.op).and(Some(key(guard.span()))),
-            Expr::Macro(m) => Some(key(m.mac.span())).filter(|_| m.mac.path.is_ident("matches")),
+            Expr::Macro(m) => m.mac.path.is_ident("matches").then_some(key(m.mac.span())),
             _ => None,
         };
         self.predicates.extend(predicate);
@@ -1880,7 +2196,11 @@ impl Walk {
 pub(crate) fn use_paths(tree: &syn::UseTree, prefix: &Vec<String>) -> Vec<UsePath> {
     match tree {
         syn::UseTree::Path(p) => {
-            let longer = prefix.iter().cloned().chain(Some(p.ident.to_string())).collect();
+            let longer = prefix
+                .iter()
+                .cloned()
+                .chain(Some(p.ident.to_string()))
+                .collect();
             use_paths(&p.tree, &longer)
         }
         syn::UseTree::Name(n) => Vec::from([leaf(prefix, &n.ident, Some(n.ident.to_string()))]),
@@ -1896,7 +2216,11 @@ pub(crate) fn use_paths(tree: &syn::UseTree, prefix: &Vec<String>) -> Vec<UsePat
 
 fn leaf(prefix: &[String], ident: &syn::Ident, name: Option<String>) -> UsePath {
     UsePath {
-        segments: prefix.iter().cloned().chain(Some(ident.to_string())).collect(),
+        segments: prefix
+            .iter()
+            .cloned()
+            .chain(Some(ident.to_string()))
+            .collect(),
         name,
         span: ident.span(),
     }

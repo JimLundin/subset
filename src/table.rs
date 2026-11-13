@@ -161,12 +161,13 @@ pub(crate) enum Rule {
     ValueParser,
     TokioTest,
     BoolLit,
+    IdentAt,
     Env,
 }
 
 const CONSUMING_READER: &str = "a reader in `consuming_readers` changes its buffer on every read, so a tuple of reads means something only by evaluation order; split the bytes with `split_at_checked` and match them, as in the bootstrap review's §A7 (proposal 0039)";
 const FALLIBLE_OPERATOR: &str = "a trait in `fallible_operators` is never imported, named in a path or called as a method; write `checked_*` or `saturating_*` (proposal 0038)";
-const MUT_OURS: &str = "`mut` only on a value whose type isn't ours, on an actor's loop state or on a type in `endpoints`; to lend a library field of a value of ours as `&mut`, destructure the value and bind that field `mut` (proposals 0008, 0035)";
+const MUT_OURS: &str = "`mut` only on a value whose type isn't ours, on an actor's loop state, on a type in `endpoints` or on a `Visit` implementor (proposal 0045); to lend a library field of a value of ours as `&mut`, destructure the value and bind that field `mut` (proposals 0008, 0035)";
 const PREDICATE: &str = "a boolean expression (`matches!`, a comparison, `&&`, `||`, `!`) only as the body of a closure passed straight to a method in `predicate_adapters` (proposals 0028, 0037), or one comparison or `matches!` as a match guard (proposal 0040)";
 const RANGE_BY_NAME: &str = "a range built by name (`RangeInclusive::new`, any other associated fn of a range type, `Range { .. }`, `RangeFull`, a `Bound`) is a range expression (`expr.range`) under another name; it stands only as the iterator of a `for`, the receiver of an iterator method or of `contains`, or the argument of `zip` or `chain`, never as an index or a slice argument: split bytes with `split_at_checked` (bootstrap review §A7, rtc-ports and v8 reviews)";
 
@@ -182,7 +183,7 @@ pub(crate) const RULES: &[RuleRow] = &[
     RuleRow { rule: Rule::LoopTurn, id: "expr.loop", message: "a loop turn takes one input (`select!`, a `match` of `select!`s, or one awaited call) and handles it with one call or `match` (proposal 0007)" },
     RuleRow { rule: Rule::Break, id: "expr.break", message: "`break` only with a value, out of an actor loop (proposal 0007)" },
     RuleRow { rule: Rule::MutSelf, id: "item.fn.receiver.mut", message: "`mut self` only on a fn whose body is an actor loop (proposal 0008)" },
-    RuleRow { rule: Rule::RefMutSelf, id: "item.fn.receiver.mut", message: "`&mut self` only on methods of an actor's loop state, of a type of ours named in one of its field types or in a variant of an enum it owns (proposal 0008), or of a type in `endpoints` (proposal 0035)" },
+    RuleRow { rule: Rule::RefMutSelf, id: "item.fn.receiver.mut", message: "`&mut self` only on methods of an actor's loop state, of a type of ours named in one of its field types or in a variant of an enum it owns (proposal 0008), of a type in `endpoints` (proposal 0035), or of a type that implements syn's `Visit` (proposal 0045)" },
     RuleRow { rule: Rule::LetMut, id: "stmt.let.mut", message: "`let mut` only for a loop's state just before the loop, or for a value never reassigned and only lent as `&mut` (proposal 0008)" },
     RuleRow { rule: Rule::PatMut, id: "pat.ident.mut", message: "a `mut` binding is never reassigned, only lent as `&mut` (proposal 0008)" },
     RuleRow { rule: Rule::LetMutOurs, id: "stmt.let.mut", message: MUT_OURS },
@@ -222,7 +223,7 @@ pub(crate) const RULES: &[RuleRow] = &[
     RuleRow { rule: Rule::ForIter, id: "expr.for", message: "a `for` iterates a list built before it or by adapters, with no block, assignment or branch in its iterator expression (proposal 0041)" },
     RuleRow { rule: Rule::ForEach, id: "expr.method_call", message: "a loop whose body performs side effects is `for item in list { .. }`, not `for_each` or `try_for_each` (proposal 0041)" },
     RuleRow { rule: Rule::StreamEffects, id: "expr.method_call", message: "awaited effects run in order as `for item in list { f(item).await?; }`, not `stream::iter(..).then(..).try_collect()` into `()` (proposal 0041)" },
-    RuleRow { rule: Rule::ImplTrait, id: "item.impl.trait", message: "trait impls only for `Drop`, `Debug`, `Serialize`, `Deserialize` and `ProtocolHandler` (proposal 0009)" },
+    RuleRow { rule: Rule::ImplTrait, id: "item.impl.trait", message: "trait impls only for `Drop`, `Debug`, `Serialize`, `Deserialize`, `ProtocolHandler` (proposal 0009) and syn's `Visit` (proposal 0045)" },
     RuleRow { rule: Rule::LifetimeParam, id: "generics.lifetime", message: "lifetime parameters only in a library trait impl (proposal 0009)" },
     RuleRow { rule: Rule::Lifetime, id: "type.lifetime", message: "lifetimes only in a library trait impl, where its signature demands them (proposal 0009)" },
     RuleRow { rule: Rule::StaticStr, id: "type.lifetime.static_str", message: "`&'static str` only as a field type of a struct that is the row type of a `const` table and is built nowhere else (proposal 0042)" },
@@ -238,7 +239,7 @@ pub(crate) const RULES: &[RuleRow] = &[
     RuleRow { rule: Rule::OrdInner, id: "expr.method_call", message: "compare an ordered newtype as a whole, `a.cmp(&b)`, never through `.0` (proposal 0024)" },
     RuleRow { rule: Rule::ErrorMessage, id: "attr.error", message: "each error variant carries one `#[error(\"…\")]` message, never `transparent` (proposal 0010)" },
     RuleRow { rule: Rule::FromOnce, id: "attr.from", message: "`#[from]` only on the one variant of an enum holding a given error type (proposal 0011)" },
-    RuleRow { rule: Rule::SerdeKeys, id: "attr.serde", message: "`#[serde]` only with `transparent`, `tag`, `content`, `rename_all` and `rename` (proposal 0012)" },
+    RuleRow { rule: Rule::SerdeKeys, id: "attr.serde", message: "`#[serde]` only with `transparent`, `tag`, `content`, `rename_all` and `rename` (proposal 0012), `untagged`, or `skip_serializing_if = \"Option::is_none\"` (proposal 0043)" },
     RuleRow { rule: Rule::TypeParam, id: "generics.type_param", message: "a type parameter only on a fn, with exactly one bound, `Serialize` or `DeserializeOwned`, and no `where` (proposal 0013), or as the unbounded `T` of an `ask` helper (proposal 0026)" },
     RuleRow { rule: Rule::ImplTraitArg, id: "type.impl_trait.arg", message: "`impl Trait` as an argument only as `build: impl FnOnce(oneshot::Sender<T>) -> Msg`, the last parameter of a private `ask<T>` helper (proposal 0026)" },
     RuleRow { rule: Rule::Slice, id: "type.slice", message: "`&[T]` only as a parameter type or a `const` type; a `const` list is `const NAME: &[T] = &[..]` (proposal 0014)" },
@@ -253,10 +254,11 @@ pub(crate) const RULES: &[RuleRow] = &[
     RuleRow { rule: Rule::Closure, id: "expr.closure", message: "a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook (proposals 0006, 0017, 0018, 0026)" },
     RuleRow { rule: Rule::Glob, id: "item.use.glob", message: "a glob import only for `dioxus::prelude::*` (proposal 0018)" },
     RuleRow { rule: Rule::Allow, id: "attr.allow", message: "only `#![allow(clippy::useless_format)]` at the crate root (proposal 0018)" },
-    RuleRow { rule: Rule::BoolType, id: "type.bool", message: "`bool` only in a type argument of a type we don't define, or as a flag field of a clap `Parser` struct (proposals 0019, 0023)" },
+    RuleRow { rule: Rule::BoolType, id: "type.bool", message: "`bool` only in a type argument of a type we don't define, as a flag field of a clap `Parser` struct, or as a field of a serde wire type (proposals 0019, 0023, 0043)" },
     RuleRow { rule: Rule::ValueParser, id: "attr.arg", message: "a choice between named values is a `ValueEnum`, not `value_parser = [...]` (proposal 0019)" },
     RuleRow { rule: Rule::TokioTest, id: "attr.tokio::test", message: "`#[tokio::test]` takes no arguments and marks an `async fn` (proposal 0020)" },
-    RuleRow { rule: Rule::BoolLit, id: "expr.lit.bool", message: "`true` / `false` only as an argument or field value of a fn, method or struct we don't define (proposal 0023)" },
+    RuleRow { rule: Rule::IdentAt, id: "pat.ident.at", message: "`name @ pattern` only binds a whole value matched by a struct, tuple-struct or path pattern, with no `mut` or `ref` (proposal 0044)" },
+    RuleRow { rule: Rule::BoolLit, id: "expr.lit.bool", message: "`true` / `false` only as an argument or field value of a fn, method or struct we don't define, or as a field value of a serde wire type (proposals 0023, 0043)" },
     RuleRow { rule: Rule::Env, id: "macro.env", message: "`env!` only for `CARGO_PKG_VERSION`, `CARGO_PKG_NAME` and `CARGO_MANIFEST_DIR` (proposal 0022)" },
 ];
 

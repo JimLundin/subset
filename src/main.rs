@@ -67,7 +67,10 @@ fn usage(problem: &str) -> Fatal {
 
 /// The value after `flag`.
 fn value(args: &[String], flag: &str) -> Option<String> {
-    args.iter().skip_while(|a| a.as_str() != flag).nth(1).cloned()
+    args.iter()
+        .skip_while(|a| a.as_str() != flag)
+        .nth(1)
+        .cloned()
 }
 
 fn run(args: &[String]) -> Result<ExitCode, Fatal> {
@@ -81,9 +84,9 @@ fn run(args: &[String]) -> Result<ExitCode, Fatal> {
         })
         .map(|(arg, _)| PathBuf::from(arg))
         .collect::<Vec<PathBuf>>();
-    let unknown = rest
-        .iter()
-        .find(|a| a.starts_with("--") && !VALUE_FLAGS.contains(&a.as_str()) && a.as_str() != "--json");
+    let unknown = rest.iter().find(|a| {
+        a.starts_with("--") && !VALUE_FLAGS.contains(&a.as_str()) && a.as_str() != "--json"
+    });
     let missing = rest
         .last()
         .filter(|last| VALUE_FLAGS.contains(&last.as_str()));
@@ -140,17 +143,20 @@ fn check(config: &Path) -> Result<ExitCode, Fatal> {
         .iter()
         .map(|v| format!("{}: {}: {}\n", v.location(), v.id, v.reason))
         .collect::<String>();
-    print(text)?;
-    Ok(violations.first().map_or(ExitCode::SUCCESS, |_| ExitCode::FAILURE))
+    let _ = print(text)?;
+    Ok(violations
+        .first()
+        .map_or(ExitCode::SUCCESS, |_| ExitCode::FAILURE))
 }
 
 fn report(config: &Path, json: Within) -> Result<ExitCode, Fatal> {
-    let by_id = violations(config)?
-        .into_iter()
-        .fold(BTreeMap::<String, Vec<Violation>>::new(), |mut by_id, v| {
+    let by_id = violations(config)?.into_iter().fold(
+        BTreeMap::<String, Vec<Violation>>::new(),
+        |mut by_id, v| {
             by_id.entry(v.id.clone()).or_default().push(v);
             by_id
-        });
+        },
+    );
     let total = by_id.values().map(Vec::len).sum::<usize>();
     let rows = by_id
         .into_iter()
@@ -169,12 +175,21 @@ fn report(config: &Path, json: Within) -> Result<ExitCode, Fatal> {
                         ("examples", examples.into()),
                         ("files", files.into()),
                         ("id", id.clone().into()),
-                        ("reason", seen.first().map(|v| v.reason.clone()).unwrap_or_default().into()),
+                        (
+                            "reason",
+                            seen.first()
+                                .map(|v| v.reason.clone())
+                                .unwrap_or_default()
+                                .into(),
+                        ),
                     ]))
                 })
                 .collect::<Vec<serde_json::Value>>();
             let out = object(Vec::from([("ids", ids.into()), ("total", total.into())]));
-            format!("{}\n", serde_json::to_string_pretty(&out).unwrap_or_default())
+            format!(
+                "{}\n",
+                serde_json::to_string_pretty(&out).unwrap_or_default()
+            )
         }
         Within::Out => rows
             .iter()
@@ -184,7 +199,11 @@ fn report(config: &Path, json: Within) -> Result<ExitCode, Fatal> {
                     1 => "file",
                     _ => "files",
                 };
-                format!("{id} {} in {files} {noun}: {}\n", seen.len(), examples.join(" "))
+                format!(
+                    "{id} {} in {files} {noun}: {}\n",
+                    seen.len(),
+                    examples.join(" ")
+                )
             })
             .collect(),
     };
@@ -193,8 +212,15 @@ fn report(config: &Path, json: Within) -> Result<ExitCode, Fatal> {
 
 /// How many files a group of violations is in, and its first locations.
 fn summary(seen: &[Violation]) -> (usize, Vec<String>) {
-    let files = seen.iter().map(|v| v.path.as_str()).collect::<BTreeSet<&str>>();
-    let examples = seen.iter().take(5).map(Violation::location).collect::<Vec<String>>();
+    let files = seen
+        .iter()
+        .map(|v| v.path.as_str())
+        .collect::<BTreeSet<&str>>();
+    let examples = seen
+        .iter()
+        .take(5)
+        .map(Violation::location)
+        .collect::<Vec<String>>();
     (files.len(), examples)
 }
 
@@ -244,9 +270,15 @@ fn measure(paths: &[PathBuf], json: Within) -> Result<ExitCode, Fatal> {
                     ]))
                 })
                 .collect::<Vec<serde_json::Value>>();
-            let total = object(Vec::from([("lines", lines.into()), ("tokens", tokens.into())]));
+            let total = object(Vec::from([
+                ("lines", lines.into()),
+                ("tokens", tokens.into()),
+            ]));
             let out = object(Vec::from([("files", files.into()), ("total", total)]));
-            format!("{}\n", serde_json::to_string_pretty(&out).unwrap_or_default())
+            format!(
+                "{}\n",
+                serde_json::to_string_pretty(&out).unwrap_or_default()
+            )
         }
         Within::Out => rows
             .iter()
@@ -257,7 +289,12 @@ fn measure(paths: &[PathBuf], json: Within) -> Result<ExitCode, Fatal> {
     print(text)
 }
 
-fn score(config_path: &Path, paths: &[PathBuf], by: score::Level, json: Within) -> Result<ExitCode, Fatal> {
+fn score(
+    config_path: &Path,
+    paths: &[PathBuf],
+    by: score::Level,
+    json: Within,
+) -> Result<ExitCode, Fatal> {
     let config = config::load(config_path)?;
     let root = root_of(config_path);
     let files = match paths.first() {
@@ -266,7 +303,7 @@ fn score(config_path: &Path, paths: &[PathBuf], by: score::Level, json: Within) 
     };
     let sources = sources(root, &files)?;
     let manifests = manifests(root, &sources);
-    let scored = scored(&config, config_path, sources, &manifests)?;
+    let scored = scored(&config, sources, &manifests)?;
     let weights = weights(&config)?;
     let text = score::output(&scored, by, json, weights);
     print(text)
@@ -295,7 +332,7 @@ fn report_html(
         note: "The files under <code>include</code> in the config: the code written in the subset."
             .to_string(),
         comparison: Within::Out,
-        files: scored(&config, config_path, ours, &dirs)?,
+        files: scored(&config, ours, &dirs)?,
     };
     let others = compare
         .iter()
@@ -308,19 +345,21 @@ fn report_html(
                        Code the subset doesn't cover counts as violations."
                     .to_string(),
                 comparison: Within::In,
-                files: scored(&config, config_path, theirs, &dirs)?,
+                files: scored(&config, theirs, &dirs)?,
             })
         })
         .collect::<Result<Vec<report::Group>, Fatal>>()?;
     let snapshots = match history {
-        Some(n) => history::snapshots(&config, config_path, root, n),
+        Some(n) => history::snapshots(&config, root, n),
         None => Err("History wasn't generated. Pass --history <n> to add it.".to_string()),
     };
     let stamp = match history::head(root) {
         Some(head) => format!("{} at {head}.", config.include.join(", ")),
         None => format!("{}.", config.include.join(", ")),
     };
-    let groups = std::iter::once(own).chain(others).collect::<Vec<report::Group>>();
+    let groups = std::iter::once(own)
+        .chain(others)
+        .collect::<Vec<report::Group>>();
     let html = report::render(&stamp, &groups, &snapshots, weights);
     std::fs::create_dir_all(out).map_err(|e| Fatal(format!("{}: {e}", display(out))))?;
     let index = out.join("index.html");
@@ -341,7 +380,6 @@ fn manifests(root: &Path, sources: &[(PathBuf, String)]) -> BTreeSet<PathBuf> {
 /// Scores `sources` under the config's allowed ids and weights.
 pub(crate) fn scored(
     config: &Config,
-    config_path: &Path,
     sources: Vec<(PathBuf, String)>,
     manifests: &BTreeSet<PathBuf>,
 ) -> Result<Vec<score::ScoredFile>, Fatal> {
@@ -424,7 +462,10 @@ struct Parsed {
 }
 
 /// Every file's analysis. Paths are relative to the config's directory.
-pub(crate) fn analyse(config: &Config, sources: Vec<(PathBuf, String)>) -> Result<Vec<Analysed>, Fatal> {
+pub(crate) fn analyse(
+    config: &Config,
+    sources: Vec<(PathBuf, String)>,
+) -> Result<Vec<Analysed>, Fatal> {
     let results = sources
         .into_iter()
         .map(|(path, src)| match syn::parse_file(&src) {
@@ -448,7 +489,10 @@ pub(crate) fn analyse(config: &Config, sources: Vec<(PathBuf, String)>) -> Resul
         Some(_) => Err(Fatal(errors.join("\n"))),
         None => Ok(()),
     }?;
-    let parsed = results.into_iter().filter_map(Result::ok).collect::<Vec<Parsed>>();
+    let parsed = results
+        .into_iter()
+        .filter_map(Result::ok)
+        .collect::<Vec<Parsed>>();
     let lists = config.lists.clone();
     let none = Rc::new(Facts::none());
     let first = parsed
@@ -487,7 +531,13 @@ fn components(path: &Path) -> Vec<String> {
 }
 
 /// What one file's walk reads.
-fn environment(p: &Parsed, facts: &Rc<Facts>, lists: &Rc<facts::Lists>, own: &[Fact], config: &Config) -> Env {
+fn environment(
+    p: &Parsed,
+    facts: &Rc<Facts>,
+    lists: &Rc<facts::Lists>,
+    own: &[Fact],
+    config: &Config,
+) -> Env {
     let parts = components(&p.path);
     let names = FileNames::of(own, facts);
     let operator_methods = names.operator_methods(&lists.operators);
@@ -498,7 +548,10 @@ fn environment(p: &Parsed, facts: &Rc<Facts>, lists: &Rc<facts::Lists>, own: &[F
             _ => None,
         })
         .collect::<Vec<CfgItem>>();
-    let crate_root = match (parts.iter().rev().nth(1).map(String::as_str), parts.last().map(String::as_str)) {
+    let crate_root = match (
+        parts.iter().rev().nth(1).map(String::as_str),
+        parts.last().map(String::as_str),
+    ) {
         (Some("src"), Some("lib.rs" | "main.rs")) => Within::In,
         _ => Within::Out,
     };
@@ -529,7 +582,7 @@ pub(crate) fn covers(pattern: &glob::Pattern, path: &Path) -> Option<()> {
         require_literal_separator: true,
         ..glob::MatchOptions::new()
     };
-    Some(()).filter(|_| pattern.matches_path_with(path, options))
+    pattern.matches_path_with(path, options).then_some(())
 }
 
 /// The violations of one file and which occurrences they are.
@@ -567,10 +620,12 @@ fn judge(p: Parsed, hits: Vec<Hit>, config: &Config) -> Analysed {
     let violating = occurrences
         .iter()
         .enumerate()
-        .map(|(i, o)| match (allowed(config, &here, &o.id), found.get(&i)) {
-            (Some(_), None) => Within::Out,
-            _ => Within::In,
-        })
+        .map(
+            |(i, o)| match (allowed(config, &here, &o.id), found.get(&i)) {
+                (Some(_), None) => Within::Out,
+                _ => Within::In,
+            },
+        )
         .collect();
     let plain = occurrences
         .iter()
@@ -627,15 +682,14 @@ fn allowed(config: &Config, here: &[&config::Scope], id: &str) -> Option<()> {
 /// or else the smallest one of its id that contains it.
 fn found_at(occurrences: &[Occurrence], finding: &Finding) -> Option<usize> {
     let id = table::row(finding.rule).0;
-    let same = occurrences
-        .iter()
-        .enumerate()
-        .filter(|(_, o)| o.id == id);
+    let same = occurrences.iter().enumerate().filter(|(_, o)| o.id == id);
     same.clone()
         .find(|(_, o)| (o.at.line, o.at.col) == (finding.at.line, finding.at.col))
         .or_else(|| {
-            same.filter(|(_, o)| o.extent.start <= finding.at.byte && finding.at.byte < o.extent.end)
-                .min_by_key(|(_, o)| o.extent.len())
+            same.filter(|(_, o)| {
+                o.extent.start <= finding.at.byte && finding.at.byte < o.extent.end
+            })
+            .min_by_key(|(_, o)| o.extent.len())
         })
         .map(|(i, _)| i)
 }

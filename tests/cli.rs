@@ -55,13 +55,19 @@ fn run(dir: &Path, args: &[&str]) -> String {
         .current_dir(dir)
         .output()
         .expect("run subset");
-    let code = out.status.code().map_or("signal".to_string(), |c| c.to_string());
+    let code = out
+        .status
+        .code()
+        .map_or("signal".to_string(), |c| c.to_string());
     let stderr = String::from_utf8_lossy(&out.stderr);
     let errors = match stderr.as_ref() {
         "" => String::new(),
         text => format!("stderr:\n{text}"),
     };
-    format!("exit {code}\n{}{errors}", String::from_utf8_lossy(&out.stdout))
+    format!(
+        "exit {code}\n{}{errors}",
+        String::from_utf8_lossy(&out.stdout)
+    )
 }
 
 /// Text with Windows line ends read as Unix ones.
@@ -90,7 +96,12 @@ fn case(name: &str) -> Option<String> {
     };
     let got = commands
         .lines()
-        .map(|c| format!("$ {c}\n{}", run(&dir, &c.split_whitespace().collect::<Vec<&str>>())))
+        .map(|c| {
+            format!(
+                "$ {c}\n{}",
+                run(&dir, &c.split_whitespace().collect::<Vec<&str>>())
+            )
+        })
         .collect::<String>();
     let blessed = std::env::var("SUBSET_BLESS")
         .ok()
@@ -109,7 +120,10 @@ fn every_case_prints_what_it_expects() {
         .filter_map(|e| e.ok().map(|e| e.file_name().to_string_lossy().to_string()))
         .collect::<Vec<String>>();
     names.sort();
-    let failures = names.iter().filter_map(|n| case(n)).collect::<Vec<String>>();
+    let failures = names
+        .iter()
+        .filter_map(|n| case(n))
+        .collect::<Vec<String>>();
     assert_eq!(failures, Vec::<String>::new());
 }
 
@@ -129,7 +143,11 @@ fn readme_lists(command: &str) -> String {
 #[test]
 fn the_readme_lists_every_id_rule_and_score_only_id() {
     assert_eq!(
-        Vec::from([readme_lists("ids"), readme_lists("rules"), readme_lists("score-ids")]),
+        Vec::from([
+            readme_lists("ids"),
+            readme_lists("rules"),
+            readme_lists("score-ids")
+        ]),
         Vec::from(["ids: true", "rules: true", "score-ids: true"])
     );
 }
@@ -162,7 +180,10 @@ fn every_example_passes_the_subset() {
     for (path, code) in &files {
         write(&dir.join(path), code);
     }
-    assert_eq!((files.len(), run(&dir, &["check"])), (28, "exit 0\n".to_string()));
+    assert_eq!(
+        (files.len(), run(&dir, &["check"])),
+        (28, "exit 0\n".to_string())
+    );
 }
 
 fn write(path: &Path, text: &str) {
@@ -174,7 +195,14 @@ fn git(dir: &Path, args: &[&str]) -> String {
     let out = Command::new("git")
         .arg("-C")
         .arg(dir)
-        .args(["-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false"])
+        .args([
+            "-c",
+            "user.name=t",
+            "-c",
+            "user.email=t@t",
+            "-c",
+            "commit.gpgsign=false",
+        ])
         .args(args)
         .output()
         .expect("run git");
@@ -193,7 +221,18 @@ fn report_html_writes_one_static_page_with_history() {
     git(&dir, &["commit", "-q", "-m", "one"]);
     write(&dir.join("lights/src/lib.rs"), "enum Light { On, Off }\n");
     git(&dir, &["commit", "-q", "-am", "two"]);
-    let printed = run(&dir, &["report-html", "--out", "site", "--compare", "other", "--history", "5"]);
+    let printed = run(
+        &dir,
+        &[
+            "report-html",
+            "--out",
+            "site",
+            "--compare",
+            "other",
+            "--history",
+            "5",
+        ],
+    );
     let html = read(&dir.join("site/index.html"));
     let missing = Vec::from([
         "Comparison",
@@ -235,7 +274,12 @@ fn every_allowed_id_has_a_weight() {
     let scoped = config
         .get("scope")
         .and_then(toml::Value::as_array)
-        .map(|scopes| scopes.iter().flat_map(|s| strings(s.get("allowed"))).collect::<Vec<String>>())
+        .map(|scopes| {
+            scopes
+                .iter()
+                .flat_map(|s| strings(s.get("allowed")))
+                .collect::<Vec<String>>()
+        })
         .unwrap_or_default();
     let score_only = run(&root(), &["score-ids"])
         .lines()
@@ -244,7 +288,10 @@ fn every_allowed_id_has_a_weight() {
         .filter(|id| id != &"field.wire")
         .map(ToString::to_string)
         .collect::<Vec<String>>();
-    let weighted = config.get("weights").and_then(|w| w.get("ids")).and_then(toml::Value::as_table);
+    let weighted = config
+        .get("weights")
+        .and_then(|w| w.get("ids"))
+        .and_then(toml::Value::as_table);
     let missing = strings(config.get("allowed"))
         .into_iter()
         .chain(scoped)

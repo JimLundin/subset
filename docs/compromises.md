@@ -1,8 +1,8 @@
 # Where the subset gives ground
 
 The thesis is that **every state is a named enum variant and every decision is
-a `match`**, protected by seven qualities (`docs/subset.md`). Version 8 accepts
-35 proposals, two of which (0038, 0039) only narrow the checker. Most keep all
+a `match`**, protected by seven qualities (`docs/subset.md`). Version 9 accepts
+38 proposals, two of which (0038, 0039) only narrow the checker. Most keep all
 the qualities. The ones below don't, or they bend
 the thesis at its edges. Each is confined by its rule, and this page is the
 list to revisit first when one of them starts to spread.
@@ -15,6 +15,8 @@ list to revisit first when one of them starts to spread.
 | **0035** `&mut self` on stream endpoints | **Forward data flow**, for the listed stream types. Their methods change the endpoint in place, anywhere in the code, not only inside loop state. | A stream's state (bytes consumed, the peer's window) lives outside the program, so returning the half by value only made every caller thread the handle back. The client's stream code shrank 21.9% (score -19.5%), and `FrameBuffer` 18.6%. | A named list, `endpoints` in `subset.toml`, that grows only by review. Each type wraps a library stream or channel whose own API takes `&mut`, or is the reassembly buffer of one. No `&mut` parameters of our types. Every other type of ours keeps 0008's reach. |
 | **0018** Dioxus (`rsx!`, signals) | **Visible branching** and **forward data flow**, inside the UI crate. Markup can branch where the checker can't see, and signals are reactive state that Dioxus owns. | There is no other way to build the UI. | `crates/app` only. Decisions are made in `client`, and markup only renders their results. |
 | **0009** trait impls | **Local reasoning**, slightly. A library calls our code from somewhere else. | There's no way around it for `Drop`, hand-written `Debug`/serde, and framework hooks such as iroh's `ProtocolHandler`. | A closed list of traits. `Display`, `From` and `FromStr` are written as plain methods instead. |
+| **0043** `bool` on wire types | **Named states**, at the wire: a protocol's flag is a `bool` field. | The vendored SDKs' JSON has `is_error` and `interrupt` flags; without it each needed a duplicate struct or a bool-carrying enum (issue #1). | Only fields of serde-derived types, which 0012 confines to the wire modules. A flag read from the wire becomes an enum before it reaches our types, by review. |
+| **0045** `Visit` | **Forward data flow** and **local reasoning**, inside a visitor: syn calls our `&mut self` methods as it walks, and state lives on the visitor. | The checker's walk is 27% smaller in tokens than one fn per syntax node kind (proposal 0045). | Only implementors of syn's `Visit`, which count as 0035 endpoints and nothing more. |
 | **0011** `#[from]` | **Local reasoning**, slightly: the error conversion isn't written at the `?`. **One way** is at risk, since `?` alone and `map_err` both exist. | It is 17% shorter across 20 sites. | Only when exactly one variant holds that error type, ours or a library's. Otherwise use `map_err`, so a fact about the enum decides between the two, not taste. |
 
 ## The thesis bends at its edges

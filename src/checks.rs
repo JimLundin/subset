@@ -13,11 +13,11 @@ use syn::{
 };
 
 use crate::facts::{CfgItem, Element, Fact, Facts};
-use crate::syntax::{self, Extent};
+use crate::syntax;
 use crate::table::Rule;
 use crate::walk::{
-    Callee, Cx, Env, Fixed, Func, Generics, Hit, Host, Owner, Receiver, Refinement, Slot,
-    Within, flag, join, mark, unless, when,
+    Callee, Cx, Env, Fixed, Func, Generics, Hit, Host, Owner, Receiver, Refinement, Slot, Within,
+    flag, join, mark, unless, when,
 };
 
 /// Where a named library item stands (proposals 0038, 0039).
@@ -84,7 +84,9 @@ pub(crate) fn std_root(segments: Vec<String>) -> Vec<String> {
 /// `pub(crate)`, the one restricted visibility 0003 allows.
 pub(crate) fn pub_crate(vis: &Visibility) -> Option<&syn::VisRestricted> {
     match vis {
-        Visibility::Restricted(r) => Some(r).filter(|r| r.in_token.is_none() && r.path.is_ident("crate")),
+        Visibility::Restricted(r) => {
+            Some(r).filter(|r| r.in_token.is_none() && r.path.is_ident("crate"))
+        }
         _ => None,
     }
 }
@@ -92,7 +94,11 @@ pub(crate) fn pub_crate(vis: &Visibility) -> Option<&syn::VisRestricted> {
 pub(crate) fn globs(tree: &syn::UseTree, prefix: &Vec<String>) -> Vec<Hit> {
     match tree {
         syn::UseTree::Path(p) => {
-            let longer = prefix.iter().cloned().chain(Some(p.ident.to_string())).collect();
+            let longer = prefix
+                .iter()
+                .cloned()
+                .chain(Some(p.ident.to_string()))
+                .collect();
             globs(&p.tree, &longer)
         }
         syn::UseTree::Glob(g) => match prefix.join("::").as_str() {
@@ -158,7 +164,10 @@ pub(crate) fn serde(attr: &Attribute) -> Vec<Hit> {
         .iter()
         .find(|k| k.as_str() == "skip_serializing_if")
         .filter(|_| !syntax::attr_tokens(attr).contains("skip_serializing_if=\"Option::is_none\""));
-    when(unlisted.or(skip).and(Some(())), flag(attr.pound_token.span, Rule::SerdeKeys))
+    when(
+        unlisted.or(skip).and(Some(())),
+        flag(attr.pound_token.span, Rule::SerdeKeys),
+    )
 }
 
 /// What a `thiserror::Error` derive is on.
@@ -169,7 +178,12 @@ pub(crate) enum ErrorHost {
     Enum,
 }
 
-pub(crate) fn thiserror(attrs: &[Attribute], ident: &syn::Ident, host: ErrorHost, env: &Env) -> Vec<Hit> {
+pub(crate) fn thiserror(
+    attrs: &[Attribute],
+    ident: &syn::Ident,
+    host: ErrorHost,
+    env: &Env,
+) -> Vec<Hit> {
     let name = ident.to_string();
     let error = Some(&name)
         .filter(|n| n.ends_with("Error"))
@@ -208,7 +222,7 @@ pub(crate) fn messages(item: &[Attribute], attrs: &[Attribute], at: Span) -> Vec
 fn has_message(attr: &Attribute) -> Option<()> {
     match &attr.meta {
         Meta::List(list) => match list.tokens.clone().into_iter().next() {
-            Some(TokenTree::Literal(lit)) => Some(()).filter(|_| lit.to_string().starts_with('"')),
+            Some(TokenTree::Literal(lit)) => lit.to_string().starts_with('"').then_some(()),
             _ => None,
         },
         _ => None,
@@ -264,7 +278,7 @@ pub(crate) fn str_ref(ty: &Type) -> Option<&Type> {
     match ty {
         Type::Reference(r) => match (r.mutability, r.elem.as_ref()) {
             (None, Type::Path(p)) => match p.qself {
-                None => Some(ty).filter(|_| p.path.is_ident("str")),
+                None => p.path.is_ident("str").then_some(ty),
                 Some(_) => None,
             },
             _ => None,
@@ -327,7 +341,7 @@ enum Phase {
 /// A path as a module path within the file: `self::` and `super::`
 /// resolved, a bare name in the current module. `crate::` paths and paths
 /// with generic arguments don't resolve.
-pub(crate) fn resolve(path: &syn::Path, module: &Vec<String>) -> Option<Vec<String>> {
+pub(crate) fn resolve(path: &syn::Path, module: &[String]) -> Option<Vec<String>> {
     let generic = path
         .segments
         .iter()
@@ -336,13 +350,13 @@ pub(crate) fn resolve(path: &syn::Path, module: &Vec<String>) -> Option<Vec<Stri
         (None, None) => path
             .segments
             .iter()
-            .try_fold((module.clone(), Phase::Prefix), |(out, phase), s| {
+            .try_fold((module.to_vec(), Phase::Prefix), |(out, phase), s| {
                 let name = s.ident.to_string();
                 match (phase, name.as_str()) {
                     (Phase::Prefix, "self") => Some((out, Phase::Prefix)),
-                    (Phase::Prefix, "super") => {
-                        out.split_last().map(|(_, rest)| (rest.to_vec(), Phase::Prefix))
-                    }
+                    (Phase::Prefix, "super") => out
+                        .split_last()
+                        .map(|(_, rest)| (rest.to_vec(), Phase::Prefix)),
                     (Phase::Prefix, "crate") => None,
                     _ => Some((out.into_iter().chain(Some(name)).collect(), Phase::Names)),
                 }
@@ -400,7 +414,11 @@ fn takes_input(stmt: &Stmt) -> Option<()> {
         Stmt::Expr(Expr::Match(m), _) => awaits(m.expr.as_ref()).or(m
             .arms
             .iter()
-            .all(|arm| select_expr(arm.body.as_ref()).or(awaits(arm.body.as_ref())).is_some())
+            .all(|arm| {
+                select_expr(arm.body.as_ref())
+                    .or(awaits(arm.body.as_ref()))
+                    .is_some()
+            })
             .then_some(())),
         Stmt::Expr(expr, _) => awaits(expr),
         Stmt::Item(_) => None,
@@ -447,7 +465,10 @@ fn awaits(expr: &Expr) -> Option<()> {
 /// The type a `let mut` loop state is built from: its ascribed type, the
 /// struct it constructs, or the type of the associated fn it calls.
 fn state_type(local: &Local) -> Option<String> {
-    match (&local.pat, local.init.as_ref().map(|i| syntax::strip(i.expr.as_ref()))) {
+    match (
+        &local.pat,
+        local.init.as_ref().map(|i| syntax::strip(i.expr.as_ref())),
+    ) {
         (Pat::Type(t), _) => syntax::type_name(t.ty.as_ref()),
         (_, Some(Expr::Struct(e))) => Some(syntax::last_name(&e.path)),
         (_, Some(Expr::Call(call))) => match call.func.as_ref() {
@@ -519,13 +540,13 @@ pub(crate) fn func(sig: &syn::Signature, block: &Block, env: &Env) -> Func {
         .filter(|(_, init)| some_call(init).is_some())
         .map(|(name, _)| name)
         .collect();
-    let stream_bindings = locals
-        .iter()
-        .filter_map(|l| named_local(l))
-        .fold(BTreeSet::new(), |names, (name, init)| match stream_root(init, &names) {
+    let stream_bindings = locals.iter().filter_map(|l| named_local(l)).fold(
+        BTreeSet::new(),
+        |names, (name, init)| match stream_root(init, &names) {
             Some(_) => names.into_iter().chain(Some(name)).collect(),
             None => names,
-        });
+        },
+    );
     let table_bindings = locals
         .iter()
         .filter_map(|l| named_local(l))
@@ -702,9 +723,12 @@ pub(crate) fn local(local: &Local, cx: &Cx, env: &Env) -> (Vec<Hit>, Within) {
         pat => (pat, None),
     };
     let ours = match (binding, state) {
-        (Pat::Ident(p), None) => p
-            .mutability
-            .and(mut_of_ours(ty, local.init.as_ref().map(|i| i.expr.as_ref()), cx, env)),
+        (Pat::Ident(p), None) => p.mutability.and(mut_of_ours(
+            ty,
+            local.init.as_ref().map(|i| i.expr.as_ref()),
+            cx,
+            env,
+        )),
         _ => None,
     };
     let let_mut = match name {
@@ -719,9 +743,18 @@ pub(crate) fn local(local: &Local, cx: &Cx, env: &Env) -> (Vec<Hit>, Within) {
         extent,
     }))
     .chain(discard)
-    .chain(when(reassigned.and(Some(())), flag(local.let_token.span, Rule::LetMut)))
-    .chain(when(ours.and(Some(())), flag(local.let_token.span, Rule::LetMutOurs)))
-    .chain(when(mutable.and(Some(())), mark(local.span(), Fixed::Always)))
+    .chain(when(
+        reassigned.and(Some(())),
+        flag(local.let_token.span, Rule::LetMut),
+    ))
+    .chain(when(
+        ours.and(Some(())),
+        flag(local.let_token.span, Rule::LetMutOurs),
+    ))
+    .chain(when(
+        mutable.and(Some(())),
+        mark(local.span(), Fixed::Always),
+    ))
     .collect();
     (hits, let_mut)
 }
@@ -754,12 +787,12 @@ pub(crate) fn ask_build(vis: &Visibility, sig: &syn::Signature) -> Option<()> {
         (Some(GenericParam::Type(t)), 1) => Some(t),
         _ => None,
     }?;
-    let plain = match (t.bounds.first(), &t.default, &sig.generics.where_clause) {
+    match (t.bounds.first(), &t.default, &sig.generics.where_clause) {
         (None, None, None) => Some(()),
         _ => None,
     }?;
-    let header = match (sig.ident.to_string().as_str(), vis, sig.inputs.len()) {
-        ("ask", Visibility::Inherited, 2) => Some(plain),
+    match (sig.ident.to_string().as_str(), vis, sig.inputs.len()) {
+        ("ask", Visibility::Inherited, 2) => Some(()),
         _ => None,
     }?;
     let build = match sig.inputs.last() {
@@ -782,25 +815,30 @@ pub(crate) fn ask_build(vis: &Visibility, sig: &syn::Signature) -> Option<()> {
         (Some(Type::Path(sender)), 1) => Some(sender),
         _ => None,
     }?;
-    let reply = match &sender.path.segments.last()?.arguments {
+    match &sender.path.segments.last()?.arguments {
         PathArguments::AngleBracketed(a) => match (a.args.first(), a.args.len()) {
             (Some(syn::GenericArgument::Type(Type::Path(p))), 1) => {
-                Some(()).filter(|_| p.path.is_ident(&t.ident))
+                p.path.is_ident(&t.ident).then_some(())
             }
             _ => None,
         },
         _ => None,
     }?;
-    let message = match syntax::returned(&args.output) {
-        Some(Type::Path(_)) => Some(reply),
+    match syntax::returned(&args.output) {
+        Some(Type::Path(_)) => Some(()),
         _ => None,
     }?;
     let names = syntax::segments(&sender.path);
     let tail = Vec::from(["oneshot".to_string(), "Sender".to_string()]);
-    Some(message).filter(|_| {
-        fn_once.path.segments.len() == 1 && segment.ident == "FnOnce" && names.ends_with(&tail)
-    })?;
-    Some(header)
+    let sender = names.ends_with(&tail).then_some(());
+    match (
+        fn_once.path.segments.len(),
+        segment.ident.to_string().as_str(),
+        sender,
+    ) {
+        (1, "FnOnce", Some(_)) => Some(()),
+        _ => None,
+    }
 }
 
 /// The codec bounds of proposal 0013.
@@ -820,9 +858,9 @@ pub(crate) fn generic_param(p: &GenericParam, g: &syn::Generics, cx: &Cx, env: &
     let rule = match p {
         GenericParam::Type(t) => {
             let single = match (t.bounds.first(), t.bounds.len(), &g.where_clause) {
-                (Some(TypeParamBound::Trait(b)), 1, None) => {
-                    Some(()).filter(|_| CODEC_BOUNDS.contains(&syntax::last_name(&b.path).as_str()))
-                }
+                (Some(TypeParamBound::Trait(b)), 1, None) => CODEC_BOUNDS
+                    .contains(&syntax::last_name(&b.path).as_str())
+                    .then_some(()),
                 _ => None,
             };
             let codec = match cx.generics {
@@ -830,14 +868,21 @@ pub(crate) fn generic_param(p: &GenericParam, g: &syn::Generics, cx: &Cx, env: &
                 Generics::Ask => Some(()),
                 Generics::Item => None,
             };
-            unless(cx.library().and(Some(())).or(codec), flag(p.span(), Rule::TypeParam))
+            unless(
+                cx.library().and(Some(())).or(codec),
+                flag(p.span(), Rule::TypeParam),
+            )
         }
-        GenericParam::Lifetime(_) => {
-            unless(cx.library().and(Some(())), flag(p.span(), Rule::LifetimeParam))
-        }
+        GenericParam::Lifetime(_) => unless(
+            cx.library().and(Some(())),
+            flag(p.span(), Rule::LifetimeParam),
+        ),
         GenericParam::Const(_) => Vec::new(),
     };
-    join(Vec::from([when(fixed, mark(p.span(), Fixed::Always)), rule]))
+    join(Vec::from([
+        when(fixed, mark(p.span(), Fixed::Always)),
+        rule,
+    ]))
 }
 
 /// A trait bound naming a trait we don't define.
@@ -861,7 +906,9 @@ pub(crate) fn type_matches(pattern: &Type, ty: &Type, facts: &Facts) -> Option<(
         (Type::Paren(p), _) => type_matches(p.elem.as_ref(), ty, facts),
         (_, Type::Paren(t)) => type_matches(pattern, t.elem.as_ref(), facts),
         (Type::Reference(p), Type::Reference(t)) => match (p.mutability, t.mutability) {
-            (Some(_), Some(_)) | (None, None) => type_matches(p.elem.as_ref(), t.elem.as_ref(), facts),
+            (Some(_), Some(_)) | (None, None) => {
+                type_matches(p.elem.as_ref(), t.elem.as_ref(), facts)
+            }
             _ => None,
         },
         (Type::Path(p), Type::Path(t)) => match (&p.qself, &t.qself) {
@@ -871,7 +918,11 @@ pub(crate) fn type_matches(pattern: &Type, ty: &Type, facts: &Facts) -> Option<(
         (Type::TraitObject(p), Type::TraitObject(t)) => p
             .bounds
             .iter()
-            .all(|pb| t.bounds.iter().any(|tb| bounds_match(pb, tb, facts).is_some()))
+            .all(|pb| {
+                t.bounds
+                    .iter()
+                    .any(|tb| bounds_match(pb, tb, facts).is_some())
+            })
             .then_some(()),
         _ => None,
     }
@@ -879,7 +930,9 @@ pub(crate) fn type_matches(pattern: &Type, ty: &Type, facts: &Facts) -> Option<(
 
 fn bounds_match(pattern: &TypeParamBound, bound: &TypeParamBound, facts: &Facts) -> Option<()> {
     match (pattern, bound) {
-        (TypeParamBound::Trait(p), TypeParamBound::Trait(b)) => path_matches(&p.path, &b.path, facts),
+        (TypeParamBound::Trait(p), TypeParamBound::Trait(b)) => {
+            path_matches(&p.path, &b.path, facts)
+        }
         _ => None,
     }
 }
@@ -919,7 +972,11 @@ fn path_matches(pattern: &syn::Path, path: &syn::Path, facts: &Facts) -> Option<
         _ => None,
     };
     match (bare_and_ours, args) {
-        (None, Some(_)) => Some(()).filter(|_| shared > 0 && want_tail == have_tail),
+        (None, Some(_)) => match (shared, want_tail) {
+            (0, _) => None,
+            (_, tail) if tail == have_tail => Some(()),
+            _ => None,
+        },
         _ => None,
     }
 }
@@ -930,7 +987,11 @@ pub(crate) fn transparent(ty: &Type, env: &Env) -> Option<()> {
         Type::Path(p) => match (&p.qself, crate::walk::ours(&p.path, env)) {
             (None, Owner::Theirs) => {
                 let last = syntax::last_name(&p.path);
-                env.lists.transparent.iter().find(|t| t == &&last).and(Some(()))
+                env.lists
+                    .transparent
+                    .iter()
+                    .find(|t| t == &&last)
+                    .and(Some(()))
             }
             _ => None,
         },
@@ -1005,7 +1066,11 @@ pub(crate) fn ty(t: &Type, cx: &Cx, env: &Env) -> Vec<Hit> {
             Some(_) => Vec::new(),
         },
         Type::Reference(r) => {
-            let static_str = r.lifetime.as_ref().and(static_str(t)).and(r.lifetime.as_ref());
+            let static_str = r
+                .lifetime
+                .as_ref()
+                .and(static_str(t))
+                .and(r.lifetime.as_ref());
             let row = match slot {
                 Slot::RowField => Some(()),
                 _ => None,
@@ -1038,7 +1103,7 @@ pub(crate) fn ty(t: &Type, cx: &Cx, env: &Env) -> Vec<Hit> {
         }
         Type::Array(a) => {
             let bytes = match a.elem.as_ref() {
-                Type::Path(p) => Some(()).filter(|_| p.path.is_ident("u8")),
+                Type::Path(p) => p.path.is_ident("u8").then_some(()),
                 _ => None,
             };
             unless(bytes, flag(a.span(), Rule::ArrayType))
@@ -1049,12 +1114,10 @@ pub(crate) fn ty(t: &Type, cx: &Cx, env: &Env) -> Vec<Hit> {
         },
         Type::TraitObject(o) => {
             let fn_mut = match (o.bounds.first(), o.bounds.len()) {
-                (Some(TypeParamBound::Trait(b)), 1) => {
-                    match syntax::last_name(&b.path).as_str() {
-                        "FnMut" => Some(()),
-                        _ => None,
-                    }
-                }
+                (Some(TypeParamBound::Trait(b)), 1) => match syntax::last_name(&b.path).as_str() {
+                    "FnMut" => Some(()),
+                    _ => None,
+                },
                 _ => None,
             };
             let in_closure = match slot {
@@ -1066,7 +1129,10 @@ pub(crate) fn ty(t: &Type, cx: &Cx, env: &Env) -> Vec<Hit> {
             };
             unless(fn_mut.and(in_closure), flag(o.span(), Rule::Dyn))
         }
-        Type::Path(p) => match (&p.qself, p.path.get_ident().map(ToString::to_string).as_deref()) {
+        Type::Path(p) => match (
+            &p.qself,
+            p.path.get_ident().map(ToString::to_string).as_deref(),
+        ) {
             (None, Some("bool")) => unless(
                 library_type_arg(slot).or(match slot {
                     Slot::ClapField | Slot::WireField => Some(()),
@@ -1114,7 +1180,6 @@ struct Matches {
 }
 
 fn parse_matches(mac: &syn::Macro) -> Option<Matches> {
-    use syn::parse::Parser;
     mac.parse_body_with(matches_body).ok()
 }
 
@@ -1149,7 +1214,10 @@ fn bool_pattern(pat: &Pat) -> Option<()> {
             syn::Lit::Bool(_) => Some(()),
             _ => None,
         },
-        Pat::Ident(p) => p.subpat.as_ref().and_then(|(_, sub)| bool_pattern(sub.as_ref())),
+        Pat::Ident(p) => p
+            .subpat
+            .as_ref()
+            .and_then(|(_, sub)| bool_pattern(sub.as_ref())),
         Pat::Or(p) => p.cases.iter().find_map(bool_pattern),
         Pat::Paren(p) => bool_pattern(p.pat.as_ref()),
         Pat::Reference(p) => bool_pattern(p.pat.as_ref()),
@@ -1181,7 +1249,9 @@ fn place_or_call(expr: &Expr) -> Option<()> {
         },
         Expr::MethodCall(e) => place_or_call(e.receiver.as_ref())
             .and(e.args.iter().try_fold((), |_, e| place_or_call(e))),
-        Expr::Call(e) => place_or_call(e.func.as_ref()).and(e.args.iter().try_fold((), |_, e| place_or_call(e))),
+        Expr::Call(e) => {
+            place_or_call(e.func.as_ref()).and(e.args.iter().try_fold((), |_, e| place_or_call(e)))
+        }
         _ => None,
     }
 }
@@ -1210,7 +1280,7 @@ pub(crate) fn leaves(expr: &Expr) -> usize {
 fn field_of_self(expr: &Expr) -> Option<()> {
     match expr {
         Expr::Field(f) => match f.base.as_ref() {
-            Expr::Path(p) => Some(()).filter(|_| p.path.is_ident("self")),
+            Expr::Path(p) => p.path.is_ident("self").then_some(()),
             base => field_of_self(base),
         },
         _ => None,
@@ -1313,7 +1383,7 @@ fn is_drop(path: &syn::Path) -> Option<()> {
     let tail = Vec::from(["mem".to_string(), "drop".to_string()]);
     match (names.first().map(String::as_str), names.len()) {
         (Some("drop"), 1) => Some(()),
-        _ => Some(()).filter(|_| names.ends_with(&tail)),
+        _ => names.ends_with(&tail).then_some(()),
     }
 }
 
@@ -1345,7 +1415,10 @@ pub(crate) fn call(c: &syn::ExprCall, callee: &Callee, cx: &Cx) -> Vec<Hit> {
         .filter(|_| matches!(callee.owner, Owner::Theirs));
     join(Vec::from([
         when(compares.and(Some(())), flag(c.func.span(), Rule::LiftEq)),
-        when(drop.and(absent(named)), flag(c.func.span(), Rule::DropDiscard)),
+        when(
+            drop.and(absent(named)),
+            flag(c.func.span(), Rule::DropDiscard),
+        ),
         when(range.and(Some(())), flag(c.func.span(), Rule::RangeCall)),
     ]))
 }
@@ -1371,7 +1444,7 @@ pub(crate) fn path_expr(p: &syn::ExprPath, cx: &Cx, env: &Env) -> Vec<Hit> {
 pub(crate) fn struct_expr(s: &syn::ExprStruct, owner: Owner, cx: &Cx) -> Vec<Hit> {
     let last = syntax::last_name(&s.path);
     let range = match (owner, cx.iterated) {
-        (Owner::Theirs, Within::Out) => Some(()).filter(|_| RANGE_TYPES.contains(&last.as_str())),
+        (Owner::Theirs, Within::Out) => RANGE_TYPES.contains(&last.as_str()).then_some(()),
         _ => None,
     };
     let base = s.rest.as_ref().and_then(|rest| match rest.as_ref() {
@@ -1385,20 +1458,23 @@ pub(crate) fn struct_expr(s: &syn::ExprStruct, owner: Owner, cx: &Cx) -> Vec<Hit
 }
 
 pub(crate) fn closure(c: &syn::ExprClosure, slot: &Slot, env: &Env) -> Vec<Hit> {
-    let known = match slot {
+    match slot {
         Slot::MethodArg { method, .. } => match takes_closure(method, env) {
             Some(_) => Vec::new(),
             None => Vec::from([flag(c.span(), Rule::ClosureMethod)]),
         },
         Slot::CallArg(callee) => {
-            let names = callee.path.iter().map(String::as_str).collect::<Vec<&str>>();
-            let wrapped = Some(()).filter(|_| names.ends_with(&["Closure", "new"]));
-            let listed = Some(()).filter(|_| CLOSURE_CALLEES.contains(&callee.last()));
+            let names = callee
+                .path
+                .iter()
+                .map(String::as_str)
+                .collect::<Vec<&str>>();
+            let wrapped = names.ends_with(&["Closure", "new"]).then_some(());
+            let listed = CLOSURE_CALLEES.contains(&callee.last()).then_some(());
             unless(wrapped.or(listed), flag(c.span(), Rule::Closure))
         }
         _ => Vec::from([flag(c.span(), Rule::Closure)]),
-    };
-    known
+    }
 }
 
 fn predicate_method(method: &str, env: &Env) -> Option<()> {
@@ -1499,7 +1575,10 @@ fn stream_root(expr: &Expr, streams: &BTreeSet<String>) -> Option<()> {
                 let path = syntax::segments(&p.path);
                 let tail = Vec::from(["stream".to_string(), "iter".to_string()]);
                 let bare = Vec::from(["iter".to_string()]);
-                Some(()).filter(|_| path.ends_with(&tail) || path == bare)
+                path.ends_with(&tail).then_some(()).or(match path {
+                    p if p == bare => Some(()),
+                    _ => None,
+                })
             }
             _ => None,
         },
@@ -1550,16 +1629,19 @@ pub(crate) fn method(m: &syn::ExprMethodCall, cx: &Cx, env: &Env) -> Vec<Hit> {
         _ => None,
     };
     let lift = match (method.as_str(), m.args.first()) {
-        ("filter" | "find", Some(Expr::Closure(c))) => built_option(m.receiver.as_ref(), some_bindings)
-            .and(comparison(c.body.as_ref())),
+        ("filter" | "find", Some(Expr::Closure(c))) => {
+            built_option(m.receiver.as_ref(), some_bindings).and(comparison(c.body.as_ref()))
+        }
         _ => None,
     };
-    let by_name = Some(())
-        .filter(|_| COMPARE_METHODS.contains(&method.as_str()))
+    let by_name = COMPARE_METHODS
+        .contains(&method.as_str())
+        .then_some(())
         .filter(|_| m.args.len() == 1);
     let ordering = match m.receiver.as_ref() {
-        Expr::MethodCall(r) => Some(())
-            .filter(|_| ORDERING_TESTS.contains(&method.as_str()))
+        Expr::MethodCall(r) => ORDERING_TESTS
+            .contains(&method.as_str())
+            .then_some(())
             .filter(|_| r.method == "cmp" || r.method == "partial_cmp"),
         _ => None,
     };
@@ -1579,7 +1661,8 @@ pub(crate) fn method(m: &syn::ExprMethodCall, cx: &Cx, env: &Env) -> Vec<Hit> {
         _ => None,
     };
     let mapped = match (method.as_str(), m.args.first(), m.receiver.as_ref()) {
-        ("map", Some(Expr::Closure(c)), Expr::Await(a)) => match (c.body.as_ref(), a.base.as_ref()) {
+        ("map", Some(Expr::Closure(c)), Expr::Await(a)) => match (c.body.as_ref(), a.base.as_ref())
+        {
             (Expr::Tuple(t), Expr::MethodCall(inner)) => {
                 match (t.elems.first(), inner.method.to_string().as_str()) {
                     (None, "try_collect") => stream_root(inner.receiver.as_ref(), streams),
@@ -1598,20 +1681,18 @@ pub(crate) fn method(m: &syn::ExprMethodCall, cx: &Cx, env: &Env) -> Vec<Hit> {
         "rposition" => Some(()),
         _ => None,
     };
-    let keyed = predicate_method(&method, env)
-        .or(rposition)
-        .and_then(|_| {
-            let bindings = cx
-                .func
-                .as_ref()
-                .map(|f| f.table_bindings.clone())
-                .unwrap_or_default();
-            let scan = env.tables.scanned(m.receiver.as_ref(), &bindings)?;
-            match m.args.first() {
-                Some(Expr::Closure(c)) => keyed(c, &scan),
-                _ => None,
-            }
-        });
+    let keyed = predicate_method(&method, env).or(rposition).and_then(|_| {
+        let bindings = cx
+            .func
+            .as_ref()
+            .map(|f| f.table_bindings.clone())
+            .unwrap_or_default();
+        let scan = env.tables.scanned(m.receiver.as_ref(), &bindings)?;
+        match m.args.first() {
+            Some(Expr::Closure(c)) => keyed(c, &scan),
+            _ => None,
+        }
+    });
     join(Vec::from([
         when(ord, flag(at, Rule::OrdInner)),
         when(count, flag(at, Rule::Count)),
@@ -1771,8 +1852,13 @@ fn constant(expr: &Expr) -> Option<()> {
             .and(Some(())),
         Expr::Reference(e) => constant(e.expr.as_ref()),
         Expr::Paren(e) => constant(e.expr.as_ref()),
-        Expr::Call(c) => constant(c.func.as_ref()).and(c.args.iter().try_fold((), |_, e| constant(e))),
-        Expr::Tuple(t) => t.elems.first().and(t.elems.iter().try_fold((), |_, e| constant(e))),
+        Expr::Call(c) => {
+            constant(c.func.as_ref()).and(c.args.iter().try_fold((), |_, e| constant(e)))
+        }
+        Expr::Tuple(t) => t
+            .elems
+            .first()
+            .and(t.elems.iter().try_fold((), |_, e| constant(e))),
         Expr::Struct(s) => match s.rest {
             None => s.fields.iter().try_fold((), |_, f| constant(&f.expr)),
             Some(_) => None,
@@ -1835,12 +1921,14 @@ fn covers_rest(general: &Pat, specific: &Pat) -> Option<()> {
         (Pat::TupleStruct(g), Pat::TupleStruct(s)) => {
             same_path(&g.path, &s.path).and(all_cover(&g.elems, &s.elems))
         }
-        (Pat::Struct(g), Pat::Struct(s)) => same_path(&g.path, &s.path).and(g.fields.iter().try_fold((), |_, field| {
+        (Pat::Struct(g), Pat::Struct(s)) => {
+            same_path(&g.path, &s.path).and(g.fields.iter().try_fold((), |_, field| {
                 match s.fields.iter().find(|f| f.member == field.member) {
                     Some(theirs) => covers(field.pat.as_ref(), theirs.pat.as_ref()),
                     None => wild_covered(field.pat.as_ref()),
                 }
-            })),
+            }))
+        }
         (g, s) => same(g, s),
     }
 }
@@ -1901,7 +1989,8 @@ pub(crate) fn guards(m: &syn::ExprMatch) -> Vec<Hit> {
                     Expr::Binary(e) => match comparison_op(&e.op) {
                         Some(_) => join(Vec::from([
                             unless(
-                                rooted_in(e.left.as_ref(), &bound).or(rooted_in(e.right.as_ref(), &bound)),
+                                rooted_in(e.left.as_ref(), &bound)
+                                    .or(rooted_in(e.right.as_ref(), &bound)),
                                 flag(at, Rule::GuardBound),
                             ),
                             when(
@@ -1927,12 +2016,14 @@ pub(crate) fn guards(m: &syn::ExprMatch) -> Vec<Hit> {
                     }
                     _ => Vec::from([flag(at, Rule::Guard)]),
                 };
-                let fallback = m
-                    .arms
-                    .iter()
-                    .skip(i.saturating_add(1))
-                    .find(|later| later.guard.is_none() && covers(&later.pat, &arm.pat).is_some());
-                join(Vec::from([shape, unless(fallback.and(Some(())), flag(at, Rule::GuardFallback))]))
+                let fallback =
+                    m.arms.iter().skip(i.saturating_add(1)).find(|later| {
+                        later.guard.is_none() && covers(&later.pat, &arm.pat).is_some()
+                    });
+                join(Vec::from([
+                    shape,
+                    unless(fallback.and(Some(())), flag(at, Rule::GuardFallback)),
+                ]))
             }
             None => Vec::new(),
         })
@@ -1960,7 +2051,12 @@ fn keyed(closure: &syn::ExprClosure, scan: &Scan) -> Option<()> {
         },
         (Within::In, _) => None,
     }?;
-    compares(&binding(row, &scan.keys), closure.body.as_ref(), Within::Out, &scan.keys)
+    compares(
+        &binding(row, &scan.keys),
+        closure.body.as_ref(),
+        Within::Out,
+        &scan.keys,
+    )
 }
 
 /// How a predicate closure binds a row.
@@ -1989,9 +2085,10 @@ fn binding(pat: &Pat, keys: &Element) -> Binding {
         Pat::Struct(s) => Binding::Parts(
             s.fields
                 .iter()
-                .filter_map(|f| match &f.member {
-                    syn::Member::Named(name) => Some(f).filter(|_| fields.contains(&name.to_string())),
-                    syn::Member::Unnamed(_) => None,
+                .filter(|f| {
+                    member_name(&f.member)
+                        .filter(|n| fields.contains(n))
+                        .is_some()
                 })
                 .filter_map(|f| pat_name(f.pat.as_ref()))
                 .collect(),
@@ -2045,12 +2142,12 @@ fn compares(b: &Binding, expr: &Expr, negated: Within, keys: &Element) -> Option
                 _ => None,
             }
             .and(match e.receiver.as_ref() {
-                    Expr::MethodCall(c) => Some(c)
-                        .filter(|c| c.method == "cmp" || c.method == "partial_cmp")
-                        .and_then(|c| c.args.first().filter(|_| c.args.len() == 1).map(|a| (c, a))),
-                    _ => None,
-                })
-                .and_then(|(c, arg)| equal(b, c.receiver.as_ref(), arg, keys));
+                Expr::MethodCall(c) => Some(c)
+                    .filter(|c| c.method == "cmp" || c.method == "partial_cmp")
+                    .and_then(|c| c.args.first().filter(|_| c.args.len() == 1).map(|a| (c, a))),
+                _ => None,
+            })
+            .and_then(|(c, arg)| equal(b, c.receiver.as_ref(), arg, keys));
             named.or(ordering)
         }
         Expr::Call(e) => {
@@ -2090,16 +2187,19 @@ fn key(b: &Binding, expr: &Expr, keys: &Element) -> Option<()> {
             UnOp::Deref(_) => key(b, e.expr.as_ref(), keys),
             _ => None,
         },
-        (Binding::Whole(name), Expr::Path(p), Element::Str) => {
-            Some(()).filter(|_| p.path.is_ident(name))
-        }
-        (Binding::Whole(name), Expr::Field(f), Element::Tuple(fields) | Element::Fields(fields)) => {
+        (Binding::Whole(name), Expr::Path(p), Element::Str) => p.path.is_ident(name).then_some(()),
+        (
+            Binding::Whole(name),
+            Expr::Field(f),
+            Element::Tuple(fields) | Element::Fields(fields),
+        ) => {
             let field = match &f.member {
                 syn::Member::Named(i) => i.to_string(),
                 syn::Member::Unnamed(i) => i.index.to_string(),
             };
-            Some(())
-                .filter(|_| fields.contains(&field))
+            fields
+                .contains(&field)
+                .then_some(())
                 .and(key_base(f.base.as_ref(), name))
         }
         (Binding::Parts(names), Expr::Path(_), _) => syntax::ident_of(expr)
@@ -2116,7 +2216,7 @@ fn key_base(base: &Expr, name: &str) -> Option<()> {
             UnOp::Deref(_) => key_base(e.expr.as_ref(), name),
             _ => None,
         },
-        Expr::Path(p) => Some(()).filter(|_| p.path.is_ident(name)),
+        Expr::Path(p) => p.path.is_ident(name).then_some(()),
         _ => None,
     }
 }
@@ -2165,17 +2265,32 @@ pub(crate) fn expr(e: &Expr, cx: &Cx, env: &Env) -> Vec<Hit> {
                 .collect()
         }
         Expr::Assign(a) => assign(a, cx),
-        Expr::Async(a) => unless(async_placed(&cx.slot), flag(a.async_token.span, Rule::AsyncBlock)),
+        Expr::Async(a) => unless(
+            async_placed(&cx.slot),
+            flag(a.async_token.span, Rule::AsyncBlock),
+        ),
         Expr::Binary(b) => match cx.predicate {
             Within::In => Vec::new(),
-            Within::Out => predicate_rule(&b.op).map(|r| flag(b.op.span(), r)).into_iter().collect(),
+            Within::Out => predicate_rule(&b.op)
+                .map(|r| flag(b.op.span(), r))
+                .into_iter()
+                .collect(),
         },
         Expr::Break(b) => {
-            let valued = b.expr.as_ref().filter(|_| matches!(cx.lp, crate::walk::Loop::Actor));
+            let valued = b
+                .expr
+                .as_ref()
+                .filter(|_| matches!(cx.lp, crate::walk::Loop::Actor));
             unless(valued.and(Some(())), flag(b.break_token.span, Rule::Break))
         }
         Expr::Lit(l) => match (&l.lit, library_value(&cx.slot), &cx.slot) {
-            (syn::Lit::Bool(_), None, Slot::FieldValue { wire: Within::In, .. }) => Vec::new(),
+            (
+                syn::Lit::Bool(_),
+                None,
+                Slot::FieldValue {
+                    wire: Within::In, ..
+                },
+            ) => Vec::new(),
             (syn::Lit::Bool(_), None, _) => Vec::from([flag(l.span(), Rule::BoolLit)]),
             _ => Vec::new(),
         },
@@ -2190,9 +2305,14 @@ pub(crate) fn expr(e: &Expr, cx: &Cx, env: &Env) -> Vec<Hit> {
                 (Some(_), None) => Some(Rule::LoopTurn),
                 (Some(_), Some(_)) => None,
             };
-            rule.map(|r| flag(l.loop_token.span, r)).into_iter().collect()
+            rule.map(|r| flag(l.loop_token.span, r))
+                .into_iter()
+                .collect()
         }
-        Expr::Match(m) => when(filtered_once(&m.expr), flag(m.match_token.span, Rule::LiftMatched)),
+        Expr::Match(m) => when(
+            filtered_once(&m.expr),
+            flag(m.match_token.span, Rule::LiftMatched),
+        ),
         Expr::Path(p) => path_expr(p, cx, env),
         Expr::Repeat(r) => {
             let literal = match r.expr.as_ref() {
@@ -2223,5 +2343,32 @@ pub(crate) fn has_let(cond: &Expr) -> Option<&Expr> {
             _ => None,
         },
         _ => None,
+    }
+}
+
+/// `name @ Variant { .. }`: a binding that keeps the whole value a variant
+/// pattern matched (proposal 0044).
+pub(crate) fn ident_at(p: &syn::PatIdent) -> Vec<Hit> {
+    match &p.subpat {
+        Some((at, sub)) => {
+            let variant = match sub.as_ref() {
+                Pat::Struct(_) | Pat::TupleStruct(_) | Pat::Path(_) => Some(()),
+                _ => None,
+            };
+            let plain = match (p.by_ref, p.mutability) {
+                (None, None) => variant,
+                _ => None,
+            };
+            unless(plain, flag(at.span, Rule::IdentAt))
+        }
+        None => Vec::new(),
+    }
+}
+
+/// The name of a named field.
+fn member_name(member: &syn::Member) -> Option<String> {
+    match member {
+        syn::Member::Named(name) => Some(name.to_string()),
+        syn::Member::Unnamed(_) => None,
     }
 }

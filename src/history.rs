@@ -19,12 +19,7 @@ pub(crate) struct Snapshot {
 
 /// The score per crate at each of the last `n` commits that changed files
 /// under `include`, under today's config, oldest first.
-pub(crate) fn snapshots(
-    config: &Config,
-    config_path: &Path,
-    root: &Path,
-    n: usize,
-) -> Result<Vec<Snapshot>, String> {
+pub(crate) fn snapshots(config: &Config, root: &Path, n: usize) -> Result<Vec<Snapshot>, String> {
     let weights = config.weights.as_ref().ok_or("no [weights] table")?;
     let include = crate::config::globs(&config.include)?;
     let count = format!("-n{n}");
@@ -47,10 +42,13 @@ pub(crate) fn snapshots(
     commits
         .into_iter()
         .map(|(sha, date)| {
-            let tree = git(root, &Vec::from(["ls-tree", "-r", "--name-only", sha.as_str()]))?
-                .lines()
-                .map(PathBuf::from)
-                .collect::<Vec<PathBuf>>();
+            let tree = git(
+                root,
+                &Vec::from(["ls-tree", "-r", "--name-only", sha.as_str()]),
+            )?
+            .lines()
+            .map(PathBuf::from)
+            .collect::<Vec<PathBuf>>();
             let manifests = tree
                 .iter()
                 .filter(|p| p.file_name().and_then(|n| n.to_str()) == Some("Cargo.toml"))
@@ -62,7 +60,7 @@ pub(crate) fn snapshots(
                 .cloned()
                 .collect::<Vec<PathBuf>>();
             let sources = read(root, &sha, &rust)?;
-            let scored = crate::scored(config, config_path, sources, &manifests);
+            let scored = crate::scored(config, sources, &manifests);
             Ok(scored.ok().map(|files| Snapshot {
                 crates: score::rows(&files, Level::Crate, weights)
                     .iter()
@@ -110,7 +108,9 @@ fn blobs(bytes: &[u8], paths: &[PathBuf]) -> Result<Vec<(PathBuf, String)>, Stri
                 .iter()
                 .position(|b| b == &b'\n')
                 .ok_or("git cat-file: short output")?;
-            let (header, after) = bytes.split_at_checked(end).ok_or("git cat-file: short output")?;
+            let (header, after) = bytes
+                .split_at_checked(end)
+                .ok_or("git cat-file: short output")?;
             let header = String::from_utf8_lossy(header);
             let size = header
                 .split_whitespace()
@@ -121,7 +121,8 @@ fn blobs(bytes: &[u8], paths: &[PathBuf]) -> Result<Vec<(PathBuf, String)>, Stri
                 .split_at_checked(1)
                 .and_then(|(_, body)| body.split_at_checked(size))
                 .ok_or("git cat-file: short output")?;
-            let text = String::from_utf8(body.to_vec()).map_err(|e| format!("{}: {e}", display(path)))?;
+            let text =
+                String::from_utf8(body.to_vec()).map_err(|e| format!("{}: {e}", display(path)))?;
             let after = after.split_at_checked(1).map_or(after, |(_, rest)| rest);
             Ok(std::iter::once((path.clone(), text))
                 .chain(blobs(after, rest)?)
@@ -144,12 +145,14 @@ fn git(root: &Path, args: &[&str]) -> Result<String, String> {
         .args(args)
         .output()
         .map_err(|e| format!("git: {e}"))?;
-    let first = args
-        .first()
-        .map(ToString::to_string)
-        .unwrap_or_default();
+    let first = args.first().map(ToString::to_string).unwrap_or_default();
     Some(&out)
         .filter(|o| o.status.success())
         .map(|o| String::from_utf8_lossy(&o.stdout).to_string())
-        .ok_or_else(|| format!("git {first}: {}", String::from_utf8_lossy(&out.stderr).trim()))
+        .ok_or_else(|| {
+            format!(
+                "git {first}: {}",
+                String::from_utf8_lossy(&out.stderr).trim()
+            )
+        })
 }

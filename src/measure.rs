@@ -24,7 +24,10 @@ pub(crate) struct Token {
 /// group. A line counts when a counted token starts, ends or spans it.
 pub(crate) fn measure(src: &str) -> Result<Volume, proc_macro2::LexError> {
     let tokens = tokens(src)?;
-    let lines = tokens.iter().flat_map(|t| t.lines.iter().copied()).collect::<BTreeSet<usize>>();
+    let lines = tokens
+        .iter()
+        .flat_map(|t| t.lines.iter().copied())
+        .collect::<BTreeSet<usize>>();
     Ok(Volume {
         tokens: tokens.len(),
         lines: lines.len(),
@@ -50,11 +53,10 @@ enum Lexeme {
 fn lexeme(tree: &TokenTree, src: &str) -> Lexeme {
     match tree {
         TokenTree::Punct(p) => match p.as_char() {
-            '#' => {
-                src.split_at_checked(p.span().byte_range().start)
-                    .filter(|(_, rest)| rest.starts_with("//") || rest.starts_with("/*"))
-                    .map_or(Lexeme::Other, |_| Lexeme::Doc)
-            }
+            '#' => src
+                .split_at_checked(p.span().byte_range().start)
+                .filter(|(_, rest)| rest.starts_with("//") || rest.starts_with("/*"))
+                .map_or(Lexeme::Other, |_| Lexeme::Doc),
             '!' => Lexeme::Bang,
             _ => Lexeme::Other,
         },
@@ -64,7 +66,10 @@ fn lexeme(tree: &TokenTree, src: &str) -> Lexeme {
 
 fn walk(stream: TokenStream, src: &str) -> Vec<Token> {
     let trees = stream.into_iter().collect::<Vec<TokenTree>>();
-    let kinds = trees.iter().map(|t| lexeme(t, src)).collect::<Vec<Lexeme>>();
+    let kinds = trees
+        .iter()
+        .map(|t| lexeme(t, src))
+        .collect::<Vec<Lexeme>>();
     let before = std::iter::once(Lexeme::Other).chain(kinds.iter().copied());
     let two_before = std::iter::repeat_n(Lexeme::Other, 2).chain(kinds.iter().copied());
     trees

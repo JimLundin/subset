@@ -35,12 +35,21 @@ pub(crate) enum Fact {
     Wire(String),
     Use(UsePath),
     /// A struct with named fields, by its module path, with its `&str` fields.
-    Struct { key: Vec<String>, strings: Vec<String> },
+    Struct {
+        key: Vec<String>,
+        strings: Vec<String>,
+    },
     /// A `const` whose type is a slice or array.
-    Table { name: String, element: Element },
+    Table {
+        name: String,
+        element: Element,
+    },
     /// A struct built outside a table's literal, by module path where the
     /// path resolves in the file, and by name.
-    Built { key: Option<Vec<String>>, name: String },
+    Built {
+        key: Option<Vec<String>>,
+        name: String,
+    },
     /// A `cfg` fn, impl or use.
     Cfg(CfgItem),
 }
@@ -134,7 +143,10 @@ enum Kind {
 
 /// The names facts of one kind give.
 fn names(all: &[&Fact], kind: Kind) -> BTreeSet<String> {
-    all.iter().filter_map(|f| name_of(f, kind)).cloned().collect()
+    all.iter()
+        .filter_map(|f| name_of(f, kind))
+        .cloned()
+        .collect()
 }
 
 fn name_of(fact: &Fact, kind: Kind) -> Option<&String> {
@@ -159,8 +171,11 @@ impl Facts {
     }
 
     /// The facts of every file, each given with its path.
-    pub(crate) fn gather(files: &Vec<(Vec<String>, Vec<Fact>)>) -> Facts {
-        let all = files.iter().flat_map(|(_, facts)| facts).collect::<Vec<&Fact>>();
+    pub(crate) fn gather(files: &[(Vec<String>, Vec<Fact>)]) -> Facts {
+        let all = files
+            .iter()
+            .flat_map(|(_, facts)| facts)
+            .collect::<Vec<&Fact>>();
         let types = names(&all, Kind::Type);
         let enums = names(&all, Kind::Enum);
         let loop_states = names(&all, Kind::LoopState);
@@ -170,12 +185,15 @@ impl Facts {
                 Fact::Fields(owner, names) => Some((owner, names)),
                 _ => None,
             })
-            .fold(BTreeMap::<String, BTreeSet<String>>::new(), |mut map, (owner, names)| {
-                map.entry(owner.clone())
-                    .or_insert_with(BTreeSet::new)
-                    .extend(names.iter().cloned());
-                map
-            });
+            .fold(
+                BTreeMap::<String, BTreeSet<String>>::new(),
+                |mut map, (owner, names)| {
+                    map.entry(owner.clone())
+                        .or_insert_with(BTreeSet::new)
+                        .extend(names.iter().cloned());
+                    map
+                },
+            );
         let direct = loop_states
             .iter()
             .filter_map(|state| fields.get(state))
@@ -229,7 +247,8 @@ impl Facts {
     }
 
     pub(crate) fn owner(&self, segments: &[String]) -> Owner {
-        self.owner_of(segments).map_or(Owner::Theirs, |_| Owner::Ours)
+        self.owner_of(segments)
+            .map_or(Owner::Theirs, |_| Owner::Ours)
     }
 
     /// `crate`, `self`, `super`, one of our crates or one of our modules.
@@ -439,10 +458,6 @@ pub(crate) struct Tables {
 }
 
 impl Tables {
-    pub(crate) fn none() -> Tables {
-        Tables::of(&Vec::new())
-    }
-
     pub(crate) fn of(facts: &[Fact]) -> Tables {
         let structs = facts
             .iter()
@@ -464,15 +479,23 @@ impl Tables {
                 Fact::Built { key, name } => Some((key, name)),
                 _ => None,
             })
-            .fold((BTreeSet::<Vec<String>>::new(), BTreeSet::<String>::new()), |(keys, names), (key, name)| {
-                match key.as_ref().filter(|k| structs.contains_key(k.as_slice())) {
+            .fold(
+                (BTreeSet::<Vec<String>>::new(), BTreeSet::<String>::new()),
+                |(keys, names), (key, name)| match key
+                    .as_ref()
+                    .filter(|k| structs.contains_key(k.as_slice()))
+                {
                     Some(k) => (keys.into_iter().chain(Some(k.clone())).collect(), names),
                     None => (keys, names.into_iter().chain(Some(name.clone())).collect()),
-                }
-            });
+                },
+            );
         let rows = structs
             .keys()
-            .filter(|key| tables.iter().any(|(_, e)| e == &&Element::Row(key.to_vec())))
+            .filter(|key| {
+                tables
+                    .iter()
+                    .any(|(_, e)| e == &&Element::Row(key.to_vec()))
+            })
             .filter(|key| {
                 !outside.contains(key.as_slice())
                     && !outside_names.contains(key.last().map_or("", String::as_str))
@@ -491,7 +514,9 @@ impl Tables {
                     _ => None,
                 }?;
                 match &keys {
-                    Element::Fields(fields) => fields.first().map(|_| (name.to_string(), keys.clone())),
+                    Element::Fields(fields) => {
+                        fields.first().map(|_| (name.to_string(), keys.clone()))
+                    }
                     _ => Some((name.to_string(), keys)),
                 }
             })
@@ -505,10 +530,12 @@ impl Tables {
     pub(crate) fn scanned(&self, expr: &Expr, bindings: &BTreeMap<String, Expr>) -> Option<Scan> {
         match expr {
             Expr::MethodCall(e) => match e.method.to_string().as_str() {
-                "enumerate" => self.scanned(e.receiver.as_ref(), bindings).map(|inner| Scan {
-                    enumerated: Within::In,
-                    ..inner
-                }),
+                "enumerate" => self
+                    .scanned(e.receiver.as_ref(), bindings)
+                    .map(|inner| Scan {
+                        enumerated: Within::In,
+                        ..inner
+                    }),
                 method => PASS_THROUGH
                     .contains(&method)
                     .then(|| self.scanned(e.receiver.as_ref(), bindings))
@@ -517,7 +544,10 @@ impl Tables {
             Expr::Reference(e) => self.scanned(e.expr.as_ref(), bindings),
             Expr::Paren(e) => self.scanned(e.expr.as_ref(), bindings),
             Expr::Path(e) => {
-                let bound = e.path.get_ident().and_then(|i| bindings.get(&i.to_string()));
+                let bound = e
+                    .path
+                    .get_ident()
+                    .and_then(|i| bindings.get(&i.to_string()));
                 match bound {
                     Some(init) => self.scanned(init, &BTreeMap::new()),
                     None => {
@@ -536,6 +566,16 @@ impl Tables {
 
 /// Methods between a table and its predicate that pass rows through.
 const PASS_THROUGH: &[&str] = &[
-    "iter", "into_iter", "copied", "cloned", "rev", "skip", "take", "step_by", "filter",
-    "skip_while", "take_while", "by_ref",
+    "iter",
+    "into_iter",
+    "copied",
+    "cloned",
+    "rev",
+    "skip",
+    "take",
+    "step_by",
+    "filter",
+    "skip_while",
+    "take_while",
+    "by_ref",
 ];

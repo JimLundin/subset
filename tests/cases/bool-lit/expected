@@ -1,4 +1,4 @@
 $ check
 exit 1
-crates/daemon/src/a_fail.rs:12:19: expr.lit.bool: `true` / `false` only as an argument or field value of a fn, method or struct we don't define (proposal 0023)
-crates/daemon/src/a_fail.rs:17:21: expr.lit.bool: `true` / `false` only as an argument or field value of a fn, method or struct we don't define (proposal 0023)
+crates/daemon/src/a_fail.rs:12:19: expr.lit.bool: `true` / `false` only as an argument or field value of a fn, method or struct we don't define, or as a field value of a serde wire type (proposals 0023, 0043)
+crates/daemon/src/a_fail.rs:17:21: expr.lit.bool: `true` / `false` only as an argument or field value of a fn, method or struct we don't define, or as a field value of a serde wire type (proposals 0023, 0043)

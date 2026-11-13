@@ -96,35 +96,125 @@ impl Weights {
 }
 
 const KEYS: &[&str] = &[
-    "version", "include", "allowed", "derives", "macros", "test_macros", "endpoints",
-    "predicate_adapters", "closure_methods", "fallible_operators", "consuming_readers", "scope",
+    "version",
+    "include",
+    "allowed",
+    "derives",
+    "macros",
+    "test_macros",
+    "endpoints",
+    "predicate_adapters",
+    "closure_methods",
+    "fallible_operators",
+    "consuming_readers",
+    "scope",
     "weights",
 ];
 const SCOPE_KEYS: &[&str] = &["rule", "paths", "allowed"];
 const WEIGHT_KEYS: &[&str] = &[
-    "tiers", "ids", "adapters", "primitives", "transparent", "untyped", "external_protocols",
+    "tiers",
+    "ids",
+    "adapters",
+    "primitives",
+    "transparent",
+    "untyped",
+    "external_protocols",
 ];
 
 /// The filtering adapters of proposal 0028: the default `predicate_adapters`.
 const PREDICATE_ADAPTERS: &[&str] = &[
-    "filter", "find", "any", "all", "position", "take_while", "skip_while", "retain",
+    "filter",
+    "find",
+    "any",
+    "all",
+    "position",
+    "take_while",
+    "skip_while",
+    "retain",
 ];
 /// The standard library's `Iterator`, `Option` and `Result` methods that take
 /// a closure: the default `closure_methods`.
 const CLOSURE_METHODS: &[&str] = &[
-    "and_then", "filter_map", "find_map", "flat_map", "fold", "for_each", "get_or_insert_with",
-    "inspect", "inspect_err", "is_err_and", "is_none_or", "is_ok_and", "is_some_and", "map",
-    "map_err", "map_or", "map_or_else", "map_while", "max_by", "max_by_key", "min_by",
-    "min_by_key", "ok_or_else", "or_else", "partition", "reduce", "rfind", "rposition", "scan",
-    "try_fold", "try_for_each", "unwrap_or_else",
+    "and_then",
+    "filter_map",
+    "find_map",
+    "flat_map",
+    "fold",
+    "for_each",
+    "get_or_insert_with",
+    "inspect",
+    "inspect_err",
+    "is_err_and",
+    "is_none_or",
+    "is_ok_and",
+    "is_some_and",
+    "map",
+    "map_err",
+    "map_or",
+    "map_or_else",
+    "map_while",
+    "max_by",
+    "max_by_key",
+    "min_by",
+    "min_by_key",
+    "ok_or_else",
+    "or_else",
+    "partition",
+    "reduce",
+    "rfind",
+    "rposition",
+    "scan",
+    "try_fold",
+    "try_for_each",
+    "unwrap_or_else",
 ];
 /// The standard library's iterator methods: the default `adapters`.
 pub(crate) const ITERATOR_ADAPTERS: &[&str] = &[
-    "all", "any", "chain", "cloned", "collect", "copied", "count", "cycle", "enumerate", "filter",
-    "filter_map", "find", "find_map", "flat_map", "flatten", "fold", "fuse", "inspect", "last",
-    "map", "map_while", "max", "max_by", "max_by_key", "min", "min_by", "min_by_key", "nth",
-    "partition", "peekable", "position", "product", "reduce", "rev", "rposition", "scan", "skip",
-    "skip_while", "step_by", "sum", "take", "take_while", "try_fold", "unzip", "zip",
+    "all",
+    "any",
+    "chain",
+    "cloned",
+    "collect",
+    "copied",
+    "count",
+    "cycle",
+    "enumerate",
+    "filter",
+    "filter_map",
+    "find",
+    "find_map",
+    "flat_map",
+    "flatten",
+    "fold",
+    "fuse",
+    "inspect",
+    "last",
+    "map",
+    "map_while",
+    "max",
+    "max_by",
+    "max_by_key",
+    "min",
+    "min_by",
+    "min_by_key",
+    "nth",
+    "partition",
+    "peekable",
+    "position",
+    "product",
+    "reduce",
+    "rev",
+    "rposition",
+    "scan",
+    "skip",
+    "skip_while",
+    "step_by",
+    "sum",
+    "take",
+    "take_while",
+    "try_fold",
+    "unzip",
+    "zip",
 ];
 /// The standard library's primitive data: text, numbers and bytes.
 const PRIMITIVES: &[&str] = &[
@@ -185,7 +275,10 @@ fn parse(table: &Table) -> Result<Config, String> {
         transparent: weight_list(table, "transparent", TRANSPARENT)?,
     });
     let scopes = match table.get("scope") {
-        Some(Value::Array(scopes)) => scopes.iter().map(scope).collect::<Result<Vec<Scope>, String>>()?,
+        Some(Value::Array(scopes)) => scopes
+            .iter()
+            .map(scope)
+            .collect::<Result<Vec<Scope>, String>>()?,
         Some(_) => Err("`scope` is not an array of tables".to_string())?,
         None => Vec::new(),
     };
@@ -256,7 +349,9 @@ pub(crate) fn globs(patterns: &[String]) -> Result<Vec<glob::Pattern>, String> {
 }
 
 fn scope(value: &Value) -> Result<Scope, String> {
-    let table = value.as_table().ok_or("`scope` holds a value that is not a table")?;
+    let table = value
+        .as_table()
+        .ok_or("`scope` holds a value that is not a table")?;
     unknown(table, SCOPE_KEYS, "scope.")?;
     Ok(Scope {
         rule: table
@@ -281,7 +376,8 @@ fn operators(value: Option<&Value>) -> Result<Vec<Operator>, String> {
             .iter()
             .flat_map(|name| {
                 let method = name.to_lowercase();
-                let plain = Operator::parse(&format!("std::ops::{name}"), Vec::from([method.clone()]));
+                let plain =
+                    Operator::parse(&format!("std::ops::{name}"), Vec::from([method.clone()]));
                 let assign = Operator::parse(
                     &format!("std::ops::{name}Assign"),
                     Vec::from([format!("{method}_assign")]),

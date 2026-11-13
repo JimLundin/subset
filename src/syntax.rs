@@ -91,7 +91,10 @@ pub(crate) fn type_segments(ty: &Type) -> Vec<String> {
             .collect(),
         Type::TraitObject(t) => bounds_segments(&t.bounds),
         Type::ImplTrait(t) => bounds_segments(&t.bounds),
-        _ => inner_types(ty).into_iter().flat_map(type_segments).collect(),
+        _ => inner_types(ty)
+            .into_iter()
+            .flat_map(type_segments)
+            .collect(),
     }
 }
 
@@ -130,11 +133,9 @@ pub(crate) fn argument_types(args: &syn::PathArguments) -> Vec<&Type> {
                 _ => None,
             })
             .collect(),
-        syn::PathArguments::Parenthesized(p) => p
-            .inputs
-            .iter()
-            .chain(returned(&p.output))
-            .collect(),
+        syn::PathArguments::Parenthesized(p) => {
+            p.inputs.iter().chain(returned(&p.output)).collect()
+        }
         syn::PathArguments::None => Vec::new(),
     }
 }
@@ -252,9 +253,7 @@ pub(crate) fn cfg_test(attr: &Attribute) -> Option<&Attribute> {
 /// `#[test]`, `#[tokio::test]` or `#[cfg(test)]`.
 pub(crate) fn test_attr(attrs: &[Attribute]) -> Option<&Attribute> {
     attrs.iter().find(|a| {
-        a.path().is_ident("test")
-            || path_string(a.path()) == "tokio::test"
-            || cfg_test(a).is_some()
+        a.path().is_ident("test") || path_string(a.path()) == "tokio::test" || cfg_test(a).is_some()
     })
 }
 

@@ -1,5 +1,5 @@
 $ check
 exit 1
-crates/client/src/b_fail.rs:3:15: pat.ident.mut: `mut` only on a value whose type isn't ours, on an actor's loop state or on a type in `endpoints`; to lend a library field of a value of ours as `&mut`, destructure the value and bind that field `mut` (proposals 0008, 0035)
-crates/client/src/b_fail.rs:8:5: stmt.let.mut: `mut` only on a value whose type isn't ours, on an actor's loop state or on a type in `endpoints`; to lend a library field of a value of ours as `&mut`, destructure the value and bind that field `mut` (proposals 0008, 0035)
-crates/client/src/b_fail.rs:13:5: stmt.let.mut: `mut` only on a value whose type isn't ours, on an actor's loop state or on a type in `endpoints`; to lend a library field of a value of ours as `&mut`, destructure the value and bind that field `mut` (proposals 0008, 0035)
+crates/client/src/b_fail.rs:3:15: pat.ident.mut: `mut` only on a value whose type isn't ours, on an actor's loop state, on a type in `endpoints` or on a `Visit` implementor (proposal 0045); to lend a library field of a value of ours as `&mut`, destructure the value and bind that field `mut` (proposals 0008, 0035)
+crates/client/src/b_fail.rs:8:5: stmt.let.mut: `mut` only on a value whose type isn't ours, on an actor's loop state, on a type in `endpoints` or on a `Visit` implementor (proposal 0045); to lend a library field of a value of ours as `&mut`, destructure the value and bind that field `mut` (proposals 0008, 0035)
+crates/client/src/b_fail.rs:13:5: stmt.let.mut: `mut` only on a value whose type isn't ours, on an actor's loop state, on a type in `endpoints` or on a `Visit` implementor (proposal 0045); to lend a library field of a value of ours as `&mut`, destructure the value and bind that field `mut` (proposals 0008, 0035)

@@ -1,3 +1,3 @@
 $ check
 exit 1
-crates/daemon/src/a_fail.rs:1:1: item.impl.trait: trait impls only for `Drop`, `Debug`, `Serialize`, `Deserialize` and `ProtocolHandler` (proposal 0009)
+crates/daemon/src/a_fail.rs:1:1: item.impl.trait: trait impls only for `Drop`, `Debug`, `Serialize`, `Deserialize`, `ProtocolHandler` (proposal 0009) and syn's `Visit` (proposal 0045)

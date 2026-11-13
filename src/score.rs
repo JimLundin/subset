@@ -138,34 +138,38 @@ fn judge(a: &Analysed, w: &Weights) -> Vec<Judged> {
             _ => None,
         })
         .collect::<Vec<&crate::walk::Refinement>>();
-    let judged = a.occurrences.iter().zip(&a.violating).map(|(o, violating)| {
-        let id = refinements
-            .iter()
-            .find(|r| r.extent == o.extent && refines(r.from.as_deref(), &o.id).is_some())
-            .map_or(o.id.clone(), |r| r.to.clone());
-        let tier = w.tier(&id);
-        let fixed = marks
-            .iter()
-            .filter(|m| m.extent == o.extent)
-            .map(|m| m.fixed)
-            .min_by_key(|f| match f {
-                Fixed::Always => 0,
-                Fixed::IfRestricted => 1,
-            });
-        let wire = wires.iter().find_map(|f| f.holding(o.extent));
-        let tier = match (violating, wire, fixed, tier.restricted()) {
-            (Within::In, _, _, _) => Tier::Outside,
-            (Within::Out, Some(_), _, _) => Tier::Boundary,
-            (Within::Out, None, Some(Fixed::Always), _) => Tier::Boundary,
-            (Within::Out, None, Some(Fixed::IfRestricted), Some(_)) => Tier::Boundary,
-            _ => tier,
-        };
-        Judged {
-            id,
-            tier,
-            extent: o.extent,
-        }
-    });
+    let judged = a
+        .occurrences
+        .iter()
+        .zip(&a.violating)
+        .map(|(o, violating)| {
+            let id = refinements
+                .iter()
+                .find(|r| r.extent == o.extent && refines(r.from.as_deref(), &o.id).is_some())
+                .map_or(o.id.clone(), |r| r.to.clone());
+            let tier = w.tier(&id);
+            let fixed = marks
+                .iter()
+                .filter(|m| m.extent == o.extent)
+                .map(|m| m.fixed)
+                .min_by_key(|f| match f {
+                    Fixed::Always => 0,
+                    Fixed::IfRestricted => 1,
+                });
+            let wire = wires.iter().find_map(|f| f.holding(o.extent));
+            let tier = match (violating, wire, fixed, tier.restricted()) {
+                (Within::In, _, _, _) => Tier::Outside,
+                (Within::Out, Some(_), _, _) => Tier::Boundary,
+                (Within::Out, None, Some(Fixed::Always), _) => Tier::Boundary,
+                (Within::Out, None, Some(Fixed::IfRestricted), Some(_)) => Tier::Boundary,
+                _ => tier,
+            };
+            Judged {
+                id,
+                tier,
+                extent: o.extent,
+            }
+        });
     let fields = wires.iter().map(|f| Judged {
         id: WIRE_FIELD.to_string(),
         tier: Tier::Boundary,
@@ -181,8 +185,12 @@ fn refines(from: Option<&str>, id: &str) -> Option<()> {
             f if f == id => Some(()),
             _ => None,
         },
-        None => Some(())
-            .filter(|_| id.starts_with("type.") && !id.starts_with("type.lifetime")),
+        None => id
+            .starts_with("type.")
+            .then_some(())
+            .and(crate::checks::absent(
+                id.starts_with("type.lifetime").then_some(()),
+            )),
     }
 }
 
@@ -200,7 +208,11 @@ fn innermost(starts: &[usize], extents: &[Extent]) -> Vec<Option<usize>> {
     starts
         .iter()
         .fold(
-            (0, Vec::<(usize, Extent)>::new(), Vec::<Option<usize>>::new()),
+            (
+                0,
+                Vec::<(usize, Extent)>::new(),
+                Vec::<Option<usize>>::new(),
+            ),
             |(next, open, mut out), p| {
                 let count = sorted
                     .iter()
@@ -265,17 +277,26 @@ pub(crate) fn file(a: &Analysed, w: &Weights, krate: &str) -> Result<ScoredFile,
         .collect::<Vec<&crate::walk::Typed>>();
     let starts = tokens.iter().map(|t| t.start).collect::<Vec<usize>>();
     let owners = innermost(&starts, &painted);
-    let fn_owners = innermost(&starts, &fns.iter().map(|f| f.extent).collect::<Vec<Extent>>());
-    let typed_owners = innermost(&starts, &typed.iter().map(|t| t.extent).collect::<Vec<Extent>>());
+    let fn_owners = innermost(
+        &starts,
+        &fns.iter().map(|f| f.extent).collect::<Vec<Extent>>(),
+    );
+    let typed_owners = innermost(
+        &starts,
+        &typed.iter().map(|t| t.extent).collect::<Vec<Extent>>(),
+    );
     let counted = judged
         .iter()
         .fold(BTreeMap::<(String, usize), Count>::new(), |mut map, j| {
             let key = (j.id.clone(), tier_index(j.tier));
             let old = map.remove(&key).unwrap_or(Count::none());
-            map.insert(key, Count {
-                count: old.count.saturating_add(1),
-                ..old
-            });
+            map.insert(
+                key,
+                Count {
+                    count: old.count.saturating_add(1),
+                    ..old
+                },
+            );
             map
         });
     let start = Tallies {
@@ -291,7 +312,9 @@ pub(crate) fn file(a: &Analysed, w: &Weights, krate: &str) -> Result<ScoredFile,
         .fold(start, |t, (token, (owner, (in_fn, in_type)))| {
             let (id, tier) = owner
                 .and_then(|i| judged.get(i))
-                .map_or((NO_CONSTRUCT.to_string(), Tier::Neutral), |j| (j.id.clone(), j.tier));
+                .map_or((NO_CONSTRUCT.to_string(), Tier::Neutral), |j| {
+                    (j.id.clone(), j.tier)
+                });
             let class = in_type.and_then(|i| typed.get(i));
             t.add(token, id, tier_index(tier), in_fn.to_owned(), class)
         });
@@ -338,12 +361,21 @@ impl Tallies {
         class: Option<&&crate::walk::Typed>,
     ) -> Tallies {
         let mut constructs = self.constructs;
-        let old = constructs.remove(&(id.clone(), tier)).unwrap_or(Count::none());
-        constructs.insert((id, tier), Count {
-            tokens: old.tokens.saturating_add(1),
-            lines: old.lines.into_iter().chain(token.lines.iter().copied()).collect(),
-            ..old
-        });
+        let old = constructs
+            .remove(&(id.clone(), tier))
+            .unwrap_or(Count::none());
+        constructs.insert(
+            (id, tier),
+            Count {
+                tokens: old.tokens.saturating_add(1),
+                lines: old
+                    .lines
+                    .into_iter()
+                    .chain(token.lines.iter().copied())
+                    .collect(),
+                ..old
+            },
+        );
         let fns = self
             .fns
             .into_iter()
@@ -351,11 +383,17 @@ impl Tallies {
             .map(|(i, f)| match in_fn {
                 Some(owner) if owner == i => {
                     let primitive = class
-                        .filter(|t| matches!((t.class, t.place), (TypeClass::Primitive, Place::Signature)))
+                        .filter(|t| {
+                            matches!((t.class, t.place), (TypeClass::Primitive, Place::Signature))
+                        })
                         .map_or(0, |_| 1);
                     FnTally {
                         tiers: bump(f.tiers, tier),
-                        lines: f.lines.into_iter().chain(token.lines.iter().copied()).collect(),
+                        lines: f
+                            .lines
+                            .into_iter()
+                            .chain(token.lines.iter().copied())
+                            .collect(),
                         signature_primitives: f.signature_primitives.saturating_add(primitive),
                         ..f
                     }
@@ -366,14 +404,21 @@ impl Tallies {
         let typing = match class {
             Some(t) => bump(
                 self.typing,
-                CLASSES.iter().position(|c| c == &t.class).unwrap_or_default(),
+                CLASSES
+                    .iter()
+                    .position(|c| c == &t.class)
+                    .unwrap_or_default(),
             ),
             None => self.typing,
         };
         Tallies {
             constructs,
             tiers: bump(self.tiers, tier),
-            lines: self.lines.into_iter().chain(token.lines.iter().copied()).collect(),
+            lines: self
+                .lines
+                .into_iter()
+                .chain(token.lines.iter().copied())
+                .collect(),
             fns,
             typing,
         }
@@ -433,16 +478,19 @@ impl Row {
     }
 
     pub(crate) fn boundary(&self, w: &Weights) -> f64 {
-        self.tiers
-            .get(tier_index(Tier::Boundary))
-            .map_or(0.0, |n| float(n.to_owned()).mul_add(w.weight(Tier::Boundary), 0.0))
+        self.tiers.get(tier_index(Tier::Boundary)).map_or(0.0, |n| {
+            float(n.to_owned()).mul_add(w.weight(Tier::Boundary), 0.0)
+        })
     }
 
     /// The boundary score as a share of the score, in percent.
     pub(crate) fn boundary_share(&self, w: &Weights) -> f64 {
         let score = self.score(w);
         match score.partial_cmp(&0.0) {
-            Some(std::cmp::Ordering::Greater) => self.boundary(w).mul_add(100.0, 0.0).mul_add(score.recip(), 0.0),
+            Some(std::cmp::Ordering::Greater) => self
+                .boundary(w)
+                .mul_add(100.0, 0.0)
+                .mul_add(score.recip(), 0.0),
             _ => 0.0,
         }
     }
@@ -486,10 +534,13 @@ pub(crate) fn rows(files: &[ScoredFile], level: Level, w: &Weights) -> Vec<Row> 
     let rows = match level {
         Level::Crate => files
             .iter()
-            .fold(BTreeMap::<String, Vec<&ScoredFile>>::new(), |mut crates, f| {
-                crates.entry(f.krate.clone()).or_default().push(f);
-                crates
-            })
+            .fold(
+                BTreeMap::<String, Vec<&ScoredFile>>::new(),
+                |mut crates, f| {
+                    crates.entry(f.krate.clone()).or_default().push(f);
+                    crates
+                },
+            )
             .into_iter()
             .map(|(name, files)| Row {
                 name,
@@ -521,15 +572,21 @@ pub(crate) fn rows(files: &[ScoredFile], level: Level, w: &Weights) -> Vec<Row> 
         Level::Construct => files
             .iter()
             .flat_map(|f| f.constructs.iter())
-            .fold(BTreeMap::<(String, usize), (usize, usize, usize)>::new(), |mut all, (key, c)| {
-                let (count, tokens, lines) = all.remove(key).unwrap_or((0, 0, 0));
-                all.insert(key.clone(), (
-                    count.saturating_add(c.count),
-                    tokens.saturating_add(c.tokens),
-                    lines.saturating_add(c.lines.len()),
-                ));
-                all
-            })
+            .fold(
+                BTreeMap::<(String, usize), (usize, usize, usize)>::new(),
+                |mut all, (key, c)| {
+                    let (count, tokens, lines) = all.remove(key).unwrap_or((0, 0, 0));
+                    all.insert(
+                        key.clone(),
+                        (
+                            count.saturating_add(c.count),
+                            tokens.saturating_add(c.tokens),
+                            lines.saturating_add(c.lines.len()),
+                        ),
+                    );
+                    all
+                },
+            )
             .into_iter()
             .map(|((id, tier), (count, tokens, lines))| Row {
                 name: id,
@@ -561,32 +618,41 @@ pub(crate) fn output(files: &[ScoredFile], level: Level, json: Within, w: &Weigh
         Within::In => {
             let value = object(Vec::from([
                 ("by", level.column().into()),
-                ("rows", rows.iter().map(|r| json_row(r, w)).collect::<Vec<serde_json::Value>>().into()),
+                (
+                    "rows",
+                    rows.iter()
+                        .map(|r| json_row(r, w))
+                        .collect::<Vec<serde_json::Value>>()
+                        .into(),
+                ),
                 ("total", json_row(&total, w)),
             ]));
-            format!("{}\n", serde_json::to_string_pretty(&value).unwrap_or_default())
+            format!(
+                "{}\n",
+                serde_json::to_string_pretty(&value).unwrap_or_default()
+            )
         }
         Within::Out => text(&rows, &total, level, w),
     }
 }
 
 fn json_row(row: &Row, w: &Weights) -> serde_json::Value {
-                let base = Vec::from([
-                    ("boundary", row.boundary(w).into()),
-                    ("boundary_share", row.boundary_share(w).into()),
-                    ("lines", row.lines.into()),
-                    ("name", row.name.clone().into()),
-                    ("per_token", row.per_token(w).into()),
-                    ("score", row.score(w).into()),
-                    ("tokens", row.tokens().into()),
-                ]);
-                let extra = row
-                    .construct
-                    .iter()
-                    .flat_map(|(count, tier)| {
-                        Vec::from([("count", count.to_owned().into()), ("tier", tier.name().into())])
-                    });
-                object(base.into_iter().chain(extra).collect())
+    let base = Vec::from([
+        ("boundary", row.boundary(w).into()),
+        ("boundary_share", row.boundary_share(w).into()),
+        ("lines", row.lines.into()),
+        ("name", row.name.clone().into()),
+        ("per_token", row.per_token(w).into()),
+        ("score", row.score(w).into()),
+        ("tokens", row.tokens().into()),
+    ]);
+    let extra = row.construct.iter().flat_map(|(count, tier)| {
+        Vec::from([
+            ("count", count.to_owned().into()),
+            ("tier", tier.name().into()),
+        ])
+    });
+    object(base.into_iter().chain(extra).collect())
 }
 
 fn text(rows: &[Row], total: &Row, level: Level, w: &Weights) -> String {
