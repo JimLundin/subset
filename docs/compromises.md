@@ -80,6 +80,15 @@ closures. The checker verifies reference positions and conservatively
 rejects unknown macro references, while callee behavior and choosing the
 shared-function form remain review checks.
 
+**Synchronous receiver drains (0058, version 15).** The exact library
+constructor, inline zero-argument `try_recv().ok()` pull and immediately
+consuming inline `find_map` are checked. Named callbacks, constructor
+aliases and escaping generators are rejected. Known own receiver bindings
+and shadowed `std` modules are rejected where existing name facts identify
+them. Unresolved receiver fields and method semantics remain review work:
+the pull must be a nonblocking external API under the existing mutation
+rule. The closure keeps its tolerated tier and library boundary pricing.
+
 `tools/subset` checks the location rules as `[[scope]]` tables in
 `subset.toml`, the shape rules it can see in the syntax, and the interior
 mutability types (`README.md`). It has no type information and

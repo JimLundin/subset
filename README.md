@@ -168,7 +168,10 @@ actor loop states and what they own, ordered newtypes, serde wire types and
 | `type.dyn` | `dyn` only as `Closure<dyn FnMut(..)>` (proposal 0017) |
 | `expr.closure.adapter` | a closure passed to a method only to a method in `closure_methods` or `predicate_adapters`: the iterator, `Option` and `Result` methods and the library methods the config lists (proposals 0006, 0026, 0028, 0037) |
 | `pat.type` | a type annotation only on a plain immutable parameter of a confined local closure (proposal 0046) |
-| `expr.closure` | a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046) |
+| `expr.closure` | a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, the immediate receiver pull of 0058, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046, 0058) |
+| `expr.call` | `std::iter::from_fn` only as the direct receiver of inline eager `find_map`, with an inline synchronous zero-argument `receiver.try_recv().ok()` pull from a library receiver (proposal 0058) |
+| `expr.path` | `std::iter::from_fn` is called directly, never retained or passed as a function value (proposal 0058) |
+| `item.use` | use the exact `std::iter::from_fn` callee in its immediately consumed receiver drain, never import or rename it (proposal 0058) |
 | `item.use.glob` | a glob import only for `dioxus::prelude::*` (proposal 0018) |
 | `attr.allow` | only `#![allow(clippy::useless_format)]` at the crate root (proposal 0018) |
 | `type.bool` | `bool` only in a type argument of a type we don't define, as a flag field of a clap `Parser` struct, or as a field of a serde wire type (proposals 0019, 0023, 0043) |

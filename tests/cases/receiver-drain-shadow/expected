@@ -1,0 +1,4 @@
+$ check
+exit 1
+crates/daemon/src/a.rs:8:5: expr.call: `std::iter::from_fn` only as the direct receiver of inline eager `find_map`, with an inline synchronous zero-argument `receiver.try_recv().ok()` pull from a library receiver (proposal 0058)
+crates/daemon/src/a.rs:8:24: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, the immediate receiver pull of 0058, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046, 0058)

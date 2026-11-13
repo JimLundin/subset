@@ -1,6 +1,6 @@
 ---
 construct: expr.closure
-status: proposed
+status: accepted
 task: issue #5, synchronous Conductor channel draining
 ---
 
@@ -103,7 +103,7 @@ argument. Library receiver calls and signatures retain their normal prices.
 | After, tolerated with boundary use | **100.5** | **117** | **13** |
 | Change, admitted | **-30.5 (-23.3%)** | **-26 (-18.2%)** | **-5 (-27.8%)** |
 
-`subset score --by construct` charges exactly **two** tokens to the one
+At version 14, `subset score --by construct` charges exactly **two** tokens to the one
 outside `expr.closure`, score 10.0. The arithmetic is
 `108.5 - (5.0 - 1.0) * 2 = 100.5`. No other after construct is outside.
 The outside-priced result already saves **17.2%**, independently clearing
@@ -125,7 +125,7 @@ git -C /path/to/conductor grep -n -E 'try_recv|from_fn|spawn_blocking' \
 Reproduction commands and exact stdout/stderr/exit records are in the
 [review](../reviews/issue5-callbacks-actors.md#reproduction-and-measurement-scope)
 and its [script](../reviews/issue5-callbacks-actors/measure.py).
-On the after, `subset check` exits 1 and prints exactly:
+At version 14, on the after, `subset check` exits 1 and prints exactly:
 
 ```text
 crates/agents/src/claude/session.rs:472:37: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046)
@@ -184,20 +184,33 @@ python3 docs/reviews/issue5-callbacks-actors/validate.py --phase before --jobs 1
 
 ## Tool change and limits
 
-Teach closure checking this exact `std::iter::from_fn` argument position,
-require an inline zero-argument synchronous `try_recv().ok()` body, and
-verify the complete call is the direct receiver of the eager terminal
-`find_map`. Reject lazy-only chains, generator bindings/returns/helper
-arguments, and named callbacks. Do not simply add `from_fn` to the generic
-callee list: that would allow 0046's named closures to reach it. The local
-closure use validator must not silently permit a named/returned generator.
+Version 15 checks the exact `std::iter::from_fn` argument position,
+requires an inline zero-argument synchronous `try_recv().ok()` body, and
+verifies the complete call is the direct receiver of inline synchronous
+eager `find_map`. It rejects lazy chains, generator bindings/returns/helper
+arguments, named callbacks, constructor imports/renames and function-value
+escapes. Parentheses and `move` retain their ordinary syntax. `from_fn`
+is not added to the generic callee list, so 0046's named closures cannot
+reach it. Known local `std` modules do not qualify as library callees.
 Actor-state discovery, mutable bindings, predicates, and genuinely awaited
 stream closures do not change. Existing `expr.closure` scoring suffices.
 
-The current checker relies on syntax and configured call names, not Rust
+The [receiver-drain fixtures](../../tests/cases/receiver-drain) cover the
+accepted form, parentheses, `move`, external fields and binding the terminal
+result, alongside rejected body/callback/terminal shapes and generator
+escapes. Separate [alias](../../tests/cases/receiver-drain-alias) and
+[shadow](../../tests/cases/receiver-drain-shadow) cases protect callee identity.
+The [CLI regression](../../tests/cli.rs) checks both complete retained Claude
+source snapshots and asserts **131.0 / 143 / 18** before and
+**100.5 / 117 / 13** after admission, including existing boundary pricing.
+
+The checker relies on syntax and configured call names, not Rust
 type resolution. It can verify call path, argument/body/consumer shape and
-confinement; it cannot prove the receiver is Tokio's library receiver or
-that a same-spelled user method obeys the external `&mut` rule. Type origin,
+confinement and rejects receiver bindings whose declared or constructed
+type is known to be ours. It cannot prove an unresolved receiver or field
+is Tokio's library receiver, or that a same-spelled method obeys the external
+`&mut` rule. Import resolution and local binding classification remain
+conservative, consistent with the existing checker. Type origin,
 nonblocking pull/`Option` semantics and ownership therefore remain review checks plus Rust
 compilation, consistent with current 0008 boundary handling. Do not present
 a final-segment whitelist as proof of library behavior.
@@ -208,5 +221,6 @@ Those requests have separate evidence and limitations in the review.
 
 ## Owner decision
 
-Pending. This document records a measured candidate; it does not accept the
-construct, change `subset.toml`, or authorize a Conductor production rewrite.
+Accepted by the owner on **2026-11-13**, as version **15**. The accepted
+scope is the exact synchronous receiver drain above; 0059 remains proposed.
+The retained Conductor rewrite is authorized by this acceptance.

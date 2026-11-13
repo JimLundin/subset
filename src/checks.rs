@@ -56,7 +56,14 @@ pub(crate) fn named(segments: &[String], kind: Named, at: Span, env: &Env) -> Ve
         (None, Some(_), Named::Type) => Some(Rule::ReaderType),
         (None, None, _) => None,
     };
-    rule.map(|r| flag(at, r)).into_iter().collect()
+    let receiver_import = match kind {
+        Named::Use => receiver_constructor(segments, env),
+        Named::Path | Named::Type => None,
+    };
+    join(Vec::from([
+        rule.map(|r| flag(at, r)).into_iter().collect(),
+        when(receiver_import, flag(at, Rule::ReceiverImport)),
+    ]))
 }
 
 /// Where `segments` name the item `module::name`, unless a bare name is ours.
@@ -1026,6 +1033,35 @@ pub(crate) fn func(sig: &syn::Signature, block: &Block, env: &Env) -> Func {
         })
         .collect();
     let locals = syntax::locals(block);
+    let own_receiver_bindings = sig
+        .inputs
+        .iter()
+        .filter_map(|argument| match argument {
+            FnArg::Typed(typed) => match typed.pat.as_ref() {
+                Pat::Ident(name) => {
+                    our_receiver_type(&typed.ty, env).map(|_| name.ident.to_string())
+                }
+                _ => None,
+            },
+            FnArg::Receiver(_) => None,
+        })
+        .chain(locals.iter().filter_map(|local| {
+            let (name, init) = named_local(local)?;
+            let path = match ungroup(init) {
+                Expr::Struct(value) => Some(value.path.clone()),
+                Expr::Call(call) => match ungroup(&call.func) {
+                    Expr::Path(function) => {
+                        let mut path = function.path.clone();
+                        let _ = path.segments.pop();
+                        Some(path)
+                    }
+                    _ => None,
+                },
+                _ => None,
+            }?;
+            known_own_receiver(&path, env).map(|_| name)
+        }))
+        .collect();
     let some_bindings = locals
         .iter()
         .filter_map(|l| named_local(l))
@@ -1054,6 +1090,7 @@ pub(crate) fn func(sig: &syn::Signature, block: &Block, env: &Env) -> Func {
             .unwrap_or_default(),
         assigned,
         params,
+        own_receiver_bindings,
         some_bindings,
         stream_bindings,
         table_bindings,
@@ -1965,7 +2002,7 @@ fn second_last(path: &[String]) -> Option<&str> {
     path.iter().rev().nth(1).map(String::as_str)
 }
 
-pub(crate) fn call(c: &syn::ExprCall, callee: &Callee, cx: &Cx) -> Vec<Hit> {
+pub(crate) fn call(c: &syn::ExprCall, callee: &Callee, cx: &Cx, env: &Env) -> Vec<Hit> {
     let last = callee.last();
     let compares = second_last(&callee.path)
         .filter(|t| COMPARE_TRAITS.contains(t))
@@ -1993,6 +2030,10 @@ pub(crate) fn call(c: &syn::ExprCall, callee: &Callee, cx: &Cx) -> Vec<Hit> {
             flag(c.func.span(), Rule::DropDiscard),
         ),
         when(range.and(Some(())), flag(c.func.span(), Rule::RangeCall)),
+        when(
+            receiver_constructor(&callee.path, env).and(absent(receiver_drain(c, callee, cx))),
+            flag(c.span(), Rule::ReceiverDrain),
+        ),
     ]))
 }
 
@@ -2007,11 +2048,19 @@ pub(crate) fn path_expr(p: &syn::ExprPath, cx: &Cx, env: &Env) -> Vec<Hit> {
         ("RangeFull" | "Unbounded", Owner::Theirs) => Some(()),
         _ => None,
     };
-    match (drop, range) {
+    let receiver_value = match cx.slot {
+        Slot::CallCallee => None,
+        _ => receiver_constructor(&syntax::segments(&p.path), env),
+    };
+    let existing = match (drop, range) {
         (Some(_), _) => Vec::from([flag(p.span(), Rule::DropFn)]),
         (None, Some(_)) => Vec::from([flag(p.span(), Rule::RangePath)]),
         (None, None) => Vec::new(),
-    }
+    };
+    join(Vec::from([
+        existing,
+        when(receiver_value, flag(p.span(), Rule::ReceiverValue)),
+    ]))
 }
 
 pub(crate) fn struct_expr(s: &syn::ExprStruct, owner: Owner, cx: &Cx) -> Vec<Hit> {
@@ -2030,17 +2079,177 @@ pub(crate) fn struct_expr(s: &syn::ExprStruct, owner: Owner, cx: &Cx) -> Vec<Hit
     ]))
 }
 
-pub(crate) fn closure(c: &syn::ExprClosure, slot: &Slot, env: &Env) -> Vec<Hit> {
-    match slot {
+pub(crate) fn closure(c: &syn::ExprClosure, cx: &Cx, env: &Env) -> Vec<Hit> {
+    match &cx.slot {
         Slot::LocalClosure => Vec::new(),
         Slot::MethodArg { method, .. } => match takes_closure(method, env) {
             Some(_) => Vec::new(),
             None => Vec::from([flag(c.span(), Rule::ClosureMethod)]),
         },
         Slot::CallArg(callee) => {
-            unless(closure_callee(&callee.path), flag(c.span(), Rule::Closure))
+            let receiver = receiver_callee(&callee.path)
+                .filter(|_| matches!(callee.owner, Owner::Theirs))
+                .and(receiver_pull(c, cx));
+            unless(
+                closure_callee(&callee.path).or(receiver),
+                flag(c.span(), Rule::Closure),
+            )
         }
         _ => Vec::from([flag(c.span(), Rule::Closure)]),
+    }
+}
+
+/// The one eagerly consumed generator boundary added by proposal 0058.
+pub(crate) fn eager_find_map(method: &syn::ExprMethodCall) -> Option<()> {
+    match (
+        method.method.to_string().as_str(),
+        method.args.first(),
+        method.args.len(),
+    ) {
+        ("find_map", Some(consumer), 1) => match ungroup(consumer) {
+            Expr::Closure(c) => {
+                synchronous_closure(c).filter(|_| c.inputs.len() == 1 && method.turbofish.is_none())
+            }
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+fn receiver_callee(path: &[String]) -> Option<()> {
+    match path
+        .iter()
+        .map(String::as_str)
+        .collect::<Vec<&str>>()
+        .as_slice()
+    {
+        ["std", "iter", "from_fn"] => Some(()),
+        _ => None,
+    }
+}
+
+/// Recognize imports/aliases only to reject them; admission uses the exact
+/// written std path, its existing owner classification and eager context.
+fn receiver_constructor(path: &[String], env: &Env) -> Option<()> {
+    receiver_callee(path)
+        .or_else(|| receiver_alias(path, env, env.names.uses.len().saturating_add(1)))
+}
+
+fn receiver_alias(path: &[String], env: &Env, budget: usize) -> Option<()> {
+    match (budget, path.split_first()) {
+        (0, _) | (_, None) => None,
+        (_, Some((first, rest))) => {
+            env.names
+                .uses
+                .iter()
+                .find_map(|import| match import.name.as_ref() {
+                    Some(name) if name == first => {
+                        let prefix = match import.segments.split_last() {
+                            Some((last, prefix)) => match last.as_str() {
+                                "self" => prefix.to_vec(),
+                                _ => import.segments.clone(),
+                            },
+                            None => Vec::new(),
+                        };
+                        let resolved = prefix
+                            .into_iter()
+                            .chain(rest.iter().cloned())
+                            .collect::<Vec<String>>();
+                        receiver_callee(&resolved)
+                            .or_else(|| receiver_alias(&resolved, env, budget.saturating_sub(1)))
+                    }
+                    Some(_) | None => None,
+                })
+        }
+    }
+}
+
+fn synchronous_closure(c: &syn::ExprClosure) -> Option<()> {
+    match (c.asyncness, c.constness, c.movability, &c.output) {
+        (None, None, None, syn::ReturnType::Default) => Some(()),
+        _ => None,
+    }
+}
+
+fn receiver_place(expr: &Expr) -> Option<()> {
+    match ungroup(expr) {
+        Expr::Path(path) => path.qself.is_none().then_some(()),
+        Expr::Field(field) => receiver_place(&field.base),
+        _ => None,
+    }
+}
+
+fn receiver_pull(c: &syn::ExprClosure, cx: &Cx) -> Option<()> {
+    synchronous_closure(c).filter(|_| c.inputs.is_empty())?;
+    let ok = match ungroup(&c.body) {
+        Expr::MethodCall(method) => Some(method),
+        _ => None,
+    }?;
+    Some(ok).filter(|method| {
+        method.method == "ok" && method.args.is_empty() && method.turbofish.is_none()
+    })?;
+    let pull = match ungroup(&ok.receiver) {
+        Expr::MethodCall(method) => Some(method),
+        _ => None,
+    }?;
+    Some(pull).filter(|method| {
+        method.method == "try_recv" && method.args.is_empty() && method.turbofish.is_none()
+    })?;
+    receiver_place(&pull.receiver)?;
+    let own = syntax::ident_of(ungroup(&pull.receiver)).and_then(|name| {
+        cx.func
+            .as_ref()
+            .and_then(|function| function.own_receiver_bindings.get(&name))
+    });
+    absent(own.and(Some(())))
+}
+
+fn known_own_receiver(path: &syn::Path, env: &Env) -> Option<()> {
+    let names = syntax::segments(path);
+    match names.as_slice() {
+        [name] => env
+            .facts
+            .types
+            .get(name)
+            .or(env.names.ours.get(name))
+            .and(Some(())),
+        _ => env.facts.owner_of(&names),
+    }
+}
+
+fn our_receiver_type(ty: &Type, env: &Env) -> Option<()> {
+    match ty {
+        Type::Path(path) => known_own_receiver(&path.path, env),
+        Type::Reference(reference) => our_receiver_type(&reference.elem, env),
+        Type::Paren(group) => our_receiver_type(&group.elem, env),
+        _ => None,
+    }
+}
+
+fn receiver_drain(c: &syn::ExprCall, callee: &Callee, cx: &Cx) -> Option<()> {
+    receiver_callee(&callee.path)?;
+    match (callee.owner, &cx.slot) {
+        (Owner::Theirs, Slot::ReceiverDrain) => Some(()),
+        _ => None,
+    }?;
+    let path = match ungroup(&c.func) {
+        Expr::Path(path) => Some(path),
+        _ => None,
+    }?;
+    Some(path).filter(|path| {
+        path.qself.is_none()
+            && path
+                .path
+                .segments
+                .iter()
+                .all(|segment| matches!(segment.arguments, PathArguments::None))
+    })?;
+    match (c.args.first(), c.args.len()) {
+        (Some(argument), 1) => match ungroup(argument) {
+            Expr::Closure(closure) => receiver_pull(closure, cx),
+            _ => None,
+        },
+        _ => None,
     }
 }
 
@@ -2055,7 +2264,7 @@ fn closure_callee(path: &[String]) -> Option<()> {
 }
 
 /// Parentheses and token groups keep the expression in the same slot.
-fn ungroup(expr: &Expr) -> &Expr {
+pub(crate) fn ungroup(expr: &Expr) -> &Expr {
     match expr {
         Expr::Paren(p) => ungroup(&p.expr),
         Expr::Group(g) => ungroup(&g.expr),

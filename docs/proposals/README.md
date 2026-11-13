@@ -35,22 +35,26 @@ follows [Presenting a case](../presenting-a-case.md).
   changes still need their own rules and evidence. The reported examples
   do not all pass merely because these narrower forms are implemented.
 
-## Pending owner decisions from issue #5
+## Accepted from issue #5
 
 - [0058: synchronous receiver iterator](0058-synchronous-receiver-iterator.md)
   confines `std::iter::from_fn` to a nonblocking receiver pull consumed
-  immediately by `find_map`. The measured function saves 23.3% at the
-  proposed price; both versions passed compiler and behavior checks.
+  immediately by `find_map`. Accepted on 2026-11-13 as version 15. The
+  measured function saves 23.3% with boundary pricing; both versions passed
+  compiler and behavior checks. Its independent readiness review is
+  recorded in [0058's review](../reviews/issue5-proposal-review.md).
+
+## Pending owner decision from issue #5
+
 - [0059: path-error factory](0059-path-error-factory.md) shares a private
   concrete error adapter across functions, with a fresh callable passed
   directly to `map_err` and existing path bindings as context. Nine
   unresolved sites remain after the accepted local-closure rewrite, meeting
   the count test. Full-crate compilation and focused ownership tests passed.
 
-Both proposals passed independent readiness review, recorded in
-[0058's review](../reviews/issue5-proposal-review.md) and
-[0059's review](../reviews/issue5-error-factory-review.md). Their status is
-**proposed**; neither changes the active checker or allowlist.
+0059 passed independent readiness review, recorded in
+[0059's review](../reviews/issue5-error-factory-review.md). Its status stays
+**proposed**; it does not change the active checker or allowlist.
 
 The [consumer review](../reviews/issue5-consumer-review.md),
 [complete patch](../reviews/issue5-consumer/conductor.diff), and

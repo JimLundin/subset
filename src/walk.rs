@@ -125,8 +125,12 @@ pub(crate) enum Owner {
 pub(crate) enum Slot {
     Other,
     CallArg(Callee),
+    /// A function path invoked immediately, rather than retained as a value.
+    CallCallee,
     /// A temporary array may stand directly before a method call (0047).
     MethodReceiver,
+    /// The direct receiver of an inline eager `find_map` (0058).
+    ReceiverDrain,
     MethodArg {
         method: String,
         receiver: Owner,
@@ -210,6 +214,8 @@ pub(crate) struct Func {
     pub(crate) assigned: BTreeSet<String>,
     /// Each parameter bound to a plain name, with its type's last segment.
     pub(crate) params: BTreeMap<String, String>,
+    /// Names whose declared/constructed receiver type is known to be ours.
+    pub(crate) own_receiver_bindings: BTreeSet<String>,
     /// Names bound by `let name = Some(..)`.
     pub(crate) some_bindings: BTreeSet<String>,
     /// Names bound to a stream that starts at `stream::iter`.
@@ -1998,7 +2004,7 @@ impl<'ast> Visit<'ast> for Walk {
         self.hits.extend(rules);
         match e {
             Expr::Call(c) => {
-                let callee = match c.func.as_ref() {
+                let callee = match checks::ungroup(&c.func) {
                     Expr::Path(p) => Callee {
                         path: syntax::segments(&p.path),
                         owner: ours(&p.path, &self.env),
@@ -2008,14 +2014,18 @@ impl<'ast> Visit<'ast> for Walk {
                         owner: Owner::Theirs,
                     },
                 };
-                self.hits.extend(checks::call(c, &callee, &cx));
+                self.hits.extend(checks::call(c, &callee, &cx, &self.env));
+                self.slot(c.func.span(), Slot::CallCallee);
                 for a in c.args.iter() {
                     self.slot(a.span(), Slot::CallArg(callee.clone()));
                 }
                 visit::visit_expr(self, e);
             }
             Expr::MethodCall(m) => {
-                self.slot(m.receiver.span(), Slot::MethodReceiver);
+                self.slot(
+                    m.receiver.span(),
+                    checks::eager_find_map(m).map_or(Slot::MethodReceiver, |_| Slot::ReceiverDrain),
+                );
                 let method = m.method.to_string();
                 self.hits
                     .extend(
@@ -2105,7 +2115,7 @@ impl<'ast> Visit<'ast> for Walk {
                 for (at, name) in modifiers {
                     self.id(at, at, name);
                 }
-                self.hits.extend(checks::closure(c, &cx.slot, &self.env));
+                self.hits.extend(checks::closure(c, &cx, &self.env));
                 let predicate = match &cx.slot {
                     Slot::MethodArg { method, .. } => self
                         .env
@@ -2133,6 +2143,7 @@ impl<'ast> Visit<'ast> for Walk {
                     Slot::CallArg(_)
                     | Slot::MethodArg { .. }
                     | Slot::MethodReceiver
+                    | Slot::ReceiverDrain
                     | Slot::ConstInit,
                 ) = (r.mutability, &cx.slot)
                 {

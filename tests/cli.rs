@@ -191,6 +191,77 @@ fn write(path: &Path, text: &str) {
     std::fs::write(path, text).expect("file");
 }
 
+#[derive(Debug, PartialEq)]
+struct RefusalMeasure {
+    score: f64,
+    tokens: u64,
+    lines: u64,
+}
+
+/// Reprice the complete retained Conductor function, including its library
+/// closure boundary, rather than measuring a simplified example.
+#[test]
+fn synchronous_receiver_drain_preserves_the_accepted_measurement() {
+    assert_eq!(
+        refusal_measure("before"),
+        RefusalMeasure {
+            score: 131.0,
+            tokens: 143,
+            lines: 18,
+        }
+    );
+    assert_eq!(
+        refusal_measure("from-fn"),
+        RefusalMeasure {
+            score: 100.5,
+            tokens: 117,
+            lines: 13,
+        }
+    );
+}
+
+fn refusal_measure(phase: &str) -> RefusalMeasure {
+    let dir = scratch(&format!("receiver-drain-{phase}"));
+    let path = "crates/agents/src/claude/session.rs";
+    let retained = root()
+        .join("docs/reviews/issue5-callbacks-actors")
+        .join(phase)
+        .join(path);
+    write(&dir.join(path), &read(&retained));
+    std::fs::copy(root().join("subset.toml"), dir.join("subset.toml")).expect("config");
+    assert_eq!(run(&dir, &["check"]), "exit 0\n", "{phase}");
+    let output = run(&dir, &["score", path, "--by", "fn", "--json"]);
+    let data = serde_json::from_str::<serde_json::Value>(
+        output.strip_prefix("exit 0\n").expect("score succeeded"),
+    )
+    .expect("function measurements");
+    let row = data
+        .get("rows")
+        .and_then(serde_json::Value::as_array)
+        .expect("measurement rows")
+        .iter()
+        .find(|row| {
+            row.get("name")
+                .and_then(serde_json::Value::as_str)
+                .is_some_and(|name| name.ends_with(" refusal"))
+        })
+        .expect("complete refusal function");
+    RefusalMeasure {
+        score: row
+            .get("score")
+            .and_then(serde_json::Value::as_f64)
+            .expect("score"),
+        tokens: row
+            .get("tokens")
+            .and_then(serde_json::Value::as_u64)
+            .expect("tokens"),
+        lines: row
+            .get("lines")
+            .and_then(serde_json::Value::as_u64)
+            .expect("lines"),
+    }
+}
+
 /// Rust supplies type, ownership and exhaustiveness checks beyond syn.
 #[test]
 fn permitted_patterns_compile_and_refutable_lengths_need_fallbacks() {
