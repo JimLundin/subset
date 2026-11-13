@@ -1,0 +1,3 @@
+$ check
+exit 1
+crates/app/src/a_fail.rs:1:23: item.use.glob: a glob import only for `dioxus::prelude::*` (proposal 0018)

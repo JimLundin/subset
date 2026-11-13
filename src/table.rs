@@ -1,533 +1,452 @@
-//! The `const` tables of a file and the row types they hold (proposal 0042):
-//! which structs may have `&'static str` fields, and which predicates on a
-//! table are keyed lookups that should be a `match`.
+//! The construct ids the walk emits and the shape rules of accepted
+//! proposals, as data. `subset ids` and `subset rules` print them as the
+//! README tables.
 
-use std::collections::{BTreeSet, HashMap, HashSet};
-
-use syn::visit::{self, Visit};
-use syn::{Expr, Fields, Pat, Type};
-
-pub struct Tables {
-    /// Each `const` table's name, with what a keyed lookup compares in it.
-    keys: HashMap<String, Keys>,
-    /// The row structs: each is the element type of a `const` table and is
-    /// built only as an element of a table's literal.
-    rows: HashSet<*const syn::ItemStruct>,
+pub(crate) struct RuleRow {
+    pub(crate) rule: Rule,
+    pub(crate) id: &'static str,
+    pub(crate) message: &'static str,
 }
 
-/// What a keyed lookup compares in a table's rows.
-#[derive(Clone)]
-pub enum Keys {
-    /// The `&str` fields of a row struct, by name, or of a tuple row, by
-    /// index.
-    Fields(BTreeSet<String>),
-    /// The rows themselves, in a table of `&str`.
-    Element,
+pub(crate) struct IdRow {
+    pub(crate) id: &'static str,
+    pub(crate) meaning: &'static str,
 }
 
-/// A table that an iterator chain reads, and whether `enumerate` pairs
-/// each row with its index.
-pub struct Scan<'a> {
-    keys: &'a Keys,
-    enumerated: bool,
-}
-
-/// Methods between a table and its predicate that pass rows through.
-const PASS_THROUGH: &[&str] = &[
-    "iter",
-    "into_iter",
-    "copied",
-    "cloned",
-    "rev",
-    "skip",
-    "take",
-    "step_by",
-    "filter",
-    "skip_while",
-    "take_while",
-    "by_ref",
+/// Ids built from the source text. The placeholder names the varying part.
+pub(crate) const FAMILIES: &[IdRow] = &[
+    IdRow { id: "attr.derive.<Name>", meaning: UNLISTED_DERIVE },
+    IdRow { id: "attr.<name>", meaning: UNLISTED_ATTR },
+    IdRow { id: "macro.<path>", meaning: UNLISTED_MACRO },
+    IdRow { id: "type.interior_mut.<Name>", meaning: INTERIOR_MUT_TYPE },
+    IdRow { id: "expr.interior_mut.<Name>", meaning: INTERIOR_MUT_EXPR },
 ];
 
-impl Tables {
-    pub fn gather(file: &syn::File) -> Tables {
-        let mut walk = Walk::default();
-        walk.visit_file(file);
-        let excluded = |s: &StructInfo| {
-            walk.outside.contains(&s.key)
-                || walk
-                    .outside_names
-                    .contains(s.key.last().map_or("", String::as_str))
-        };
-        let rows = walk
-            .structs
-            .iter()
-            .filter(|s| walk.tables.iter().any(|t| t.row.as_ref() == Some(&s.key)))
-            .filter(|s| !excluded(s))
-            .map(|s| s.ptr)
-            .collect();
-        let keys = walk
-            .tables
-            .iter()
-            .filter_map(|t| t.keys(&walk.structs).map(|keys| (t.name.clone(), keys)))
-            .collect();
-        Tables { keys, rows }
-    }
+pub(crate) const UNLISTED_DERIVE: &str = "derive of a name not in `derives`";
+pub(crate) const UNLISTED_ATTR: &str = "attribute not in the subset";
+pub(crate) const UNLISTED_MACRO: &str = "macro not listed in `macros`";
+pub(crate) const INTERIOR_MUT_TYPE: &str = "std cell, lock or atomic type";
+pub(crate) const INTERIOR_MUT_EXPR: &str = "std cell, lock or atomic type in an expression path";
+const COMPOUND_ASSIGNMENT: &str = "compound assignment is not allowed; write `x = x.checked_add(1)?` (proposal 0008)";
+const INTERIOR_MUTABILITY: &str = "interior mutability stays out of the subset (proposal 0008)";
 
-    pub fn is_row(&self, item: &syn::ItemStruct) -> bool {
-        self.rows.contains(&std::ptr::from_ref(item))
-    }
-
-    /// The table that `expr` reads: a `const` table by name, or a name
-    /// bound to one in `bindings`, behind `&`, parentheses and the methods
-    /// in `PASS_THROUGH` or `enumerate`.
-    pub fn scanned(&self, expr: &Expr, bindings: &HashMap<String, Expr>) -> Option<Scan<'_>> {
-        match expr {
-            Expr::MethodCall(e) if e.method == "enumerate" => {
-                let inner = self.scanned(&e.receiver, bindings)?;
-                Some(Scan {
-                    enumerated: true,
-                    ..inner
-                })
-            }
-            Expr::MethodCall(e) if PASS_THROUGH.contains(&e.method.to_string().as_str()) => {
-                self.scanned(&e.receiver, bindings)
-            }
-            Expr::Reference(e) => self.scanned(&e.expr, bindings),
-            Expr::Paren(e) => self.scanned(&e.expr, bindings),
-            Expr::Path(e) => {
-                let bound = e
-                    .path
-                    .get_ident()
-                    .and_then(|i| bindings.get(&i.to_string()));
-                match bound {
-                    Some(init) => self.scanned(init, &HashMap::new()),
-                    None => {
-                        let name = e.path.segments.last()?.ident.to_string();
-                        self.keys.get(&name).map(|keys| Scan {
-                            keys,
-                            enumerated: false,
-                        })
-                    }
-                }
-            }
-            _ => None,
-        }
-    }
-
-    /// The names a block binds with `let` to a table or a chain over one.
-    pub fn bindings(&self, block: &syn::Block) -> HashMap<String, Expr> {
-        struct Finder<'t> {
-            tables: &'t Tables,
-            found: HashMap<String, Expr>,
-        }
-        impl<'ast> Visit<'ast> for Finder<'_> {
-            fn visit_local(&mut self, local: &'ast syn::Local) {
-                if let (Pat::Ident(p), Some(init)) = (&local.pat, &local.init)
-                    && self.tables.scanned(&init.expr, &HashMap::new()).is_some()
-                {
-                    self.found.insert(p.ident.to_string(), (*init.expr).clone());
-                }
-                visit::visit_local(self, local);
-            }
-            fn visit_item(&mut self, _: &'ast syn::Item) {}
-        }
-        let mut finder = Finder {
-            tables: self,
-            found: HashMap::new(),
-        };
-        finder.visit_block(block);
-        finder.found
-    }
+/// The id and message of a rule.
+pub(crate) fn row(rule: Rule) -> (String, String) {
+    RULES
+        .iter()
+        .find(|r| r.rule == rule)
+        .map(|r| (r.id.to_string(), r.message.to_string()))
+        .unwrap_or_default()
 }
 
-/// Whether a predicate closure over `scan`'s rows tests a string key for
-/// equality with a value that isn't a literal, in any spelling: `==`,
-/// `!(.. != ..)`, `.eq`, `PartialEq::eq`, `cmp(..).is_eq()`, inside `&&`,
-/// `||` or a block.
-pub fn keyed(closure: &syn::ExprClosure, scan: &Scan) -> bool {
-    let Some(pat) = closure.inputs.first() else {
-        return false;
-    };
-    let row = match (scan.enumerated, unref(pat)) {
-        (false, pat) => pat,
-        (true, Pat::Tuple(t)) if t.elems.len() == 2 => &t.elems[1],
-        (true, _) => return false,
-    };
-    let binding = Binding::of(row, scan.keys);
-    binding.compares(&closure.body, false, scan.keys)
+pub(crate) fn message(rule: Rule) -> String {
+    row(rule).1
 }
 
-/// How a predicate closure binds a row.
-enum Binding {
-    /// The whole row, by name.
-    Whole(String),
-    /// The row's string keys, by the names a pattern binds them to.
-    Parts(BTreeSet<String>),
+/// The reason for an id that a proposal forbids outright.
+pub(crate) fn forbidden(id: &str) -> Option<String> {
+    let compound = Some(id).filter(|i| i.starts_with("expr.binary.") && i.ends_with("_assign"));
+    let interior = Some(id)
+        .filter(|i| i.starts_with("type.interior_mut.") || i.starts_with("expr.interior_mut."));
+    compound
+        .map(|_| COMPOUND_ASSIGNMENT.to_string())
+        .or(interior.map(|_| INTERIOR_MUTABILITY.to_string()))
 }
 
-impl Binding {
-    fn of(pat: &Pat, keys: &Keys) -> Binding {
-        let fields = match keys {
-            Keys::Fields(fields) => fields.clone(),
-            Keys::Element => BTreeSet::new(),
-        };
-        match unref(pat) {
-            Pat::Ident(p) => Binding::Whole(p.ident.to_string()),
-            Pat::Tuple(t) => Binding::Parts(
-                t.elems
-                    .iter()
-                    .enumerate()
-                    .filter(|(i, _)| fields.contains(&i.to_string()))
-                    .filter_map(|(_, p)| ident(p))
-                    .collect(),
-            ),
-            Pat::Struct(s) => Binding::Parts(
-                s.fields
-                    .iter()
-                    .filter(|f| match &f.member {
-                        syn::Member::Named(name) => fields.contains(&name.to_string()),
-                        syn::Member::Unnamed(_) => false,
-                    })
-                    .filter_map(|f| ident(&f.pat))
-                    .collect(),
-            ),
-            _ => Binding::Parts(BTreeSet::new()),
-        }
-    }
-
-    /// Whether `expr`, read as a predicate (negated when `negated`), holds
-    /// an equality between a key and a value that isn't a literal.
-    fn compares(&self, expr: &Expr, negated: bool, keys: &Keys) -> bool {
-        let equal = |a: &Expr, b: &Expr| {
-            (self.key(a, keys) && !literal(b)) || (self.key(b, keys) && !literal(a))
-        };
-        let eq = match negated {
-            false => "eq",
-            true => "ne",
-        };
-        match expr {
-            Expr::Paren(e) => self.compares(&e.expr, negated, keys),
-            Expr::Block(b) => match b.block.stmts.as_slice() {
-                [syn::Stmt::Expr(tail, None)] => self.compares(tail, negated, keys),
-                _ => false,
-            },
-            Expr::Unary(e) if matches!(e.op, syn::UnOp::Not(_)) => {
-                self.compares(&e.expr, !negated, keys)
-            }
-            Expr::Binary(e) => match e.op {
-                syn::BinOp::And(_) | syn::BinOp::Or(_) => {
-                    self.compares(&e.left, negated, keys) || self.compares(&e.right, negated, keys)
-                }
-                syn::BinOp::Eq(_) if !negated => equal(&e.left, &e.right),
-                syn::BinOp::Ne(_) if negated => equal(&e.left, &e.right),
-                _ => false,
-            },
-            Expr::MethodCall(e) if e.method == eq && e.args.len() == 1 => {
-                equal(&e.receiver, &e.args[0])
-            }
-            Expr::MethodCall(e) if e.method == format!("is_{eq}") => match &*e.receiver {
-                Expr::MethodCall(c)
-                    if (c.method == "cmp" || c.method == "partial_cmp") && c.args.len() == 1 =>
-                {
-                    equal(&c.receiver, &c.args[0])
-                }
-                _ => false,
-            },
-            Expr::Call(e) if e.args.len() == 2 => {
-                let named = matches!(&*e.func, Expr::Path(p) if p.path.segments.last().is_some_and(|s| s.ident == eq));
-                named && equal(&e.args[0], &e.args[1])
-            }
-            _ => false,
-        }
-    }
-
-    fn key(&self, expr: &Expr, keys: &Keys) -> bool {
-        match (self, expr, keys) {
-            (_, Expr::Paren(e), _) => self.key(&e.expr, keys),
-            (_, Expr::Reference(e), _) => self.key(&e.expr, keys),
-            (_, Expr::Unary(e), _) if matches!(e.op, syn::UnOp::Deref(_)) => {
-                self.key(&e.expr, keys)
-            }
-            (Binding::Whole(name), Expr::Path(p), Keys::Element) => p.path.is_ident(name),
-            (Binding::Whole(name), Expr::Field(f), Keys::Fields(fields)) => {
-                let field = match &f.member {
-                    syn::Member::Named(i) => i.to_string(),
-                    syn::Member::Unnamed(i) => i.index.to_string(),
-                };
-                fields.contains(&field) && self.key_base(&f.base, name)
-            }
-            (Binding::Parts(names), Expr::Path(p), _) => p
-                .path
-                .get_ident()
-                .is_some_and(|i| names.contains(&i.to_string())),
-            _ => false,
-        }
-    }
-
-    fn key_base(&self, base: &Expr, name: &str) -> bool {
-        match base {
-            Expr::Paren(e) => self.key_base(&e.expr, name),
-            Expr::Unary(e) if matches!(e.op, syn::UnOp::Deref(_)) => self.key_base(&e.expr, name),
-            Expr::Path(p) => p.path.is_ident(name),
-            _ => false,
-        }
-    }
+pub(crate) fn ids_table() -> String {
+    let rows = IDS
+        .iter()
+        .chain(FAMILIES)
+        .map(|r| format!("| `{}` | {} |\n", r.id, r.meaning.replace('|', r"\|")));
+    std::iter::once("| Id | Meaning |\n|---|---|\n".to_string())
+        .chain(rows)
+        .collect()
 }
 
-fn unref(pat: &Pat) -> &Pat {
-    match pat {
-        Pat::Reference(p) => unref(&p.pat),
-        Pat::Type(p) => unref(&p.pat),
-        _ => pat,
-    }
+pub(crate) fn rules_table() -> String {
+    let rows = RULES
+        .iter()
+        .map(|r| format!("| `{}` | {} |\n", r.id, r.message.replace('|', r"\|")));
+    std::iter::once("| Id | Rule |\n|---|---|\n".to_string())
+        .chain(rows)
+        .collect()
 }
 
-fn ident(pat: &Pat) -> Option<String> {
-    match unref(pat) {
-        Pat::Ident(p) => Some(p.ident.to_string()),
-        _ => None,
-    }
+/// A shape rule: where an allowed id may stand and what form it takes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Rule {
+    VisCrate,
+    PubField,
+    StructUpdate,
+    UnitType,
+    UnitValue,
+    AsyncBlock,
+    TokioMain,
+    LoopPosition,
+    LoopTurn,
+    Break,
+    MutSelf,
+    RefMutSelf,
+    LetMut,
+    PatMut,
+    LetMutOurs,
+    ParamMutOurs,
+    Assign,
+    RefMutOurs,
+    DropDiscard,
+    DropFn,
+    OkDiscard,
+    OperatorUse,
+    OperatorPath,
+    OperatorType,
+    OperatorMethod,
+    ReaderUse,
+    ReaderPath,
+    ReaderType,
+    PredicateMatches,
+    PredicateEq,
+    PredicateNe,
+    PredicateLt,
+    PredicateLe,
+    PredicateGt,
+    PredicateGe,
+    PredicateAnd,
+    PredicateOr,
+    PredicateNot,
+    Count,
+    Guard,
+    GuardBound,
+    GuardPattern,
+    GuardFallback,
+    MatchesForm,
+    LiftFilter,
+    LiftMatched,
+    LiftEq,
+    ForBody,
+    ForIter,
+    ForEach,
+    StreamEffects,
+    ImplTrait,
+    LifetimeParam,
+    Lifetime,
+    StaticStr,
+    KeyedTable,
+    RangeCall,
+    RangeStruct,
+    RangePath,
+    SplitAt,
+    StrTupleRow,
+    TupleTable,
+    ThiserrorHost,
+    OrdHost,
+    OrdInner,
+    ErrorMessage,
+    FromOnce,
+    SerdeKeys,
+    TypeParam,
+    ImplTraitArg,
+    Slice,
+    ArrayType,
+    ArrayValue,
+    Repeat,
+    CfgPredicate,
+    CfgHost,
+    CfgPair,
+    Dyn,
+    ClosureMethod,
+    Closure,
+    Glob,
+    Allow,
+    BoolType,
+    ValueParser,
+    TokioTest,
+    BoolLit,
+    Env,
 }
 
-fn literal(expr: &Expr) -> bool {
-    match expr {
-        Expr::Paren(e) => literal(&e.expr),
-        Expr::Reference(e) => literal(&e.expr),
-        Expr::Lit(_) => true,
-        _ => false,
-    }
-}
+const CONSUMING_READER: &str = "a reader in `consuming_readers` changes its buffer on every read, so a tuple of reads means something only by evaluation order; split the bytes with `split_at_checked` and match them, as in the bootstrap review's §A7 (proposal 0039)";
+const FALLIBLE_OPERATOR: &str = "a trait in `fallible_operators` is never imported, named in a path or called as a method; write `checked_*` or `saturating_*` (proposal 0038)";
+const MUT_OURS: &str = "`mut` only on a value whose type isn't ours, on an actor's loop state or on a type in `endpoints`; to lend a library field of a value of ours as `&mut`, destructure the value and bind that field `mut` (proposals 0008, 0035)";
+const PREDICATE: &str = "a boolean expression (`matches!`, a comparison, `&&`, `||`, `!`) only as the body of a closure passed straight to a method in `predicate_adapters` (proposals 0028, 0037), or one comparison or `matches!` as a match guard (proposal 0040)";
+const RANGE_BY_NAME: &str = "a range built by name (`RangeInclusive::new`, any other associated fn of a range type, `Range { .. }`, `RangeFull`, a `Bound`) is a range expression (`expr.range`) under another name; it stands only as the iterator of a `for`, the receiver of an iterator method or of `contains`, or the argument of `zip` or `chain`, never as an index or a slice argument: split bytes with `split_at_checked` (bootstrap review §A7, rtc-ports and v8 reviews)";
 
-/// Whether `ty` is `&str` or `&'static str`.
-pub fn is_str_ref(ty: &Type) -> bool {
-    matches!(ty, Type::Reference(r) if r.mutability.is_none() && matches!(&*r.elem, Type::Path(p) if p.qself.is_none() && p.path.is_ident("str")))
-}
+pub(crate) const RULES: &[RuleRow] = &[
+    RuleRow { rule: Rule::VisCrate, id: "vis.restricted", message: "only `pub(crate)`, never `pub(super)` or `pub(in …)` (proposal 0003)" },
+    RuleRow { rule: Rule::PubField, id: "vis.pub", message: "a field of a `pub(crate)` struct is `pub(crate)`, never `pub` (proposal 0003)" },
+    RuleRow { rule: Rule::StructUpdate, id: "expr.struct.update", message: "the base of `..base` is a path, a constructor call or a method call (proposals 0004, 0036)" },
+    RuleRow { rule: Rule::UnitType, id: "type.unit", message: "`()` as a type only in a type argument of a type we don't define, as in `Result<(), E>`, or as `fn main`'s return type (proposals 0005, 0023)" },
+    RuleRow { rule: Rule::UnitValue, id: "expr.unit", message: "`()` as a value only as an argument or field value of a fn, method or struct we don't define, as in `Ok(())` (proposals 0005, 0023)" },
+    RuleRow { rule: Rule::AsyncBlock, id: "expr.async", message: "an async block only as a spawn argument or the whole body of an `unfold`, `then` or `use_future` closure (proposal 0006)" },
+    RuleRow { rule: Rule::TokioMain, id: "attr.tokio::main", message: "`#[tokio::main]` only on `fn main` (proposal 0006)" },
+    RuleRow { rule: Rule::LoopPosition, id: "expr.loop", message: "loop must be the whole body of an actor run fn, after at most one `let mut` state (proposal 0007)" },
+    RuleRow { rule: Rule::LoopTurn, id: "expr.loop", message: "a loop turn takes one input (`select!`, a `match` of `select!`s, or one awaited call) and handles it with one call or `match` (proposal 0007)" },
+    RuleRow { rule: Rule::Break, id: "expr.break", message: "`break` only with a value, out of an actor loop (proposal 0007)" },
+    RuleRow { rule: Rule::MutSelf, id: "item.fn.receiver.mut", message: "`mut self` only on a fn whose body is an actor loop (proposal 0008)" },
+    RuleRow { rule: Rule::RefMutSelf, id: "item.fn.receiver.mut", message: "`&mut self` only on methods of an actor's loop state, of a type of ours named in one of its field types or in a variant of an enum it owns (proposal 0008), or of a type in `endpoints` (proposal 0035)" },
+    RuleRow { rule: Rule::LetMut, id: "stmt.let.mut", message: "`let mut` only for a loop's state just before the loop, or for a value never reassigned and only lent as `&mut` (proposal 0008)" },
+    RuleRow { rule: Rule::PatMut, id: "pat.ident.mut", message: "a `mut` binding is never reassigned, only lent as `&mut` (proposal 0008)" },
+    RuleRow { rule: Rule::LetMutOurs, id: "stmt.let.mut", message: MUT_OURS },
+    RuleRow { rule: Rule::ParamMutOurs, id: "pat.ident.mut", message: MUT_OURS },
+    RuleRow { rule: Rule::Assign, id: "expr.assign", message: "assignment only to `self.field` in a `&mut self` method, or to the loop's state binding (proposal 0008)" },
+    RuleRow { rule: Rule::RefMutOurs, id: "type.reference.mut", message: "no `&mut` of our own types other than `&mut self` (proposals 0008, 0023)" },
+    RuleRow { rule: Rule::DropDiscard, id: "expr.call", message: "`drop(..)` only of a named value that owns a resource released early; discard a value with `let _ = value;` (proposal 0025)" },
+    RuleRow { rule: Rule::DropFn, id: "expr.path", message: "`drop` passed as a function, as in `.map(drop)`, is a discard; write `let _ = value;` (proposal 0025)" },
+    RuleRow { rule: Rule::OkDiscard, id: "expr.method_call", message: "`.ok()` is not a discard; write `let _ = value;` (proposal 0025)" },
+    RuleRow { rule: Rule::OperatorUse, id: "item.use", message: FALLIBLE_OPERATOR },
+    RuleRow { rule: Rule::OperatorPath, id: "expr.path", message: FALLIBLE_OPERATOR },
+    RuleRow { rule: Rule::OperatorType, id: "type.path", message: FALLIBLE_OPERATOR },
+    RuleRow { rule: Rule::OperatorMethod, id: "expr.method_call", message: FALLIBLE_OPERATOR },
+    RuleRow { rule: Rule::ReaderUse, id: "item.use", message: CONSUMING_READER },
+    RuleRow { rule: Rule::ReaderPath, id: "expr.path", message: CONSUMING_READER },
+    RuleRow { rule: Rule::ReaderType, id: "type.path", message: CONSUMING_READER },
+    RuleRow { rule: Rule::PredicateMatches, id: "macro.matches", message: PREDICATE },
+    RuleRow { rule: Rule::PredicateEq, id: "expr.binary.eq", message: PREDICATE },
+    RuleRow { rule: Rule::PredicateNe, id: "expr.binary.ne", message: PREDICATE },
+    RuleRow { rule: Rule::PredicateLt, id: "expr.binary.lt", message: PREDICATE },
+    RuleRow { rule: Rule::PredicateLe, id: "expr.binary.le", message: PREDICATE },
+    RuleRow { rule: Rule::PredicateGt, id: "expr.binary.gt", message: PREDICATE },
+    RuleRow { rule: Rule::PredicateGe, id: "expr.binary.ge", message: PREDICATE },
+    RuleRow { rule: Rule::PredicateAnd, id: "expr.binary.and", message: PREDICATE },
+    RuleRow { rule: Rule::PredicateOr, id: "expr.binary.or", message: PREDICATE },
+    RuleRow { rule: Rule::PredicateNot, id: "expr.unary.not", message: PREDICATE },
+    RuleRow { rule: Rule::Count, id: "expr.method_call", message: "count matching items with `filter(|x| matches!(x, ..)).count()`, not `filter_map(..).count()` (proposal 0028)" },
+    RuleRow { rule: Rule::Guard, id: "expr.match.guard", message: "a match guard is one comparison (`==`, `!=`, `<`, `<=`, `>`, `>=`) or one `matches!`, with no `&&`, `||` or `!` (proposal 0040)" },
+    RuleRow { rule: Rule::GuardBound, id: "expr.match.guard", message: "a guard tests a value its arm's pattern bound; a guard on nothing the pattern bound is an `if` (proposal 0040)" },
+    RuleRow { rule: Rule::GuardPattern, id: "expr.match.guard", message: "a guard that compares with a literal, a variant or a constant, or a `matches!` on a place, is a pattern: write it in the arm (proposal 0040, bootstrap review §A3, §A4)" },
+    RuleRow { rule: Rule::GuardFallback, id: "expr.match.guard", message: "a guarded arm needs a later arm with no guard whose pattern covers the guarded one, so the otherwise case is written out (proposal 0040)" },
+    RuleRow { rule: Rule::MatchesForm, id: "macro.matches", message: "`matches!` takes a place or a call and a pattern with no `if` and no `true` / `false`, so no boolean rides through it (proposals 0028, 0040)" },
+    RuleRow { rule: Rule::LiftFilter, id: "expr.method_call", message: "`Some(x).filter(..)` or `.find(..)` with one comparison is a match guard: `pat if a == b => ..` with an unguarded arm for the rest (proposal 0040)" },
+    RuleRow { rule: Rule::LiftMatched, id: "expr.method_call", message: "a `filter` of one comparison matched at once is a match guard: `Some(x) if a == b => ..` with an unguarded arm for the rest (proposal 0040)" },
+    RuleRow { rule: Rule::LiftEq, id: "expr.method_call", message: "a comparison by name (`a.eq(&b)`, `a.lt(&b)`, `a.cmp(&b).is_eq()`, `PartialEq::eq`) is a `bool` outside a predicate; write a match guard `pat if a == b => ..` (proposal 0040)" },
+    RuleRow { rule: Rule::ForBody, id: "expr.for", message: "a `for` body holds only calls, as `f(item);`, `f(item)?;`, `x.m(item).await?;` or `let _ = f(item);`, each building nothing; build or select values with the adapters (`map`, `filter`, `fold`, `try_fold`, ..) (proposal 0041)" },
+    RuleRow { rule: Rule::ForIter, id: "expr.for", message: "a `for` iterates a list built before it or by adapters, with no block, assignment or branch in its iterator expression (proposal 0041)" },
+    RuleRow { rule: Rule::ForEach, id: "expr.method_call", message: "a loop whose body performs side effects is `for item in list { .. }`, not `for_each` or `try_for_each` (proposal 0041)" },
+    RuleRow { rule: Rule::StreamEffects, id: "expr.method_call", message: "awaited effects run in order as `for item in list { f(item).await?; }`, not `stream::iter(..).then(..).try_collect()` into `()` (proposal 0041)" },
+    RuleRow { rule: Rule::ImplTrait, id: "item.impl.trait", message: "trait impls only for `Drop`, `Debug`, `Serialize`, `Deserialize` and `ProtocolHandler` (proposal 0009)" },
+    RuleRow { rule: Rule::LifetimeParam, id: "generics.lifetime", message: "lifetime parameters only in a library trait impl (proposal 0009)" },
+    RuleRow { rule: Rule::Lifetime, id: "type.lifetime", message: "lifetimes only in a library trait impl, where its signature demands them (proposal 0009)" },
+    RuleRow { rule: Rule::StaticStr, id: "type.lifetime.static_str", message: "`&'static str` only as a field type of a struct that is the row type of a `const` table and is built nowhere else (proposal 0042)" },
+    RuleRow { rule: Rule::KeyedTable, id: "expr.method_call", message: "a predicate on a `const` table that compares a row's string for equality with a value is a keyed lookup; write a `match` on the value, as in `match os { \"macos\" => .., _ => .. }` (proposal 0042)" },
+    RuleRow { rule: Rule::RangeCall, id: "expr.call", message: RANGE_BY_NAME },
+    RuleRow { rule: Rule::RangeStruct, id: "expr.struct", message: RANGE_BY_NAME },
+    RuleRow { rule: Rule::RangePath, id: "expr.path", message: RANGE_BY_NAME },
+    RuleRow { rule: Rule::SplitAt, id: "expr.method_call", message: "`split_at` panics past the end; split bytes with `split_at_checked` and match the `Option` (bootstrap review §A7)" },
+    RuleRow { rule: Rule::StrTupleRow, id: "type.tuple", message: "a `const` table whose rows hold a `&str` has a named row struct with `&'static str` fields, not a tuple row (proposal 0042, v8 review)" },
+    RuleRow { rule: Rule::TupleTable, id: "expr.tuple", message: "a table of two or more rows with more than two fields each, counted through nested tuples, is a list of a named struct, not of tuples (proposal 0001, owner ruling 2026-11-12)" },
+    RuleRow { rule: Rule::ThiserrorHost, id: "attr.derive", message: "`thiserror::Error` only on an enum or named struct that is an error type, named `…Error` or used as a `Result`'s error (proposal 0010)" },
+    RuleRow { rule: Rule::OrdHost, id: "attr.derive", message: "`PartialOrd` and `Ord` only on a newtype struct whose order means something (proposal 0024)" },
+    RuleRow { rule: Rule::OrdInner, id: "expr.method_call", message: "compare an ordered newtype as a whole, `a.cmp(&b)`, never through `.0` (proposal 0024)" },
+    RuleRow { rule: Rule::ErrorMessage, id: "attr.error", message: "each error variant carries one `#[error(\"…\")]` message, never `transparent` (proposal 0010)" },
+    RuleRow { rule: Rule::FromOnce, id: "attr.from", message: "`#[from]` only on the one variant of an enum holding a given error type (proposal 0011)" },
+    RuleRow { rule: Rule::SerdeKeys, id: "attr.serde", message: "`#[serde]` only with `transparent`, `tag`, `content`, `rename_all` and `rename` (proposal 0012)" },
+    RuleRow { rule: Rule::TypeParam, id: "generics.type_param", message: "a type parameter only on a fn, with exactly one bound, `Serialize` or `DeserializeOwned`, and no `where` (proposal 0013), or as the unbounded `T` of an `ask` helper (proposal 0026)" },
+    RuleRow { rule: Rule::ImplTraitArg, id: "type.impl_trait.arg", message: "`impl Trait` as an argument only as `build: impl FnOnce(oneshot::Sender<T>) -> Msg`, the last parameter of a private `ask<T>` helper (proposal 0026)" },
+    RuleRow { rule: Rule::Slice, id: "type.slice", message: "`&[T]` only as a parameter type or a `const` type; a `const` list is `const NAME: &[T] = &[..]` (proposal 0014)" },
+    RuleRow { rule: Rule::ArrayType, id: "type.array", message: "an array type only for bytes whose size is part of a format or API (`[u8; N]`); a `const` list is `&[T]` (proposals 0014, 0015)" },
+    RuleRow { rule: Rule::ArrayValue, id: "expr.array", message: "an array literal only passed straight to a call, as in `f([a, b])` or `f(&[a, b])`, or as a `const` value (proposal 0015)" },
+    RuleRow { rule: Rule::Repeat, id: "expr.repeat", message: "an array repeat only of a literal, as in `[0u8; N]` (proposal 0015)" },
+    RuleRow { rule: Rule::CfgPredicate, id: "attr.cfg", message: "`cfg` only with `target_family = \"wasm\"`, `unix` or their `not` (proposal 0016)" },
+    RuleRow { rule: Rule::CfgHost, id: "attr.cfg", message: "`cfg` only on a mod, use, fn or impl item, or as `#![cfg]` atop a test file (proposal 0016)" },
+    RuleRow { rule: Rule::CfgPair, id: "attr.cfg", message: "a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)" },
+    RuleRow { rule: Rule::Dyn, id: "type.dyn", message: "`dyn` only as `Closure<dyn FnMut(..)>` (proposal 0017)" },
+    RuleRow { rule: Rule::ClosureMethod, id: "expr.closure.adapter", message: "a closure passed to a method only to a method in `closure_methods` or `predicate_adapters`: the iterator, `Option` and `Result` methods and the library methods the config lists (proposals 0006, 0026, 0028, 0037)" },
+    RuleRow { rule: Rule::Closure, id: "expr.closure", message: "a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook (proposals 0006, 0017, 0018, 0026)" },
+    RuleRow { rule: Rule::Glob, id: "item.use.glob", message: "a glob import only for `dioxus::prelude::*` (proposal 0018)" },
+    RuleRow { rule: Rule::Allow, id: "attr.allow", message: "only `#![allow(clippy::useless_format)]` at the crate root (proposal 0018)" },
+    RuleRow { rule: Rule::BoolType, id: "type.bool", message: "`bool` only in a type argument of a type we don't define, or as a flag field of a clap `Parser` struct (proposals 0019, 0023)" },
+    RuleRow { rule: Rule::ValueParser, id: "attr.arg", message: "a choice between named values is a `ValueEnum`, not `value_parser = [...]` (proposal 0019)" },
+    RuleRow { rule: Rule::TokioTest, id: "attr.tokio::test", message: "`#[tokio::test]` takes no arguments and marks an `async fn` (proposal 0020)" },
+    RuleRow { rule: Rule::BoolLit, id: "expr.lit.bool", message: "`true` / `false` only as an argument or field value of a fn, method or struct we don't define (proposal 0023)" },
+    RuleRow { rule: Rule::Env, id: "macro.env", message: "`env!` only for `CARGO_PKG_VERSION`, `CARGO_PKG_NAME` and `CARGO_MANIFEST_DIR` (proposal 0022)" },
+];
 
-/// Whether `ty` is `&'static str`.
-pub fn is_static_str(ty: &Type) -> bool {
-    is_str_ref(ty)
-        && matches!(ty, Type::Reference(r) if r.lifetime.as_ref().is_some_and(|l| l.ident == "static"))
-}
-
-/// The element type of `&[T]`, `[T; N]` or `&[T; N]`.
-pub fn element(ty: &Type) -> Option<&Type> {
-    match ty {
-        Type::Reference(r) => match &*r.elem {
-            Type::Slice(s) => Some(&s.elem),
-            Type::Array(a) => Some(&a.elem),
-            _ => None,
-        },
-        Type::Array(a) => Some(&a.elem),
-        _ => None,
-    }
-}
-
-/// Whether a tuple type holds a `&str`, through nested tuples.
-pub fn holds_str(ty: &Type) -> bool {
-    match ty {
-        Type::Tuple(t) => t.elems.iter().any(holds_str),
-        _ => is_str_ref(ty),
-    }
-}
-
-/// A struct with named fields, by its module path within the file.
-struct StructInfo {
-    key: Vec<String>,
-    ptr: *const syn::ItemStruct,
-    /// The names of its `&str` fields.
-    strings: BTreeSet<String>,
-}
-
-/// A `const` whose type is a slice or array.
-struct Table {
-    name: String,
-    element: Type,
-    /// The element type resolved to a struct's module path, when it names
-    /// one in this file's module tree.
-    row: Option<Vec<String>>,
-}
-
-impl Table {
-    fn keys(&self, structs: &[StructInfo]) -> Option<Keys> {
-        let keys = match (&self.element, &self.row) {
-            (Type::Tuple(t), _) => Keys::Fields(
-                t.elems
-                    .iter()
-                    .enumerate()
-                    .filter(|(_, ty)| is_str_ref(ty))
-                    .map(|(i, _)| i.to_string())
-                    .collect(),
-            ),
-            (ty, _) if is_str_ref(ty) => Keys::Element,
-            (_, Some(row)) => Keys::Fields(structs.iter().find(|s| &s.key == row)?.strings.clone()),
-            _ => return None,
-        };
-        match &keys {
-            Keys::Fields(fields) if fields.is_empty() => None,
-            _ => Some(keys),
-        }
-    }
-}
-
-#[derive(Default)]
-struct Walk {
-    module: Vec<String>,
-    structs: Vec<StructInfo>,
-    tables: Vec<Table>,
-    /// Struct literals that are elements of a table's literal of their own
-    /// type.
-    table_builds: HashSet<*const syn::ExprStruct>,
-    /// Structs, by module path, built outside a table's literal or held
-    /// by a `const` of their own type.
-    outside: HashSet<Vec<String>>,
-    /// The same, by bare name, where the path didn't resolve in this file.
-    outside_names: HashSet<String>,
-}
-
-impl Walk {
-    /// A path as a module path within the file: `self::` and `super::`
-    /// resolved, a bare name in the current module. `crate::` paths and
-    /// paths with generic arguments don't resolve.
-    fn resolve(&self, path: &syn::Path) -> Option<Vec<String>> {
-        if path.leading_colon.is_some()
-            || path
-                .segments
-                .iter()
-                .any(|s| !matches!(s.arguments, syn::PathArguments::None))
-        {
-            return None;
-        }
-        let mut out = self.module.clone();
-        let mut segments = path.segments.iter().peekable();
-        while let Some(s) = segments.peek() {
-            match s.ident.to_string().as_str() {
-                "self" => {}
-                "super" => {
-                    out.pop()?;
-                }
-                "crate" => return None,
-                _ => break,
-            }
-            segments.next();
-        }
-        out.extend(segments.map(|s| s.ident.to_string()));
-        Some(out)
-    }
-
-    fn mark_outside(&mut self, path: &syn::Path) {
-        match self.resolve(path) {
-            Some(key) if self.structs.iter().any(|s| s.key == key) => {
-                self.outside.insert(key);
-            }
-            _ => {
-                if let Some(last) = path.segments.last() {
-                    self.outside_names.insert(last.ident.to_string());
-                }
-            }
-        }
-    }
-
-    fn visit_const(&mut self, name: &syn::Ident, ty: &Type, init: &Expr) {
-        match (element(ty), ty) {
-            (Some(row), _) => {
-                let key = match row {
-                    Type::Path(p) if p.qself.is_none() => self.resolve(&p.path),
-                    _ => None,
-                };
-                if let Some(key) = &key {
-                    for elem in literal_rows(init) {
-                        if let Expr::Struct(s) = elem
-                            && self.resolve(&s.path).as_ref() == Some(key)
-                        {
-                            self.table_builds.insert(std::ptr::from_ref(s));
-                        }
-                    }
-                }
-                self.tables.push(Table {
-                    name: name.to_string(),
-                    element: row.clone(),
-                    row: key,
-                });
-            }
-            (None, Type::Path(p)) if p.qself.is_none() => self.mark_outside(&p.path),
-            _ => {}
-        }
-    }
-}
-
-/// The elements of an array literal, behind `&` and parentheses.
-fn literal_rows(expr: &Expr) -> Vec<&Expr> {
-    match expr {
-        Expr::Reference(e) => literal_rows(&e.expr),
-        Expr::Paren(e) => literal_rows(&e.expr),
-        Expr::Array(a) => a.elems.iter().collect(),
-        _ => Vec::new(),
-    }
-}
-
-impl<'ast> Visit<'ast> for Walk {
-    fn visit_file(&mut self, file: &'ast syn::File) {
-        // Structs first, so a const or literal earlier in the file resolves.
-        let mut structs = StructWalk {
-            module: Vec::new(),
-            out: Vec::new(),
-        };
-        structs.visit_file(file);
-        self.structs = structs.out;
-        visit::visit_file(self, file);
-    }
-
-    fn visit_item_mod(&mut self, i: &'ast syn::ItemMod) {
-        self.module.push(i.ident.to_string());
-        visit::visit_item_mod(self, i);
-        self.module.pop();
-    }
-
-    fn visit_item_const(&mut self, i: &'ast syn::ItemConst) {
-        self.visit_const(&i.ident, &i.ty, &i.expr);
-        visit::visit_item_const(self, i);
-    }
-
-    fn visit_impl_item_const(&mut self, i: &'ast syn::ImplItemConst) {
-        self.visit_const(&i.ident, &i.ty, &i.expr);
-        visit::visit_impl_item_const(self, i);
-    }
-
-    fn visit_expr_struct(&mut self, e: &'ast syn::ExprStruct) {
-        if !self.table_builds.contains(&std::ptr::from_ref(e)) {
-            self.mark_outside(&e.path);
-        }
-        visit::visit_expr_struct(self, e);
-    }
-}
-
-struct StructWalk {
-    module: Vec<String>,
-    out: Vec<StructInfo>,
-}
-
-impl<'ast> Visit<'ast> for StructWalk {
-    fn visit_item_mod(&mut self, i: &'ast syn::ItemMod) {
-        self.module.push(i.ident.to_string());
-        visit::visit_item_mod(self, i);
-        self.module.pop();
-    }
-
-    fn visit_item_struct(&mut self, i: &'ast syn::ItemStruct) {
-        if let Fields::Named(fields) = &i.fields {
-            let mut key = self.module.clone();
-            key.push(i.ident.to_string());
-            self.out.push(StructInfo {
-                key,
-                ptr: std::ptr::from_ref(i),
-                strings: fields
-                    .named
-                    .iter()
-                    .filter(|f| is_str_ref(&f.ty))
-                    .filter_map(|f| f.ident.as_ref().map(ToString::to_string))
-                    .collect(),
-            });
-        }
-        visit::visit_item_struct(self, i);
-    }
-}
+pub(crate) const IDS: &[IdRow] = &[
+    IdRow { id: "item.struct.named", meaning: "struct with named fields" },
+    IdRow { id: "item.struct.newtype", meaning: "struct with exactly one unnamed field" },
+    IdRow { id: "item.struct.tuple", meaning: "tuple struct with zero or several unnamed fields" },
+    IdRow { id: "item.struct.unit", meaning: "unit struct" },
+    IdRow { id: "item.enum", meaning: "enum" },
+    IdRow { id: "item.enum.discriminant", meaning: "explicit enum discriminant" },
+    IdRow { id: "item.fn", meaning: "function or method" },
+    IdRow { id: "item.fn.async", meaning: "async fn" },
+    IdRow { id: "item.fn.const", meaning: "const fn" },
+    IdRow { id: "item.fn.unsafe", meaning: "unsafe fn" },
+    IdRow { id: "item.fn.extern", meaning: "fn with an explicit ABI" },
+    IdRow { id: "item.fn.variadic", meaning: "variadic fn" },
+    IdRow { id: "item.fn.receiver.mut", meaning: "`mut self` or `&mut self` receiver" },
+    IdRow { id: "item.fn.receiver.typed", meaning: "self receiver with an explicit type" },
+    IdRow { id: "item.impl.inherent", meaning: "inherent impl" },
+    IdRow { id: "item.impl.trait", meaning: "trait impl" },
+    IdRow { id: "item.impl.unsafe", meaning: "unsafe impl" },
+    IdRow { id: "item.impl.type", meaning: "associated type in an impl" },
+    IdRow { id: "item.const", meaning: "const item" },
+    IdRow { id: "item.static", meaning: "static item" },
+    IdRow { id: "item.static.mut", meaning: "static mut item" },
+    IdRow { id: "item.use", meaning: "use declaration" },
+    IdRow { id: "item.use.glob", meaning: "glob import" },
+    IdRow { id: "item.use.rename", meaning: "import renamed with `as`" },
+    IdRow { id: "item.mod", meaning: "module" },
+    IdRow { id: "item.extern_crate", meaning: "extern crate" },
+    IdRow { id: "item.foreign_mod", meaning: "extern block" },
+    IdRow { id: "item.foreign.fn", meaning: "fn in an extern block" },
+    IdRow { id: "item.foreign.static", meaning: "static in an extern block" },
+    IdRow { id: "item.foreign.type", meaning: "type in an extern block" },
+    IdRow { id: "item.trait", meaning: "trait definition" },
+    IdRow { id: "item.trait.unsafe", meaning: "unsafe trait" },
+    IdRow { id: "item.trait.auto", meaning: "auto trait" },
+    IdRow { id: "item.trait.const", meaning: "associated const in a trait" },
+    IdRow { id: "item.trait.fn", meaning: "fn in a trait" },
+    IdRow { id: "item.trait.type", meaning: "associated type in a trait" },
+    IdRow { id: "item.trait_alias", meaning: "trait alias" },
+    IdRow { id: "item.type", meaning: "type alias" },
+    IdRow { id: "item.union", meaning: "union" },
+    IdRow { id: "item.macro_rules", meaning: "macro_rules! definition" },
+    IdRow { id: "vis.pub", meaning: "`pub` visibility" },
+    IdRow { id: "vis.restricted", meaning: "`pub(crate)`, `pub(super)` or `pub(in path)` visibility" },
+    IdRow { id: "expr.array", meaning: "array expression" },
+    IdRow { id: "expr.assign", meaning: "assignment" },
+    IdRow { id: "expr.async", meaning: "async block" },
+    IdRow { id: "expr.await", meaning: "`.await`" },
+    IdRow { id: "expr.binary.add", meaning: "`+` operator" },
+    IdRow { id: "expr.binary.sub", meaning: "`-` operator" },
+    IdRow { id: "expr.binary.mul", meaning: "`*` operator" },
+    IdRow { id: "expr.binary.div", meaning: "`/` operator" },
+    IdRow { id: "expr.binary.rem", meaning: "`%` operator" },
+    IdRow { id: "expr.binary.and", meaning: "`&&` operator" },
+    IdRow { id: "expr.binary.or", meaning: "`||` operator" },
+    IdRow { id: "expr.binary.bit_xor", meaning: "`^` operator" },
+    IdRow { id: "expr.binary.bit_and", meaning: "`&` operator" },
+    IdRow { id: "expr.binary.bit_or", meaning: "`|` operator" },
+    IdRow { id: "expr.binary.shl", meaning: "`<<` operator" },
+    IdRow { id: "expr.binary.shr", meaning: "`>>` operator" },
+    IdRow { id: "expr.binary.eq", meaning: "`==` operator" },
+    IdRow { id: "expr.binary.lt", meaning: "`<` operator" },
+    IdRow { id: "expr.binary.le", meaning: "`<=` operator" },
+    IdRow { id: "expr.binary.ne", meaning: "`!=` operator" },
+    IdRow { id: "expr.binary.ge", meaning: "`>=` operator" },
+    IdRow { id: "expr.binary.gt", meaning: "`>` operator" },
+    IdRow { id: "expr.binary.add_assign", meaning: "`+=` operator" },
+    IdRow { id: "expr.binary.sub_assign", meaning: "`-=` operator" },
+    IdRow { id: "expr.binary.mul_assign", meaning: "`*=` operator" },
+    IdRow { id: "expr.binary.div_assign", meaning: "`/=` operator" },
+    IdRow { id: "expr.binary.rem_assign", meaning: "`%=` operator" },
+    IdRow { id: "expr.binary.bit_xor_assign", meaning: "`^=` operator" },
+    IdRow { id: "expr.binary.bit_and_assign", meaning: "`&=` operator" },
+    IdRow { id: "expr.binary.bit_or_assign", meaning: "`|=` operator" },
+    IdRow { id: "expr.binary.shl_assign", meaning: "`<<=` operator" },
+    IdRow { id: "expr.binary.shr_assign", meaning: "`>>=` operator" },
+    IdRow { id: "expr.block", meaning: "block expression" },
+    IdRow { id: "expr.block.labeled", meaning: "labeled block" },
+    IdRow { id: "expr.break", meaning: "`break`" },
+    IdRow { id: "expr.call", meaning: "function call" },
+    IdRow { id: "expr.cast", meaning: "`as` cast" },
+    IdRow { id: "expr.closure", meaning: "closure that is not a direct argument of a method call" },
+    IdRow { id: "expr.closure.adapter", meaning: "closure passed straight to a method call" },
+    IdRow { id: "expr.closure.async", meaning: "async closure" },
+    IdRow { id: "expr.closure.const", meaning: "const closure" },
+    IdRow { id: "expr.closure.static", meaning: "static closure" },
+    IdRow { id: "expr.const_block", meaning: "const block" },
+    IdRow { id: "expr.continue", meaning: "`continue`" },
+    IdRow { id: "expr.field", meaning: "field access" },
+    IdRow { id: "expr.for", meaning: "`for` loop" },
+    IdRow { id: "expr.group", meaning: "invisible group expression" },
+    IdRow { id: "expr.if", meaning: "`if` expression" },
+    IdRow { id: "expr.if_let", meaning: "`if let` with an `else`, or an `if` with a let-chain" },
+    IdRow { id: "expr.if_let.single", meaning: "`if let` with no `else`" },
+    IdRow { id: "expr.index", meaning: "indexing" },
+    IdRow { id: "expr.infer", meaning: "`_` in expression position" },
+    IdRow { id: "expr.let", meaning: "`let` inside a condition chain" },
+    IdRow { id: "expr.lit", meaning: "literal other than `true` / `false`" },
+    IdRow { id: "expr.lit.bool", meaning: "`true` / `false` literal" },
+    IdRow { id: "expr.loop", meaning: "`loop`" },
+    IdRow { id: "expr.match", meaning: "`match` expression" },
+    IdRow { id: "expr.match.guard", meaning: "`if` guard on a match arm" },
+    IdRow { id: "expr.method_call", meaning: "method call" },
+    IdRow { id: "expr.paren", meaning: "parenthesized expression" },
+    IdRow { id: "expr.path", meaning: "path expression" },
+    IdRow { id: "expr.path.qualified", meaning: "qualified path `<T as Trait>::item`" },
+    IdRow { id: "expr.range", meaning: "range expression" },
+    IdRow { id: "expr.raw_addr", meaning: "`&raw` pointer" },
+    IdRow { id: "expr.reference", meaning: "`&x`" },
+    IdRow { id: "expr.reference.mut", meaning: "`&mut x`" },
+    IdRow { id: "expr.repeat", meaning: "array repeat `[x; n]`" },
+    IdRow { id: "expr.return", meaning: "`return`" },
+    IdRow { id: "expr.struct", meaning: "struct or enum-variant construction" },
+    IdRow { id: "expr.struct.update", meaning: "struct construction with `..base`" },
+    IdRow { id: "expr.try", meaning: "`?` operator" },
+    IdRow { id: "expr.try_block", meaning: "`try` block" },
+    IdRow { id: "expr.tuple", meaning: "tuple expression" },
+    IdRow { id: "expr.unit", meaning: "`()` value" },
+    IdRow { id: "expr.unary.deref", meaning: "`*` dereference" },
+    IdRow { id: "expr.unary.not", meaning: "`!` operator" },
+    IdRow { id: "expr.unary.neg", meaning: "unary `-`" },
+    IdRow { id: "expr.unsafe", meaning: "unsafe block" },
+    IdRow { id: "expr.while", meaning: "`while` loop" },
+    IdRow { id: "expr.while_let", meaning: "`while let` loop" },
+    IdRow { id: "expr.yield", meaning: "`yield`" },
+    IdRow { id: "stmt.let", meaning: "immutable `let` with an initializer" },
+    IdRow { id: "stmt.let.mut", meaning: "`let` with a `mut` binding" },
+    IdRow { id: "stmt.let.else", meaning: "`let ... else`" },
+    IdRow { id: "stmt.let.uninit", meaning: "`let` without an initializer" },
+    IdRow { id: "pat.const", meaning: "const block pattern" },
+    IdRow { id: "pat.ident", meaning: "binding pattern" },
+    IdRow { id: "pat.ident.mut", meaning: "`mut` binding outside `let`" },
+    IdRow { id: "pat.ident.ref", meaning: "`ref` binding" },
+    IdRow { id: "pat.ident.ref_mut", meaning: "`ref mut` binding" },
+    IdRow { id: "pat.ident.at", meaning: "`name @ pattern` binding" },
+    IdRow { id: "pat.lit", meaning: "literal pattern other than `true` / `false`" },
+    IdRow { id: "pat.lit.bool", meaning: "`true` / `false` pattern" },
+    IdRow { id: "pat.or", meaning: "`A | B` pattern" },
+    IdRow { id: "pat.paren", meaning: "parenthesized pattern" },
+    IdRow { id: "pat.path", meaning: "path pattern (unit variant or const)" },
+    IdRow { id: "pat.range", meaning: "range pattern" },
+    IdRow { id: "pat.reference", meaning: "`&pat` pattern" },
+    IdRow { id: "pat.rest", meaning: "`..` pattern" },
+    IdRow { id: "pat.slice", meaning: "slice pattern" },
+    IdRow { id: "pat.struct", meaning: "struct pattern" },
+    IdRow { id: "pat.tuple", meaning: "tuple pattern" },
+    IdRow { id: "pat.tuple_struct", meaning: "tuple-struct pattern" },
+    IdRow { id: "pat.type", meaning: "type ascription in `let` or a closure parameter" },
+    IdRow { id: "pat.wild", meaning: "`_` pattern" },
+    IdRow { id: "type.array", meaning: "array type" },
+    IdRow { id: "type.bool", meaning: "`bool` type" },
+    IdRow { id: "type.fn_ptr", meaning: "fn pointer type" },
+    IdRow { id: "type.group", meaning: "invisible group type" },
+    IdRow { id: "type.impl_trait.arg", meaning: "`impl Trait` outside a return type" },
+    IdRow { id: "type.impl_trait.ret", meaning: "`impl Trait` in a return type" },
+    IdRow { id: "type.infer", meaning: "`_` type" },
+    IdRow { id: "type.never", meaning: "`!` type" },
+    IdRow { id: "type.paren", meaning: "parenthesized type" },
+    IdRow { id: "type.path", meaning: "path type other than `bool`" },
+    IdRow { id: "type.path.qualified", meaning: "qualified path type `<T as Trait>::Assoc`" },
+    IdRow { id: "type.ptr", meaning: "raw pointer type" },
+    IdRow { id: "type.reference", meaning: "`&T`" },
+    IdRow { id: "type.reference.mut", meaning: "`&mut T`" },
+    IdRow { id: "type.slice", meaning: "slice type" },
+    IdRow { id: "type.dyn", meaning: "trait object" },
+    IdRow { id: "type.tuple", meaning: "tuple type" },
+    IdRow { id: "type.unit", meaning: "`()` type" },
+    IdRow { id: "type.lifetime", meaning: "lifetime in a type or bound" },
+    IdRow { id: "type.lifetime.static_str", meaning: "the `'static` of `&'static str`" },
+    IdRow { id: "generics.type_param", meaning: "generic type parameter" },
+    IdRow { id: "generics.lifetime", meaning: "lifetime parameter" },
+    IdRow { id: "generics.const_param", meaning: "const generic parameter" },
+    IdRow { id: "generics.where", meaning: "where clause" },
+    IdRow { id: "generics.hrtb", meaning: "`for<'a>` bound" },
+    IdRow { id: "generics.assoc_binding", meaning: "associated item binding `Trait<Item = T>`" },
+    IdRow { id: "generics.const_arg", meaning: "const generic argument" },
+    IdRow { id: "attr.doc", meaning: "doc comment or `#[doc]`" },
+    IdRow { id: "attr.derive", meaning: "derive of names listed in `derives`" },
+    IdRow { id: "attr.cfg_test", meaning: "`#[cfg(test)]` or `#[test]`" },
+    IdRow { id: "macro.allowed", meaning: "macro listed in `macros` (or `test_macros` in tests)" },
+    IdRow { id: "unknown.item", meaning: "item kind the classifier does not know" },
+    IdRow { id: "unknown.impl_item", meaning: "impl item kind the classifier does not know" },
+    IdRow { id: "unknown.trait_item", meaning: "trait item kind the classifier does not know" },
+    IdRow { id: "unknown.foreign_item", meaning: "extern block item kind the classifier does not know" },
+    IdRow { id: "unknown.expr", meaning: "expression kind the classifier does not know" },
+    IdRow { id: "unknown.pat", meaning: "pattern kind the classifier does not know" },
+    IdRow { id: "unknown.type", meaning: "type kind the classifier does not know" },
+    IdRow { id: "unknown.bound", meaning: "bound kind the classifier does not know" },
+    IdRow { id: "unknown.generic_arg", meaning: "generic argument kind the classifier does not know" },
+    IdRow { id: "unknown.attr", meaning: "attribute the classifier cannot read" },
+];

@@ -1,0 +1,13 @@
+$ check
+exit 1
+crates/client/src/a_fail.rs:11:20: expr.method_call: a predicate on a `const` table that compares a row's string for equality with a value is a keyed lookup; write a `match` on the value, as in `match os { "macos" => .., _ => .. }` (proposal 0042)
+crates/client/src/a_fail.rs:15:30: expr.method_call: a predicate on a `const` table that compares a row's string for equality with a value is a keyed lookup; write a `match` on the value, as in `match os { "macos" => .., _ => .. }` (proposal 0042)
+crates/client/src/a_fail.rs:19:32: expr.method_call: a predicate on a `const` table that compares a row's string for equality with a value is a keyed lookup; write a `match` on the value, as in `match os { "macos" => .., _ => .. }` (proposal 0042)
+crates/client/src/a_fail.rs:23:20: expr.method_call: a predicate on a `const` table that compares a row's string for equality with a value is a keyed lookup; write a `match` on the value, as in `match os { "macos" => .., _ => .. }` (proposal 0042)
+crates/client/src/a_fail.rs:27:20: expr.method_call: a predicate on a `const` table that compares a row's string for equality with a value is a keyed lookup; write a `match` on the value, as in `match os { "macos" => .., _ => .. }` (proposal 0042)
+crates/client/src/a_fail.rs:31:20: expr.method_call: a predicate on a `const` table that compares a row's string for equality with a value is a keyed lookup; write a `match` on the value, as in `match os { "macos" => .., _ => .. }` (proposal 0042)
+crates/client/src/a_fail.rs:35:20: expr.method_call: a predicate on a `const` table that compares a row's string for equality with a value is a keyed lookup; write a `match` on the value, as in `match os { "macos" => .., _ => .. }` (proposal 0042)
+crates/client/src/a_fail.rs:39:20: expr.method_call: a predicate on a `const` table that compares a row's string for equality with a value is a keyed lookup; write a `match` on the value, as in `match os { "macos" => .., _ => .. }` (proposal 0042)
+crates/client/src/a_fail.rs:44:17: expr.method_call: a predicate on a `const` table that compares a row's string for equality with a value is a keyed lookup; write a `match` on the value, as in `match os { "macos" => .., _ => .. }` (proposal 0042)
+crates/client/src/a_fail.rs:48:18: expr.method_call: a predicate on a `const` table that compares a row's string for equality with a value is a keyed lookup; write a `match` on the value, as in `match os { "macos" => .., _ => .. }` (proposal 0042)
+crates/client/src/a_fail.rs:52:18: expr.method_call: a predicate on a `const` table that compares a row's string for equality with a value is a keyed lookup; write a `match` on the value, as in `match os { "macos" => .., _ => .. }` (proposal 0042)

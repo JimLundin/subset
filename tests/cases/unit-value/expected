@@ -1,0 +1,3 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:6:15: expr.unit: `()` as a value only as an argument or field value of a fn, method or struct we don't define, as in `Ok(())` (proposals 0005, 0023)

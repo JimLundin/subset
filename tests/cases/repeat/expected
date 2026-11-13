@@ -1,0 +1,3 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:2:5: expr.repeat: an array repeat only of a literal, as in `[0u8; N]` (proposal 0015)

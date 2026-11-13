@@ -1,0 +1,10 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:2:18: expr.binary.eq: a boolean expression (`matches!`, a comparison, `&&`, `||`, `!`) only as the body of a closure passed straight to a method in `predicate_adapters` (proposals 0028, 0037), or one comparison or `matches!` as a match guard (proposal 0040)
+crates/daemon/src/a_fail.rs:7:5: expr.if_let: `if let` with an `else`, or an `if` with a let-chain
+crates/daemon/src/a_fail.rs:7:8: expr.let: `let` inside a condition chain
+crates/daemon/src/a_fail.rs:7:31: expr.binary.and: a boolean expression (`matches!`, a comparison, `&&`, `||`, `!`) only as the body of a closure passed straight to a method in `predicate_adapters` (proposals 0028, 0037), or one comparison or `matches!` as a match guard (proposal 0040)
+crates/daemon/src/a_fail.rs:7:34: macro.matches: a boolean expression (`matches!`, a comparison, `&&`, `||`, `!`) only as the body of a closure passed straight to a method in `predicate_adapters` (proposals 0028, 0037), or one comparison or `matches!` as a match guard (proposal 0040)
+crates/daemon/src/a_fail.rs:14:17: expr.match.guard: a guard that compares with a literal, a variant or a constant, or a `matches!` on a place, is a pattern: write it in the arm (proposal 0040, bootstrap review §A3, §A4)
+crates/daemon/src/a_fail.rs:20:30: expr.lit.bool: `true` / `false` only as an argument or field value of a fn, method or struct we don't define (proposal 0023)
+crates/daemon/src/a_fail.rs:27:8: expr.method_call: count matching items with `filter(|x| matches!(x, ..)).count()`, not `filter_map(..).count()` (proposal 0028)

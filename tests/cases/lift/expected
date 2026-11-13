@@ -1,0 +1,5 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:2:17: expr.method_call: `Some(x).filter(..)` or `.find(..)` with one comparison is a match guard: `pat if a == b => ..` with an unguarded arm for the rest (proposal 0040)
+crates/daemon/src/a_fail.rs:6:10: expr.method_call: a comparison by name (`a.eq(&b)`, `a.lt(&b)`, `a.cmp(&b).is_eq()`, `PartialEq::eq`) is a `bool` outside a predicate; write a match guard `pat if a == b => ..` (proposal 0040)
+crates/daemon/src/a_fail.rs:10:12: expr.method_call: a comparison by name (`a.eq(&b)`, `a.lt(&b)`, `a.cmp(&b).is_eq()`, `PartialEq::eq`) is a `bool` outside a predicate; write a match guard `pat if a == b => ..` (proposal 0040)

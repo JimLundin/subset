@@ -1,0 +1,4 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:4:10: attr.from: `#[from]` only on the one variant of an enum holding a given error type (proposal 0011)
+crates/daemon/src/a_fail.rs:6:11: attr.from: `#[from]` only on the one variant of an enum holding a given error type (proposal 0011)

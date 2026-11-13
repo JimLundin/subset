@@ -1,0 +1,3 @@
+$ check
+exit 1
+crates/agents/src/bin/s1.rs:1:1: attr.tokio::main: `#[tokio::main]` only on `fn main` (proposal 0006)

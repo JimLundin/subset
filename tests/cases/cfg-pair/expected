@@ -1,0 +1,4 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:1:1: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)
+crates/daemon/src/a_fail.rs:6:1: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)

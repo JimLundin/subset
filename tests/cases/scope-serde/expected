@@ -1,0 +1,5 @@
+$ check
+exit 1
+crates/agents/src/claude/session.rs:1:1: attr.derive.Serialize: serde derives only on wire types in crates/proto and the agents' provider protocol modules (proposal 0012)
+crates/agents/src/claude/session.rs:1:1: attr.derive.Deserialize: serde derives only on wire types in crates/proto and the agents' provider protocol modules (proposal 0012)
+crates/agents/src/claude/session.rs:2:1: attr.serde: serde derives only on wire types in crates/proto and the agents' provider protocol modules (proposal 0012)

@@ -1,0 +1,4 @@
+$ check
+exit 1
+crates/client/src/view.rs:1:22: item.use.glob: a glob import only for `dioxus::prelude::*` in crates/app (proposal 0018)
+crates/client/src/view.rs:4:5: macro.rsx: Dioxus only in crates/app (proposal 0018)

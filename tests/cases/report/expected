@@ -1,0 +1,4 @@
+$ report
+exit 0
+expr.if 3 in 2 files: a.rs:1:10 a.rs:1:18 b.rs:1:10
+expr.loop 1 in 1 file: b.rs:1:18

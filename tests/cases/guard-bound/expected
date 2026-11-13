@@ -1,0 +1,10 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:3:11: expr.match.guard: a guard tests a value its arm's pattern bound; a guard on nothing the pattern bound is an `if` (proposal 0040)
+crates/daemon/src/a_fail.rs:10:17: expr.match.guard: a guard tests a value its arm's pattern bound; a guard on nothing the pattern bound is an `if` (proposal 0040)
+crates/daemon/src/a_fail.rs:10:17: expr.match.guard: a guard that compares with a literal, a variant or a constant, or a `matches!` on a place, is a pattern: write it in the arm (proposal 0040, bootstrap review §A3, §A4)
+crates/daemon/src/a_fail.rs:10:20: macro.matches: `matches!` takes a place or a call and a pattern with no `if` and no `true` / `false`, so no boolean rides through it (proposals 0028, 0040)
+crates/daemon/src/a_fail.rs:18:20: macro.matches: `matches!` takes a place or a call and a pattern with no `if` and no `true` / `false`, so no boolean rides through it (proposals 0028, 0040)
+crates/daemon/src/a_fail.rs:25:42: expr.match.guard: a guard that compares with a literal, a variant or a constant, or a `matches!` on a place, is a pattern: write it in the arm (proposal 0040, bootstrap review §A3, §A4)
+crates/daemon/src/a_fail.rs:32:19: expr.match.guard: a guard that compares with a literal, a variant or a constant, or a `matches!` on a place, is a pattern: write it in the arm (proposal 0040, bootstrap review §A3, §A4)
+crates/daemon/src/a_fail.rs:40:21: macro.matches: `matches!` takes a place or a call and a pattern with no `if` and no `true` / `false`, so no boolean rides through it (proposals 0028, 0040)

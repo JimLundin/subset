@@ -1,0 +1,3 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:2:16: type.slice: `&[T]` only as a parameter type or a `const` type; a `const` list is `const NAME: &[T] = &[..]` (proposal 0014)

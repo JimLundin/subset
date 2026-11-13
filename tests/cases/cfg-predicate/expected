@@ -1,0 +1,3 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:1:1: attr.cfg: `cfg` only with `target_family = "wasm"`, `unix` or their `not` (proposal 0016)

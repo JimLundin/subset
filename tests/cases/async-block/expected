@@ -1,0 +1,3 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:2:18: expr.async: an async block only as a spawn argument or the whole body of an `unfold`, `then` or `use_future` closure (proposal 0006)

@@ -7,7 +7,7 @@ version = 8
 
 # All of our code is written in the subset. tools/ (the checker itself) and
 # vendor/ are outside it for now.
-include = ["crates/**/*.rs"]
+include = ["crates/**/*.rs", "src/**/*.rs", "tests/*.rs"]
 
 # Core: data as structs and enums, branching as `match`, iteration as adapters.
 allowed = [

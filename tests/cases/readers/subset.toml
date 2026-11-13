@@ -1,0 +1,4 @@
+version = 6
+include = ["**/*.rs"]
+allowed = ["item.fn", "item.use", "expr.path", "expr.call", "expr.method_call", "expr.try", "expr.reference", "expr.reference.mut", "stmt.let", "stmt.let.mut", "pat.ident", "pat.ident.mut", "pat.tuple", "pat.wild", "type.path", "type.reference", "type.slice"]
+consuming_readers = ["bytes::Buf", "std::io::Cursor"]

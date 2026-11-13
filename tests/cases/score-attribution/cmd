@@ -1,0 +1,3 @@
+score --by fn
+score --by crate
+score --by fn --json

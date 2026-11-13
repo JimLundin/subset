@@ -1,0 +1,5 @@
+$ check
+exit 1
+crates/proto/src/a_fail.rs:1:10: generics.lifetime: lifetime parameters only in a library trait impl (proposal 0009)
+crates/proto/src/a_fail.rs:1:21: type.lifetime: lifetimes only in a library trait impl, where its signature demands them (proposal 0009)
+crates/proto/src/a_fail.rs:1:33: type.lifetime: lifetimes only in a library trait impl, where its signature demands them (proposal 0009)

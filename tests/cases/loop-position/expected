@@ -1,0 +1,3 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:3:5: expr.loop: loop must be the whole body of an actor run fn, after at most one `let mut` state (proposal 0007)

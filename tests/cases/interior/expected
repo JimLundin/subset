@@ -1,0 +1,7 @@
+$ check
+exit 1
+crates/daemon/src/shared.rs:1:21: type.interior_mut.RefCell: interior mutability stays out of the subset (proposal 0008)
+crates/daemon/src/shared.rs:1:46: type.interior_mut.AtomicBool: interior mutability stays out of the subset (proposal 0008)
+crates/daemon/src/shared.rs:1:62: type.interior_mut.Mutex: interior mutability stays out of the subset (proposal 0008)
+crates/daemon/src/shared.rs:2:5: expr.interior_mut.Mutex: interior mutability stays out of the subset (proposal 0008)
+crates/daemon/src/shared.rs:2:16: expr.interior_mut.RefCell: interior mutability stays out of the subset (proposal 0008)

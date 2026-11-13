@@ -1,0 +1,3 @@
+$ check
+exit 1
+crates/client/src/platform/a_fail.rs:2:18: type.dyn: `dyn` only as `Closure<dyn FnMut(..)>` (proposal 0017)

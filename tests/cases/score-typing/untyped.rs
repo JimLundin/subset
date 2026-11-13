@@ -1,0 +1,3 @@
+struct Event {
+    body: Value,
+}

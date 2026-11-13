@@ -1,0 +1,4 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:1:13: type.array: an array type only for bytes whose size is part of a format or API (`[u8; N]`); a `const` list is `&[T]` (proposals 0014, 0015)
+crates/daemon/src/a_fail.rs:3:16: type.array: an array type only for bytes whose size is part of a format or API (`[u8; N]`); a `const` list is `&[T]` (proposals 0014, 0015)

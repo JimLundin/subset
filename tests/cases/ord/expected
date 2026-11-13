@@ -1,0 +1,5 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:1:1: attr.derive: `PartialOrd` and `Ord` only on a newtype struct whose order means something (proposal 0024)
+crates/daemon/src/a_fail.rs:12:16: expr.method_call: compare an ordered newtype as a whole, `a.cmp(&b)`, never through `.0` (proposal 0024)
+crates/daemon/src/a_fail.rs:17:9: expr.method_call: compare an ordered newtype as a whole, `a.cmp(&b)`, never through `.0` (proposal 0024)

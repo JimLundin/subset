@@ -1,196 +1,387 @@
 //! The weighted score: every token `measure` counts costs the weight of the
 //! innermost construct that contains it.
 
+use std::cmp::Reverse;
 use std::collections::{BTreeMap, BTreeSet};
-use std::ops::{AddAssign, Range};
 
-use crate::context::{Context, Place, TypeClass};
-use crate::measure::Token;
-use crate::weights::{Tier, TierWeights};
+use crate::config::{TIERS, Tier, Weights};
+use crate::syntax::Extent;
+use crate::walk::{Fixed, Hit, Place, TypeClass, Within};
+use crate::{Analysed, Fatal, display, object};
 
 /// One construct occurrence, with the id and tier the score charges it.
-pub struct Judged {
-    pub id: String,
-    pub tier: Tier,
-    pub extent: Range<usize>,
+struct Judged {
+    id: String,
+    tier: Tier,
+    extent: Extent,
 }
 
-/// Tokens per tier, indexed by `Tier::index`.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub struct TierTokens(pub [usize; 6]);
-
-impl TierTokens {
-    pub fn tokens(&self) -> usize {
-        self.0.iter().sum()
-    }
-
-    pub fn of(&self, tier: Tier) -> usize {
-        self.0[tier.index()]
-    }
-
-    pub fn score_of(&self, tier: Tier, weights: &TierWeights) -> f64 {
-        self.of(tier) as f64 * weights.of(tier)
-    }
-
-    pub fn score(&self, weights: &TierWeights) -> f64 {
-        Tier::ALL.iter().map(|t| self.score_of(*t, weights)).sum()
-    }
-}
-
-impl AddAssign for TierTokens {
-    fn add_assign(&mut self, other: TierTokens) {
-        for (mine, theirs) in self.0.iter_mut().zip(other.0) {
-            *mine += theirs;
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub struct Count {
-    pub count: usize,
-    pub tokens: usize,
+#[derive(Clone)]
+pub(crate) struct Count {
+    pub(crate) count: usize,
+    pub(crate) tokens: usize,
     /// Lines on which the construct owns a token.
-    pub lines: usize,
+    pub(crate) lines: BTreeSet<usize>,
 }
 
-pub struct FnTally {
-    pub name: String,
-    pub line: usize,
-    pub tiers: TierTokens,
-    /// Lines holding a token of the fn, as `measure` counts them.
-    pub lines: usize,
-    /// Tokens of primitive types in the fn's signature.
-    pub signature_primitives: usize,
-}
-
-#[derive(Default)]
-pub struct FileTally {
-    pub tiers: TierTokens,
-    /// Lines holding a token, as `measure` counts them.
-    pub lines: usize,
-    /// Occurrences and tokens per id and the tier it was charged at.
-    pub constructs: BTreeMap<(String, Tier), Count>,
-    pub fns: Vec<FnTally>,
-    /// Tokens of field and signature types of our own items, per
-    /// `TypeClass::index`.
-    pub typing: [usize; 4],
-}
-
-/// The id of tokens that no construct contains.
-pub const NO_CONSTRUCT: &str = "(no construct)";
-
-/// Attributes each token to the innermost construct containing it. A
-/// construct inside a folded node owns no tokens, unless it is a violation:
-/// the folded node's own construct takes them.
-pub fn tally(src_len: usize, tokens: &[Token], judged: &[Judged], context: &Context) -> FileTally {
-    let folded = |j: &Judged| {
-        j.tier != Tier::Outside
-            && context
-                .folded
-                .iter()
-                .any(|f| f.start <= j.extent.start && j.extent.end <= f.end && j.extent != *f)
-    };
-    let painted: Vec<Range<usize>> = judged
-        .iter()
-        .map(|j| match folded(j) {
-            true => 0..0,
-            false => j.extent.clone(),
-        })
-        .collect();
-    let owners = innermost(src_len, &painted);
-    let fn_extents: Vec<Range<usize>> = context.fns.iter().map(|f| f.extent.clone()).collect();
-    let fn_owners = innermost(src_len, &fn_extents);
-    let typed_extents: Vec<Range<usize>> = context.typed.iter().map(|t| t.extent.clone()).collect();
-    let typed_owners = innermost(src_len, &typed_extents);
-
-    let mut out = FileTally::default();
-    let mut fn_tiers = vec![TierTokens::default(); context.fns.len()];
-    let mut fn_primitives = vec![0; context.fns.len()];
-    let mut file_lines: BTreeSet<usize> = BTreeSet::new();
-    let mut fn_lines: Vec<BTreeSet<usize>> = vec![BTreeSet::new(); context.fns.len()];
-    let mut construct_lines: BTreeMap<(String, Tier), BTreeSet<usize>> = BTreeMap::new();
-    for j in judged {
-        out.constructs
-            .entry((j.id.clone(), j.tier))
-            .or_default()
-            .count += 1;
-    }
-    for token in tokens {
-        let start = token.start;
-        let (id, tier) = match owners.get(start).copied().flatten() {
-            Some(i) => (judged[i].id.as_str(), judged[i].tier),
-            None => (NO_CONSTRUCT, Tier::Neutral),
-        };
-        let key = (id.to_string(), tier);
-        construct_lines
-            .entry(key.clone())
-            .or_default()
-            .extend(&token.lines);
-        out.constructs.entry(key).or_default().tokens += 1;
-        out.tiers.0[tier.index()] += 1;
-        file_lines.extend(&token.lines);
-        let in_fn = fn_owners.get(start).copied().flatten();
-        if let Some(f) = in_fn {
-            fn_tiers[f].0[tier.index()] += 1;
-            fn_lines[f].extend(&token.lines);
-        }
-        if let Some(t) = typed_owners.get(start).copied().flatten() {
-            let typed = &context.typed[t];
-            out.typing[typed.class.index()] += 1;
-            if let (TypeClass::Primitive, Place::Signature, Some(f)) =
-                (typed.class, typed.place, in_fn)
-            {
-                fn_primitives[f] += 1;
-            }
+impl Count {
+    fn none() -> Count {
+        Count {
+            count: 0,
+            tokens: 0,
+            lines: BTreeSet::new(),
         }
     }
-    for (key, lines) in construct_lines {
-        out.constructs.entry(key).or_default().lines = lines.len();
-    }
-    out.lines = file_lines.len();
-    out.fns = context
-        .fns
-        .iter()
-        .zip(fn_tiers)
-        .zip(fn_primitives)
-        .zip(fn_lines)
-        .map(|(((f, tiers), signature_primitives), lines)| FnTally {
+}
+
+impl FnTally {
+    fn of(f: &crate::walk::FnSpan) -> FnTally {
+        FnTally {
             name: f.name.clone(),
             line: f.line,
-            tiers,
-            lines: lines.len(),
-            signature_primitives,
-        })
-        .collect();
-    out
-}
-
-/// For each byte, the index of the smallest extent containing it. Among equal
-/// extents the later one wins, since the classifier emits a node before its
-/// children.
-fn innermost(len: usize, extents: &[Range<usize>]) -> Vec<Option<usize>> {
-    let mut order: Vec<usize> = (0..extents.len()).collect();
-    order.sort_by_key(|&i| (std::cmp::Reverse(extents[i].len()), i));
-    let mut owners = vec![None; len];
-    for i in order {
-        let range = extents[i].start.min(len)..extents[i].end.min(len);
-        for owner in &mut owners[range] {
-            *owner = Some(i);
+            tiers: Vec::from([0; 6]),
+            lines: BTreeSet::new(),
+            signature_primitives: 0,
         }
     }
-    owners
+}
+
+pub(crate) struct FnTally {
+    pub(crate) name: String,
+    pub(crate) line: usize,
+    /// Tokens per tier, in the order of `TIERS`.
+    pub(crate) tiers: Vec<usize>,
+    pub(crate) lines: BTreeSet<usize>,
+    /// Tokens of primitive types in the fn's signature.
+    pub(crate) signature_primitives: usize,
 }
 
 /// A scored file and the crate it belongs to.
-pub struct ScoredFile {
-    pub path: String,
-    pub krate: String,
-    pub tally: FileTally,
-    pub violations: usize,
+pub(crate) struct ScoredFile {
+    pub(crate) path: String,
+    pub(crate) krate: String,
+    pub(crate) tiers: Vec<usize>,
+    pub(crate) lines: BTreeSet<usize>,
+    /// Occurrences and tokens per id and the tier it was charged at.
+    pub(crate) constructs: BTreeMap<(String, usize), Count>,
+    pub(crate) fns: Vec<FnTally>,
+    /// Tokens of field and signature types of our own items, per class:
+    /// own, primitive, untyped, other.
+    pub(crate) typing: Vec<usize>,
+    pub(crate) violations: usize,
+}
+
+/// The id of tokens that no construct contains.
+const NO_CONSTRUCT: &str = "(no construct)";
+/// The id of a field of a wire type in an external protocol module.
+const WIRE_FIELD: &str = "field.wire";
+
+/// Ids that exist only in the score: an allowed id refined by where it
+/// stands, so it can take its own tier.
+const SCORE_IDS: &str = "| Id | Meaning |
+|---|---|
+| `expr.method_call.adapter` | method call whose name is in `adapters` |
+| `stmt.let.discard` | `let _ = value;` |
+| `type.field` | type in a field of our own struct or enum variant |
+| `type.primitive` | type in `primitives`, as a field type or in a signature of our own |
+| `type.untyped` | type in `untyped`, anywhere |
+| `field.wire` | field of a wire type in an external protocol module |
+";
+
+pub(crate) fn ids_table() -> String {
+    SCORE_IDS.to_string()
+}
+
+pub(crate) const CLASSES: &[TypeClass] = &[
+    TypeClass::Own,
+    TypeClass::Primitive,
+    TypeClass::Untyped,
+    TypeClass::Other,
+];
+
+fn tier_index(tier: Tier) -> usize {
+    TIERS.iter().position(|t| t == &tier).unwrap_or_default()
+}
+
+/// A count as a float, for weighing.
+pub(crate) fn float(n: usize) -> f64 {
+    u32::try_from(n).map_or(f64::from(u32::MAX), f64::from)
+}
+
+/// The score of tokens per tier.
+pub(crate) fn weigh(tiers: &[usize], w: &Weights) -> f64 {
+    tiers
+        .iter()
+        .zip(TIERS)
+        .map(|(n, t)| float(n.to_owned()).mul_add(w.weight(t.to_owned()), 0.0))
+        .sum()
+}
+
+/// The id and tier each occurrence is charged at: `outside` for a violation,
+/// `boundary` where an item we don't define fixes its shape, and otherwise
+/// the tier `[weights]` gives its id.
+fn judge(a: &Analysed, w: &Weights) -> Vec<Judged> {
+    let wires = a
+        .hits
+        .iter()
+        .filter_map(|h| match h {
+            Hit::Wire(e) => Some(e.to_owned()),
+            _ => None,
+        })
+        .collect::<Vec<Extent>>();
+    let marks = crate::marks(&a.hits);
+    let refinements = a
+        .hits
+        .iter()
+        .filter_map(|h| match h {
+            Hit::Refine(r) => Some(r),
+            _ => None,
+        })
+        .collect::<Vec<&crate::walk::Refinement>>();
+    let judged = a.occurrences.iter().zip(&a.violating).map(|(o, violating)| {
+        let id = refinements
+            .iter()
+            .find(|r| r.extent == o.extent && refines(r.from.as_deref(), &o.id).is_some())
+            .map_or(o.id.clone(), |r| r.to.clone());
+        let tier = w.tier(&id);
+        let fixed = marks
+            .iter()
+            .filter(|m| m.extent == o.extent)
+            .map(|m| m.fixed)
+            .min_by_key(|f| match f {
+                Fixed::Always => 0,
+                Fixed::IfRestricted => 1,
+            });
+        let wire = wires.iter().find_map(|f| f.holding(o.extent));
+        let tier = match (violating, wire, fixed, tier.restricted()) {
+            (Within::In, _, _, _) => Tier::Outside,
+            (Within::Out, Some(_), _, _) => Tier::Boundary,
+            (Within::Out, None, Some(Fixed::Always), _) => Tier::Boundary,
+            (Within::Out, None, Some(Fixed::IfRestricted), Some(_)) => Tier::Boundary,
+            _ => tier,
+        };
+        Judged {
+            id,
+            tier,
+            extent: o.extent,
+        }
+    });
+    let fields = wires.iter().map(|f| Judged {
+        id: WIRE_FIELD.to_string(),
+        tier: Tier::Boundary,
+        extent: f.to_owned(),
+    });
+    judged.chain(fields).collect()
+}
+
+/// Whether a refinement from `from` applies to an occurrence of `id`.
+fn refines(from: Option<&str>, id: &str) -> Option<()> {
+    match from {
+        Some(from) => match from {
+            f if f == id => Some(()),
+            _ => None,
+        },
+        None => Some(())
+            .filter(|_| id.starts_with("type.") && !id.starts_with("type.lifetime")),
+    }
+}
+
+/// For each token start, the index of the smallest extent containing it.
+/// Among equal extents the later one wins, since the walk reports a node
+/// before its children.
+fn innermost(starts: &[usize], extents: &[Extent]) -> Vec<Option<usize>> {
+    let sorted = extents
+        .iter()
+        .enumerate()
+        .map(|(i, e)| ((e.start, i), (i, e.to_owned())))
+        .collect::<BTreeMap<(usize, usize), (usize, Extent)>>()
+        .into_values()
+        .collect::<Vec<(usize, Extent)>>();
+    starts
+        .iter()
+        .fold(
+            (0, Vec::<(usize, Extent)>::new(), Vec::<Option<usize>>::new()),
+            |(next, open, mut out), p| {
+                let count = sorted
+                    .iter()
+                    .skip(next)
+                    .take_while(|(_, e)| &e.start <= p)
+                    .count();
+                let open = open
+                    .into_iter()
+                    .chain(sorted.iter().skip(next).take(count).copied())
+                    .filter(|(_, e)| &e.end > p)
+                    .collect::<Vec<(usize, Extent)>>();
+                out.push(
+                    open.iter()
+                        .min_by_key(|(i, e)| (e.len(), Reverse(i.to_owned())))
+                        .map(|(i, _)| i.to_owned()),
+                );
+                (next.saturating_add(count), open, out)
+            },
+        )
+        .2
+}
+
+/// Scores one analysed file.
+pub(crate) fn file(a: &Analysed, w: &Weights, krate: &str) -> Result<ScoredFile, Fatal> {
+    let tokens = crate::measure::tokens(&a.src)
+        .map_err(|e| Fatal(format!("{}: cannot lex: {e}", display(&a.path))))?;
+    let judged = judge(a, w);
+    let folds = a
+        .hits
+        .iter()
+        .filter_map(|h| match h {
+            Hit::Fold(e) => Some(e.to_owned()),
+            _ => None,
+        })
+        .collect::<Vec<Extent>>();
+    let painted = judged
+        .iter()
+        .map(|j| {
+            let folded = folds
+                .iter()
+                .filter(|f| f != &&j.extent)
+                .find_map(|f| f.holding(j.extent))
+                .filter(|_| j.tier != Tier::Outside);
+            folded.map_or(j.extent, |_| Extent { start: 0, end: 0 })
+        })
+        .collect::<Vec<Extent>>();
+    let fns = a
+        .hits
+        .iter()
+        .filter_map(|h| match h {
+            Hit::Function(f) => Some(f),
+            _ => None,
+        })
+        .collect::<Vec<&crate::walk::FnSpan>>();
+    let typed = a
+        .hits
+        .iter()
+        .filter_map(|h| match h {
+            Hit::Typed(t) => Some(t),
+            _ => None,
+        })
+        .collect::<Vec<&crate::walk::Typed>>();
+    let starts = tokens.iter().map(|t| t.start).collect::<Vec<usize>>();
+    let owners = innermost(&starts, &painted);
+    let fn_owners = innermost(&starts, &fns.iter().map(|f| f.extent).collect::<Vec<Extent>>());
+    let typed_owners = innermost(&starts, &typed.iter().map(|t| t.extent).collect::<Vec<Extent>>());
+    let counted = judged
+        .iter()
+        .fold(BTreeMap::<(String, usize), Count>::new(), |mut map, j| {
+            let key = (j.id.clone(), tier_index(j.tier));
+            let old = map.remove(&key).unwrap_or(Count::none());
+            map.insert(key, Count {
+                count: old.count.saturating_add(1),
+                ..old
+            });
+            map
+        });
+    let start = Tallies {
+        constructs: counted,
+        tiers: Vec::from([0; 6]),
+        lines: BTreeSet::new(),
+        fns: fns.iter().map(|f| FnTally::of(f)).collect(),
+        typing: Vec::from([0; 4]),
+    };
+    let tally = tokens
+        .iter()
+        .zip(owners.iter().zip(fn_owners.iter().zip(&typed_owners)))
+        .fold(start, |t, (token, (owner, (in_fn, in_type)))| {
+            let (id, tier) = owner
+                .and_then(|i| judged.get(i))
+                .map_or((NO_CONSTRUCT.to_string(), Tier::Neutral), |j| (j.id.clone(), j.tier));
+            let class = in_type.and_then(|i| typed.get(i));
+            t.add(token, id, tier_index(tier), in_fn.to_owned(), class)
+        });
+    Ok(ScoredFile {
+        path: display(&a.path),
+        krate: krate.to_string(),
+        tiers: tally.tiers,
+        lines: tally.lines,
+        constructs: tally.constructs,
+        fns: tally.fns,
+        typing: tally.typing,
+        violations: a.violations.len(),
+    })
+}
+
+/// A file's counts as its tokens are attributed.
+struct Tallies {
+    constructs: BTreeMap<(String, usize), Count>,
+    tiers: Vec<usize>,
+    lines: BTreeSet<usize>,
+    fns: Vec<FnTally>,
+    typing: Vec<usize>,
+}
+
+/// `counts` with one more at `index`.
+fn bump(counts: Vec<usize>, index: usize) -> Vec<usize> {
+    counts
+        .into_iter()
+        .enumerate()
+        .map(|(i, n)| match i {
+            i if i == index => n.saturating_add(1),
+            _ => n,
+        })
+        .collect()
+}
+
+impl Tallies {
+    fn add(
+        self,
+        token: &crate::measure::Token,
+        id: String,
+        tier: usize,
+        in_fn: Option<usize>,
+        class: Option<&&crate::walk::Typed>,
+    ) -> Tallies {
+        let mut constructs = self.constructs;
+        let old = constructs.remove(&(id.clone(), tier)).unwrap_or(Count::none());
+        constructs.insert((id, tier), Count {
+            tokens: old.tokens.saturating_add(1),
+            lines: old.lines.into_iter().chain(token.lines.iter().copied()).collect(),
+            ..old
+        });
+        let fns = self
+            .fns
+            .into_iter()
+            .enumerate()
+            .map(|(i, f)| match in_fn {
+                Some(owner) if owner == i => {
+                    let primitive = class
+                        .filter(|t| matches!((t.class, t.place), (TypeClass::Primitive, Place::Signature)))
+                        .map_or(0, |_| 1);
+                    FnTally {
+                        tiers: bump(f.tiers, tier),
+                        lines: f.lines.into_iter().chain(token.lines.iter().copied()).collect(),
+                        signature_primitives: f.signature_primitives.saturating_add(primitive),
+                        ..f
+                    }
+                }
+                _ => f,
+            })
+            .collect();
+        let typing = match class {
+            Some(t) => bump(
+                self.typing,
+                CLASSES.iter().position(|c| c == &t.class).unwrap_or_default(),
+            ),
+            None => self.typing,
+        };
+        Tallies {
+            constructs,
+            tiers: bump(self.tiers, tier),
+            lines: self.lines.into_iter().chain(token.lines.iter().copied()).collect(),
+            fns,
+            typing,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Level {
+pub(crate) enum Level {
     Crate,
     File,
     Fn,
@@ -198,7 +389,7 @@ pub enum Level {
 }
 
 impl Level {
-    pub fn parse(name: &str) -> Option<Level> {
+    pub(crate) fn parse(name: &str) -> Option<Level> {
         match name {
             "crate" => Some(Level::Crate),
             "file" => Some(Level::File),
@@ -208,7 +399,7 @@ impl Level {
         }
     }
 
-    fn column(self) -> &'static str {
+    fn column(&self) -> &str {
         match self {
             Level::Crate => "crate",
             Level::File => "file",
@@ -218,196 +409,217 @@ impl Level {
     }
 }
 
-pub struct Row {
-    pub name: String,
-    /// Occurrences, for a construct row.
-    pub count: Option<usize>,
-    /// The tier a construct row was charged at.
-    pub tier: Option<Tier>,
-    pub tiers: TierTokens,
-    /// Lines holding the row's tokens, as `measure` counts them. A
-    /// construct row counts the lines where the construct owns a token, so
-    /// construct rows overlap.
-    pub lines: usize,
+#[derive(Clone)]
+pub(crate) struct Row {
+    pub(crate) name: String,
+    /// Occurrences and the tier charged, for a construct row.
+    pub(crate) construct: Option<(usize, Tier)>,
+    pub(crate) tiers: Vec<usize>,
+    /// Lines holding the row's tokens. Construct rows overlap.
+    pub(crate) lines: usize,
 }
 
 impl Row {
-    pub fn score(&self, w: &TierWeights) -> f64 {
-        self.tiers.score(w)
+    pub(crate) fn tokens(&self) -> usize {
+        self.tiers.iter().sum()
     }
 
-    pub fn per_token(&self, w: &TierWeights) -> f64 {
-        match self.tiers.tokens() {
-            0 => 0.0,
-            n => self.score(w) / n as f64,
-        }
+    pub(crate) fn score(&self, w: &Weights) -> f64 {
+        weigh(&self.tiers, w)
     }
 
-    /// The score in lines: the score over the row's tokens per line. Only
-    /// an approximation, since tokens per line vary.
-    pub fn approx_lines(&self, w: &TierWeights) -> f64 {
-        match self.tiers.tokens() {
-            0 => 0.0,
-            n => self.score(w) * self.lines as f64 / n as f64,
-        }
+    pub(crate) fn per_token(&self, w: &Weights) -> f64 {
+        ratio(self.score(w), self.tokens())
     }
 
-    pub fn boundary(&self, w: &TierWeights) -> f64 {
-        self.tiers.score_of(Tier::Boundary, w)
+    pub(crate) fn boundary(&self, w: &Weights) -> f64 {
+        self.tiers
+            .get(tier_index(Tier::Boundary))
+            .map_or(0.0, |n| float(n.to_owned()).mul_add(w.weight(Tier::Boundary), 0.0))
     }
 
     /// The boundary score as a share of the score, in percent.
-    pub fn boundary_share(&self, w: &TierWeights) -> f64 {
-        match self.score(w) {
-            s if s > 0.0 => 100.0 * self.boundary(w) / s,
+    pub(crate) fn boundary_share(&self, w: &Weights) -> f64 {
+        let score = self.score(w);
+        match score.partial_cmp(&0.0) {
+            Some(std::cmp::Ordering::Greater) => self.boundary(w).mul_add(100.0, 0.0).mul_add(score.recip(), 0.0),
             _ => 0.0,
         }
     }
+
+    /// The score in lines: the score over the row's tokens per line.
+    pub(crate) fn approx_lines(&self, w: &Weights) -> f64 {
+        ratio(self.score(w).mul_add(float(self.lines), 0.0), self.tokens())
+    }
 }
 
-pub fn total(files: &[ScoredFile]) -> Row {
-    let mut tiers = TierTokens::default();
-    for f in files {
-        tiers += f.tally.tiers;
+/// `x` over `n`, or 0 when `n` is.
+pub(crate) fn ratio(x: f64, n: usize) -> f64 {
+    match n {
+        0 => 0.0,
+        n => x.mul_add(float(n).recip(), 0.0),
     }
+}
+
+fn sum(rows: Vec<Vec<usize>>) -> Vec<usize> {
+    rows.into_iter().fold(Vec::from([0; 6]), |total, row| {
+        total
+            .into_iter()
+            .zip(row.into_iter().chain(std::iter::repeat(0)))
+            .map(|(a, b)| a.saturating_add(b))
+            .collect()
+    })
+}
+
+pub(crate) fn total(files: &[ScoredFile]) -> Row {
     Row {
         name: "total".to_string(),
-        count: None,
-        tier: None,
-        tiers,
-        lines: files.iter().map(|f| f.tally.lines).sum(),
+        construct: None,
+        tiers: sum(files.iter().map(|f| f.tiers.clone()).collect()),
+        lines: files.iter().map(|f| f.lines.len()).sum(),
     }
 }
 
 /// Rows at one level: crates and files by name, functions and constructs by
 /// score, highest first.
-pub fn rows(files: &[ScoredFile], level: Level, w: &TierWeights) -> Vec<Row> {
-    let mut rows: Vec<Row> = match level {
-        Level::Crate => {
-            let mut crates: BTreeMap<&str, (TierTokens, usize)> = BTreeMap::new();
-            for f in files {
-                let entry = crates.entry(&f.krate).or_default();
-                entry.0 += f.tally.tiers;
-                entry.1 += f.tally.lines;
-            }
-            crates
-                .into_iter()
-                .map(|(name, (tiers, lines))| plain(name.to_string(), tiers, lines))
-                .collect()
-        }
+pub(crate) fn rows(files: &[ScoredFile], level: Level, w: &Weights) -> Vec<Row> {
+    let rows = match level {
+        Level::Crate => files
+            .iter()
+            .fold(BTreeMap::<String, Vec<&ScoredFile>>::new(), |mut crates, f| {
+                crates.entry(f.krate.clone()).or_default().push(f);
+                crates
+            })
+            .into_iter()
+            .map(|(name, files)| Row {
+                name,
+                construct: None,
+                tiers: sum(files.iter().map(|f| f.tiers.clone()).collect()),
+                lines: files.iter().map(|f| f.lines.len()).sum(),
+            })
+            .collect::<Vec<Row>>(),
         Level::File => files
             .iter()
-            .map(|f| plain(f.path.clone(), f.tally.tiers, f.tally.lines))
+            .map(|f| Row {
+                name: f.path.clone(),
+                construct: None,
+                tiers: f.tiers.clone(),
+                lines: f.lines.len(),
+            })
             .collect(),
         Level::Fn => files
             .iter()
             .flat_map(|f| {
-                f.tally.fns.iter().map(|n| {
-                    plain(
-                        format!("{}:{} {}", f.path, n.line, n.name),
-                        n.tiers,
-                        n.lines,
-                    )
+                f.fns.iter().map(|n| Row {
+                    name: format!("{}:{} {}", f.path, n.line, n.name),
+                    construct: None,
+                    tiers: n.tiers.clone(),
+                    lines: n.lines.len(),
                 })
             })
             .collect(),
-        Level::Construct => {
-            let mut all: BTreeMap<(String, Tier), Count> = BTreeMap::new();
-            for f in files {
-                for (key, c) in &f.tally.constructs {
-                    let entry = all.entry(key.clone()).or_default();
-                    entry.count += c.count;
-                    entry.tokens += c.tokens;
-                    entry.lines += c.lines;
-                }
-            }
-            all.into_iter()
-                .map(|((id, tier), c)| {
-                    let mut tiers = TierTokens::default();
-                    tiers.0[tier.index()] = c.tokens;
-                    Row {
-                        name: id,
-                        count: Some(c.count),
-                        tier: Some(tier),
-                        tiers,
-                        lines: c.lines,
-                    }
-                })
-                .collect()
-        }
+        Level::Construct => files
+            .iter()
+            .flat_map(|f| f.constructs.iter())
+            .fold(BTreeMap::<(String, usize), (usize, usize, usize)>::new(), |mut all, (key, c)| {
+                let (count, tokens, lines) = all.remove(key).unwrap_or((0, 0, 0));
+                all.insert(key.clone(), (
+                    count.saturating_add(c.count),
+                    tokens.saturating_add(c.tokens),
+                    lines.saturating_add(c.lines.len()),
+                ));
+                all
+            })
+            .into_iter()
+            .map(|((id, tier), (count, tokens, lines))| Row {
+                name: id,
+                construct: TIERS.get(tier).map(|t| (count, t.to_owned())),
+                tiers: bump(Vec::from([0; 6]), tier)
+                    .into_iter()
+                    .map(|n| n.saturating_mul(tokens))
+                    .collect(),
+                lines,
+            })
+            .collect(),
     };
-    if matches!(level, Level::Fn | Level::Construct) {
-        rows.sort_by(|a, b| b.score(w).total_cmp(&a.score(w)).then(a.name.cmp(&b.name)));
-    }
-    rows
-}
-
-fn plain(name: String, tiers: TierTokens, lines: usize) -> Row {
-    Row {
-        name,
-        count: None,
-        tier: None,
-        tiers,
-        lines,
+    match level {
+        Level::Fn | Level::Construct => rows
+            .into_iter()
+            .enumerate()
+            .map(|(i, r)| ((Reverse(r.score(w).to_bits()), r.name.clone(), i), r))
+            .collect::<BTreeMap<(Reverse<u64>, String, usize), Row>>()
+            .into_values()
+            .collect(),
+        _ => rows,
     }
 }
 
-pub fn text(rows: &[Row], total: &Row, level: Level, w: &TierWeights) -> String {
-    let construct = level == Level::Construct;
-    let mut out = format!(
-        "{:>10} {:>8} {:>7} {:>9} {:>9} {:>6}{} {}\n",
+pub(crate) fn output(files: &[ScoredFile], level: Level, json: Within, w: &Weights) -> String {
+    let rows = rows(files, level, w);
+    let total = total(files);
+    match json {
+        Within::In => {
+            let value = object(Vec::from([
+                ("by", level.column().into()),
+                ("rows", rows.iter().map(|r| json_row(r, w)).collect::<Vec<serde_json::Value>>().into()),
+                ("total", json_row(&total, w)),
+            ]));
+            format!("{}\n", serde_json::to_string_pretty(&value).unwrap_or_default())
+        }
+        Within::Out => text(&rows, &total, level, w),
+    }
+}
+
+fn json_row(row: &Row, w: &Weights) -> serde_json::Value {
+                let base = Vec::from([
+                    ("boundary", row.boundary(w).into()),
+                    ("boundary_share", row.boundary_share(w).into()),
+                    ("lines", row.lines.into()),
+                    ("name", row.name.clone().into()),
+                    ("per_token", row.per_token(w).into()),
+                    ("score", row.score(w).into()),
+                    ("tokens", row.tokens().into()),
+                ]);
+                let extra = row
+                    .construct
+                    .iter()
+                    .flat_map(|(count, tier)| {
+                        Vec::from([("count", count.to_owned().into()), ("tier", tier.name().into())])
+                    });
+                object(base.into_iter().chain(extra).collect())
+}
+
+fn text(rows: &[Row], total: &Row, level: Level, w: &Weights) -> String {
+    let construct = match level {
+        Level::Construct => format!(" {:>6} {:<10}", "count", "tier"),
+        _ => String::new(),
+    };
+    let head = format!(
+        "{:>10} {:>8} {:>7} {:>9} {:>9} {:>6}{construct} {}\n",
         "score",
         "tokens",
         "lines",
         "per token",
         "boundary",
         "share",
-        match construct {
-            true => format!(" {:>6} {:<10}", "count", "tier"),
-            false => String::new(),
-        },
         level.column()
     );
-    for row in rows.iter().chain(std::iter::once(total)) {
-        let extra = match (row.count, row.tier) {
-            (Some(count), Some(tier)) => format!(" {count:>6} {:<10}", tier.name()),
-            _ if construct => format!(" {:>6} {:<10}", "", ""),
-            _ => String::new(),
+    let lines = rows.iter().chain(std::iter::once(total)).map(|row| {
+        let extra = match (row.construct, level) {
+            (Some((count, tier)), _) => format!(" {count:>6} {:<10}", tier.name()),
+            (None, Level::Construct) => format!(" {:>6} {:<10}", "", ""),
+            (None, _) => String::new(),
         };
-        out.push_str(&format!(
+        format!(
             "{:>10.1} {:>8} {:>7} {:>9.3} {:>9.1} {:>5.1}%{extra} {}\n",
             row.score(w),
-            row.tiers.tokens(),
+            row.tokens(),
             row.lines,
             row.per_token(w),
             row.boundary(w),
             row.boundary_share(w),
             row.name
-        ));
-    }
-    out
-}
-
-pub fn json(rows: &[Row], total: &Row, level: Level, w: &TierWeights) -> serde_json::Value {
-    let one = |row: &Row| {
-        let mut value = serde_json::json!({
-            "name": row.name,
-            "score": row.score(w),
-            "tokens": row.tiers.tokens(),
-            "lines": row.lines,
-            "per_token": row.per_token(w),
-            "boundary": row.boundary(w),
-            "boundary_share": row.boundary_share(w),
-        });
-        if let (Some(count), Some(tier)) = (row.count, row.tier) {
-            value["count"] = count.into();
-            value["tier"] = tier.name().into();
-        }
-        value
-    };
-    serde_json::json!({
-        "by": level.column(),
-        "rows": rows.iter().map(one).collect::<Vec<_>>(),
-        "total": one(total),
-    })
+        )
+    });
+    std::iter::once(head).chain(lines).collect()
 }

@@ -1,0 +1,10 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:3:34: expr.match.guard: a match guard is one comparison (`==`, `!=`, `<`, `<=`, `>`, `>=`) or one `matches!`, with no `&&`, `||` or `!` (proposal 0040)
+crates/daemon/src/a_fail.rs:3:49: expr.binary.eq: a boolean expression (`matches!`, a comparison, `&&`, `||`, `!`) only as the body of a closure passed straight to a method in `predicate_adapters` (proposals 0028, 0037), or one comparison or `matches!` as a match guard (proposal 0040)
+crates/daemon/src/a_fail.rs:3:58: expr.binary.and: a boolean expression (`matches!`, a comparison, `&&`, `||`, `!`) only as the body of a closure passed straight to a method in `predicate_adapters` (proposals 0028, 0037), or one comparison or `matches!` as a match guard (proposal 0040)
+crates/daemon/src/a_fail.rs:3:72: expr.binary.eq: a boolean expression (`matches!`, a comparison, `&&`, `||`, `!`) only as the body of a closure passed straight to a method in `predicate_adapters` (proposals 0028, 0037), or one comparison or `matches!` as a match guard (proposal 0040)
+crates/daemon/src/a_fail.rs:4:34: expr.match.guard: a match guard is one comparison (`==`, `!=`, `<`, `<=`, `>`, `>=`) or one `matches!`, with no `&&`, `||` or `!` (proposal 0040)
+crates/daemon/src/a_fail.rs:4:37: expr.unary.not: a boolean expression (`matches!`, a comparison, `&&`, `||`, `!`) only as the body of a closure passed straight to a method in `predicate_adapters` (proposals 0028, 0037), or one comparison or `matches!` as a match guard (proposal 0040)
+crates/daemon/src/a_fail.rs:5:34: expr.match.guard: a match guard is one comparison (`==`, `!=`, `<`, `<=`, `>`, `>=`) or one `matches!`, with no `&&`, `||` or `!` (proposal 0040)
+crates/daemon/src/a_fail.rs:13:26: expr.match.guard: a guarded arm needs a later arm with no guard whose pattern covers the guarded one, so the otherwise case is written out (proposal 0040)

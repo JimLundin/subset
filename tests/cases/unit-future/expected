@@ -1,0 +1,4 @@
+$ check
+exit 1
+crates/client/src/upgrade.rs:2:21: type.dyn: `dyn` only in crates/client/src/platform/ (proposal 0017)
+crates/client/src/upgrade.rs:2:32: generics.assoc_binding: associated item binding `Trait<Item = T>`

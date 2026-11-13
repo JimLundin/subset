@@ -1,0 +1,21 @@
+version = 0
+include = ["**/*.rs"]
+allowed = ["item.fn", "item.enum", "expr.match", "expr.path", "expr.call", "pat.path", "pat.ident", "pat.tuple_struct", "expr.if_let.single", "type.path"]
+
+[weights]
+
+[weights.tiers]
+encouraged = 0.5
+neutral = 1.0
+tolerated = 2.0
+costly = 3.0
+outside = 5.0
+boundary = 1.0
+
+[weights.ids]
+"item.enum" = "encouraged"
+"expr.match" = "encouraged"
+"pat.path" = "encouraged"
+"pat.ident" = "encouraged"
+"pat.tuple_struct" = "encouraged"
+"expr.if_let.single" = "tolerated"

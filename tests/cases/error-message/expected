@@ -1,0 +1,4 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:3:5: attr.error: each error variant carries one `#[error("…")]` message, never `transparent` (proposal 0010)
+crates/daemon/src/a_fail.rs:5:5: attr.error: each error variant carries one `#[error("…")]` message, never `transparent` (proposal 0010)
