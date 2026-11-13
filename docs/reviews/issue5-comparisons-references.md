@@ -136,11 +136,26 @@ current implementation, not the anticipated Option-match lint diagnostic.
 
 An additional existing-form alternative is matching `rules.as_slice()` as
 `[] => None` and `_ => Some(Grant { ... })`. It avoids an Option mapping
-match entirely. It is a suggested further check, not a validated rewrite
-in this evidence set. `verify_grant.py` reconstructs the actual published
-function, the slice alternative, and a literal Option-match reconstruction
-that should reproduce `manual_map`, then runs clippy and behavior checks.
-No anticipated diagnostic is presented as an observed error.
+match entirely. This actual function rewrite **passed** clippy with
+`-D warnings`, the behavior run above, and v14 check on the complete real
+protocol file. [supported-slice.diff](issue5-comparisons-references/grant/supported-slice.diff)
+retains the rewrite. Its affected score is 223.5 → 218.5 (-2.2%), tokens
+258 → 255, and tool lines 33 → 34. The complete file's score is
+6010.5 → 6005.5, with 6814 → 6811 tokens and 1253 → 1254 tool lines.
+The after uses existing 0047 slice
+patterns and tiers, without repricing.
+
+`verify_grant.py` also reconstructs an Option-match form using the same
+real Grant body. That reconstruction fails clippy, exit 101, with the
+observed diagnostic `manual implementation of Option::map` at
+`src/main.rs:75:5`, specifically `clippy::manual_map`; behavior checks
+still pass. The checker accepts it because mapping Options by match is
+not itself forbidden. Raw output is retained in
+[manual-map-validation.txt](issue5-comparisons-references/grant/manual-map-validation.txt).
+The published `.map(...)` and the slice match both resolve this lint
+without a new admission or disabling a lint. This is a reconstructed
+historical shape, not a claim that the published commit currently fails
+clippy.
 
 `client/answers.rs:92` already uses
 `Some(answers).filter(|answers| answers.iter().all(|answer| !answer.0.is_empty()))`.
@@ -208,8 +223,8 @@ checker. Compilation of these exact rewrites is delegated to the consumer
 implementation round, which runs the actual Conductor gate. This report
 does not claim a cargo/clippy pass from syntax checks. Shared WSL launch
 failures (`Wsl/Service/WSAETIMEDOUT`) delayed independent grant validation;
-the previously launched job later completed the published-form check, with
-the slice/manual-map checks still outstanding when this report was written.
+the previously launched job later completed all three grant variants,
+producing the passes and the manual-map failure described above.
 At the coordinator's request, new launches were paused to preserve the
 already running consumer gate. No subsystem or unrelated process was
 terminated. Other projects and unpublished Conductor changes were not measured.
