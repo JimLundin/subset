@@ -1,0 +1,2 @@
+# Preserve the exact exported patch and its required blank context lines.
+*.diff text eol=lf whitespace=-blank-at-eol

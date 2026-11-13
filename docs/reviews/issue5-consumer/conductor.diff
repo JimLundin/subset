@@ -1,0 +1,610 @@
+diff --git a/crates/agents/src/bin/s1.rs b/crates/agents/src/bin/s1.rs
+index b76c7e1..19b3345 100644
+--- a/crates/agents/src/bin/s1.rs
++++ b/crates/agents/src/bin/s1.rs
+@@ -398,14 +398,6 @@ const CHOSEN_EFFORT: Effort = Effort::High;
+ /// The model `get_settings` reports for [`CHOSEN_MODEL`].
+ const CHOSEN_RESOLVED: &str = "claude-sonnet-5-5";
+ 
+-fn chosen(claude: &Path, resume: Option<SessionId>, stdout_log: Option<PathBuf>) -> ClaudeOptions {
+-    ClaudeOptions {
+-        model: Some(String::from(CHOSEN_MODEL)),
+-        effort: Some(CHOSEN_EFFORT),
+-        ..options(claude, resume, stdout_log)
+-    }
+-}
+-
+ /// Steps 11 to 13, in a fourth session started with a chosen model and
+ /// effort: the CLI reports them, a turn reasons, and the CLI killed in the
+ /// middle of a turn is resumed in a new process that remembers the first
+@@ -414,8 +406,13 @@ async fn chosen_and_killed(
+     claude: &Path,
+     fixtures: Option<&Path>,
+ ) -> Result<(Verdict, Verdict, Verdict)> {
++    let chosen = |resume, stdout_log| ClaudeOptions {
++        model: Some(String::from(CHOSEN_MODEL)),
++        effort: Some(CHOSEN_EFFORT),
++        ..options(claude, resume, stdout_log)
++    };
+     let log = log_path(fixtures, "session4-chosen-killed");
+-    let (session, events) = ClaudeSession::spawn(chosen(claude, None, log)).await?;
++    let (session, events) = ClaudeSession::spawn(chosen(None, log)).await?;
+     let applied = session.applied().await;
+     let model = report(
+         "11 chosen model and effort",
+@@ -458,7 +455,6 @@ async fn chosen_and_killed(
+     )
+     .await?;
+     let (session, events) = ClaudeSession::spawn(chosen(
+-        claude,
+         Some(session_id.clone()),
+         log_path(fixtures, "session5-resumed"),
+     ))
+@@ -911,7 +907,7 @@ async fn run(fixtures: Option<PathBuf>) -> Result<()> {
+     let (question, for_session, withdrawn, duplicate) =
+         questions(&claude, scratch, fixtures).await?;
+     let (chosen, reasoning, resumed) = chosen_and_killed(&claude, fixtures).await?;
+-    let failed = Vec::from([
++    let failed = [
+         approve,
+         deny,
+         interrupt,
+@@ -928,7 +924,7 @@ async fn run(fixtures: Option<PathBuf>) -> Result<()> {
+         chosen,
+         reasoning,
+         resumed,
+-    ])
++    ]
+     .into_iter()
+     .filter(|verdict| matches!(verdict, Verdict::Fail))
+     .count();
+diff --git a/crates/agents/src/bin/s2.rs b/crates/agents/src/bin/s2.rs
+index 0d7d260..9b0ee7a 100644
+--- a/crates/agents/src/bin/s2.rs
++++ b/crates/agents/src/bin/s2.rs
+@@ -951,7 +951,7 @@ async fn run(fixtures: Option<PathBuf>) -> Result<()> {
+     let (question, for_session, withdrawn) =
+         questions(&codex, scratch, fixtures, thread_opts.clone()).await?;
+     let (chosen, reasoning, resumed) = chosen_and_killed(&codex, fixtures, thread_opts).await?;
+-    let failed = Vec::from([
++    let failed = [
+         approve,
+         decline,
+         interrupt,
+@@ -967,7 +967,7 @@ async fn run(fixtures: Option<PathBuf>) -> Result<()> {
+         chosen,
+         reasoning,
+         resumed,
+-    ])
++    ]
+     .into_iter()
+     .filter(|verdict| matches!(verdict, Verdict::Fail))
+     .count();
+diff --git a/crates/agents/src/claude/protocol.rs b/crates/agents/src/claude/protocol.rs
+index d813cfd..3d61295 100644
+--- a/crates/agents/src/claude/protocol.rs
++++ b/crates/agents/src/claude/protocol.rs
+@@ -1249,7 +1249,7 @@ mod tests {
+             input: Value,
+             want: ToolKind,
+         }
+-        let cases = Vec::from([
++        let cases = [
+             Case {
+                 name: String::from("Bash"),
+                 input: json(r#"{"command":"ls -a"}"#),
+@@ -1343,7 +1343,7 @@ mod tests {
+                     detail: String::from(r#"{"todos":[]}"#),
+                 },
+             },
+-        ]);
++        ];
+         let (got, want) = cases.into_iter().map(|case| {
+             let line = format!(r#"{{"type":"assistant","message":{{"content":[{{"type":"tool_use","id":"call","name":{},"input":{}}}]}}}}"#, serde_json::to_string(&case.name).unwrap(), case.input);
+             let got = match parse_line(&line).unwrap() {
+@@ -1365,7 +1365,7 @@ mod tests {
+             reason: Option<String>,
+             want: TurnOutcome,
+         }
+-        let cases = Vec::from([
++        let cases = [
+             Case {
+                 is_error: String::from("null"),
+                 reason: None,
+@@ -1400,7 +1400,7 @@ mod tests {
+                     message: String::from("error_during_execution"),
+                 },
+             },
+-        ]);
++        ];
+         let (got, want) = cases.into_iter().map(|case| {
+             let line = format!(r#"{{"type":"result","subtype":"error_during_execution","session_id":"s","is_error":{},"terminal_reason":{}}}"#, case.is_error, serde_json::to_string(&case.reason).unwrap());
+             let got = match parse_line(&line).unwrap() {
+@@ -1414,12 +1414,12 @@ mod tests {
+ 
+     #[test]
+     fn tool_results_use_the_shared_outcome_and_default_to_success() {
+-        let cases = Vec::from([
++        let cases = [
+             ("", ToolOutcome::Succeeded),
+             (r#","is_error":null"#, ToolOutcome::Succeeded),
+             (r#","is_error":false"#, ToolOutcome::Succeeded),
+             (r#","is_error":true"#, ToolOutcome::Failed),
+-        ]);
++        ];
+         let (got, want) = cases.into_iter().map(|(field, want)| {
+             let line = format!(r#"{{"type":"user","message":{{"content":[{{"type":"tool_result","tool_use_id":"call"{field}}}]}}}}"#);
+             let got = match parse_line(&line).unwrap() {
+diff --git a/crates/agents/src/codex/protocol.rs b/crates/agents/src/codex/protocol.rs
+index fad5323..a335ed8 100644
+--- a/crates/agents/src/codex/protocol.rs
++++ b/crates/agents/src/codex/protocol.rs
+@@ -1476,12 +1476,12 @@ mod tests {
+     }
+ 
+     fn plain_answers(shape: &AnswerShape) -> Vec<Value> {
+-        Vec::from([
++        [
+             Decision::Accept,
+             Decision::AcceptForSession,
+             Decision::Decline,
+             Decision::Cancel,
+-        ])
++        ]
+         .into_iter()
+         .map(|decision| answered(shape, decision))
+         .collect()
+@@ -1489,7 +1489,7 @@ mod tests {
+ 
+     #[test]
+     fn command_and_file_change_decisions() {
+-        let expected = Vec::from(["accept", "acceptForSession", "decline", "cancel"])
++        let expected = ["accept", "acceptForSession", "decline", "cancel"]
+             .into_iter()
+             .map(|wire| {
+                 json(&format!(
+@@ -1752,7 +1752,7 @@ mod tests {
+     #[test]
+     fn tool_notifications_emit_shared_phases_and_file_changes() {
+         use proto::{Change, FileChange, ToolCallId, ToolKind, ToolOutcome, ToolPhase};
+-        let cases = Vec::from([
++        let cases = [
+             (
+                 r#"{"method":"item/started","params":{"threadId":"th","turnId":"tu","item":{"type":"commandExecution","id":"call","command":"pwd","status":"inProgress"}}}"#,
+                 ToolPhase::Started {
+@@ -1806,7 +1806,7 @@ mod tests {
+                     outcome: ToolOutcome::Failed,
+                 },
+             ),
+-        ]);
++        ];
+         let (got, want) = cases
+             .into_iter()
+             .map(|(line, phase)| {
+@@ -1829,7 +1829,7 @@ mod tests {
+     #[test]
+     fn completed_turns_emit_shared_outcomes_with_failure_messages() {
+         use proto::TurnOutcome;
+-        let cases = Vec::from([
++        let cases = [
+             (
+                 r#"{"method":"turn/completed","params":{"threadId":"th","turn":{"id":"tu","status":"completed"}}}"#,
+                 TurnOutcome::Completed,
+@@ -1856,7 +1856,7 @@ mod tests {
+                     message: String::from("the turn failed"),
+                 },
+             ),
+-        ]);
++        ];
+         let (got, want) = cases
+             .into_iter()
+             .map(|(line, outcome)| {
+diff --git a/crates/agents/src/install.rs b/crates/agents/src/install.rs
+index e86f4fd..f160b80 100644
+--- a/crates/agents/src/install.rs
++++ b/crates/agents/src/install.rs
+@@ -238,10 +238,12 @@ async fn unpack(
+     dir: &Path,
+     binary: &Path,
+ ) -> Result<(), InstallError> {
++    let download_error = |error| io(download, error);
++    let dir_error = |error| io(dir, error);
+     match package {
+         Package::Binary => {
+-            std::fs::create_dir_all(dir).map_err(|error| io(dir, error))?;
+-            make_executable(download).map_err(|error| io(download, error))?;
++            std::fs::create_dir_all(dir).map_err(dir_error)?;
++            make_executable(download).map_err(download_error)?;
+             std::fs::rename(download, binary).map_err(|error| io(binary, error))
+         }
+         Package::Archive => {
+@@ -255,13 +257,13 @@ async fn unpack(
+                 .arg(&staging)
+                 .status()
+                 .await
+-                .map_err(|error| io(download, error))?;
++                .map_err(download_error)?;
+             match status.code() {
+                 Some(0) => {
+                     // An earlier run may have left the directory without its binary.
+                     let _ = std::fs::remove_dir_all(dir);
+-                    std::fs::rename(&staging, dir).map_err(|error| io(dir, error))?;
+-                    std::fs::remove_file(download).map_err(|error| io(download, error))
++                    std::fs::rename(&staging, dir).map_err(dir_error)?;
++                    std::fs::remove_file(download).map_err(download_error)
+                 }
+                 _ => Err(InstallError::Unpack {
+                     archive: download.display().to_string(),
+@@ -310,12 +312,11 @@ async fn drain(
+ 
+ /// The SHA-256 of the file at `path` as it is on disk, in hex.
+ async fn sha256(path: &Path) -> Result<String, InstallError> {
+-    let file = tokio::fs::File::open(path)
+-        .await
+-        .map_err(|error| io(path, error))?;
++    let path_error = |error| io(path, error);
++    let file = tokio::fs::File::open(path).await.map_err(path_error)?;
+     digest(BufReader::with_capacity(READ_BUFFER, file), Sha256::new())
+         .await
+-        .map_err(|error| io(path, error))
++        .map_err(path_error)
+ }
+ 
+ async fn digest(
+diff --git a/crates/app/src/session.rs b/crates/app/src/session.rs
+index 100dcdc..fef405c 100644
+--- a/crates/app/src/session.rs
++++ b/crates/app/src/session.rs
+@@ -213,12 +213,12 @@ fn TranscriptItem(
+                                     ToolLine { tool, state }
+                                     Reason { reason }
+                                     div { class: "actions",
+-                                        button { class: "deny", onclick: move |_| { on_decide((request, Decision::Deny)); document::eval(&focus_on(request)); }, "Deny" }
+-                                        button { class: "approve", onclick: move |_| { on_decide((request, Decision::Approve)); document::eval(&focus_on(request)); }, "Approve" }
++                                        button { class: "deny", onclick: move |_| decide_and_focus(on_decide, request, Decision::Deny), "Deny" }
++                                        button { class: "approve", onclick: move |_| decide_and_focus(on_decide, request, Decision::Approve), "Approve" }
+                                     }
+                                     match for_session {
+                                         Some(allows) => rsx! {
+-                                            button { class: "for-session", onclick: move |_| { on_decide((request, Decision::ApproveForSession)); document::eval(&focus_on(request)); },
++                                            button { class: "for-session", onclick: move |_| decide_and_focus(on_decide, request, Decision::ApproveForSession),
+                                                 span { class: "for-session-title", "Allow for this session" }
+                                                 span { class: "for-session-allows", "Allows " code { "{allows}" } " until the session ends" }
+                                             }
+@@ -268,6 +268,16 @@ fn TranscriptItem(
+     }
+ }
+ 
++/// Sends the decision before focusing the card that remains after it resolves.
++fn decide_and_focus(
++    on_decide: EventHandler<(RequestId, Decision)>,
++    request: RequestId,
++    decision: Decision,
++) {
++    on_decide((request, decision));
++    document::eval(&focus_on(request));
++}
++
+ /// A request card's element id, unique in the pane, which shows one session.
+ fn card_id(request: RequestId) -> String {
+     format!("request-{}", request.0)
+diff --git a/crates/client/src/device.rs b/crates/client/src/device.rs
+index 48ec4fa..9a26a5e 100644
+--- a/crates/client/src/device.rs
++++ b/crates/client/src/device.rs
+@@ -95,7 +95,7 @@ mod tests {
+ 
+     #[test]
+     fn a_user_agent_names_its_device() {
+-        let cases = Vec::from([
++        let cases = [
+             case(
+                 "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1",
+                 Touch::Screen,
+@@ -142,7 +142,7 @@ mod tests {
+                 "Linux",
+             ),
+             case("", Touch::None, "Browser"),
+-        ]);
++        ];
+         let (got, want) = cases
+             .into_iter()
+             .map(|case| {
+diff --git a/crates/client/src/host_view.rs b/crates/client/src/host_view.rs
+index 0da2dd4..ce38741 100644
+--- a/crates/client/src/host_view.rs
++++ b/crates/client/src/host_view.rs
+@@ -1110,7 +1110,7 @@ mod tests {
+                 outcome: ToolOutcome::Succeeded,
+             },
+         };
+-        let cases = Vec::from([
++        let cases = [
+             WorkingCase {
+                 events: Vec::new(),
+                 working: Working::Hidden,
+@@ -1154,12 +1154,12 @@ mod tests {
+                 ]),
+                 working: Working::Hidden,
+             },
+-        ]);
++        ];
+         let (got, want) = cases
+             .into_iter()
+             .map(|case| {
+                 let view = fold(
+-                    Vec::from([created("/a"), EventKind::SessionReady])
++                    [created("/a"), EventKind::SessionReady]
+                         .into_iter()
+                         .chain(case.events)
+                         .map(|kind| (1, kind))
+diff --git a/crates/daemon/src/log.rs b/crates/daemon/src/log.rs
+index 1f7121e..ed3a06a 100644
+--- a/crates/daemon/src/log.rs
++++ b/crates/daemon/src/log.rs
+@@ -104,22 +104,12 @@ impl LogActor {
+             // Live only, so it takes no seq (see `EventKind::AssistantDelta`).
+             LogMsg::Append {
+                 session,
+-                kind: EventKind::AssistantDelta { text },
++                kind: kind @ (EventKind::AssistantDelta { .. } | EventKind::ReasoningDelta { .. }),
+             } => {
+                 let _ = self.live.send(Event {
+                     seq: self.head(),
+                     session,
+-                    kind: EventKind::AssistantDelta { text },
+-                });
+-            }
+-            LogMsg::Append {
+-                session,
+-                kind: EventKind::ReasoningDelta { text },
+-            } => {
+-                let _ = self.live.send(Event {
+-                    seq: self.head(),
+-                    session,
+-                    kind: EventKind::ReasoningDelta { text },
++                    kind,
+                 });
+             }
+             LogMsg::Append { session, kind } => {
+@@ -199,6 +189,14 @@ mod tests {
+             .await
+             .unwrap();
+         log.append(SessionId(1), delta("a")).await.unwrap();
++        log.append(
++            SessionId(1),
++            EventKind::ReasoningDelta {
++                text: String::from("thinking"),
++            },
++        )
++        .await
++        .unwrap();
+         log.append(SessionId(1), message("a")).await.unwrap();
+         assert_eq!(
+             log.welcome(providers()).await.unwrap(),
+@@ -209,11 +207,12 @@ mod tests {
+                 providers: providers(),
+             }
+         );
+-        let seen = Vec::from([
++        let seen = [
++            live.recv().await.unwrap(),
+             live.recv().await.unwrap(),
+             live.recv().await.unwrap(),
+             live.recv().await.unwrap(),
+-        ]);
++        ];
+         assert_eq!(
+             seen.into_iter()
+                 .map(|event| (event.seq, event.kind))
+@@ -221,6 +220,12 @@ mod tests {
+             [
+                 (HostSeq(1), EventKind::SessionReady),
+                 (HostSeq(1), delta("a")),
++                (
++                    HostSeq(1),
++                    EventKind::ReasoningDelta {
++                        text: String::from("thinking"),
++                    },
++                ),
+                 (HostSeq(2), message("a")),
+             ]
+         );
+diff --git a/crates/daemon/src/mapping.rs b/crates/daemon/src/mapping.rs
+index cd64618..262d802 100644
+--- a/crates/daemon/src/mapping.rs
++++ b/crates/daemon/src/mapping.rs
+@@ -378,7 +378,7 @@ mod tests {
+ 
+     #[test]
+     fn each_provider_event_maps_to_its_steps() {
+-        let cases = Vec::from([
++        let cases = [
+             Case {
+                 got: claude_steps(ClaudeEvent::ThinkingDelta {
+                     text: String::from("hm"),
+@@ -563,7 +563,7 @@ mod tests {
+                     ),
+                 })]),
+             },
+-        ]);
++        ];
+         let (got, want) = cases
+             .into_iter()
+             .map(|case| (case.got, case.want))
+diff --git a/crates/daemon/src/registry.rs b/crates/daemon/src/registry.rs
+index 6459bb4..57af87f 100644
+--- a/crates/daemon/src/registry.rs
++++ b/crates/daemon/src/registry.rs
+@@ -241,12 +241,12 @@ impl RegistryActor {
+             RegistryMsg::Continue { session, reply } => {
+                 let relaunch = match self.sessions.get(&session) {
+                     None => Err(Rejection::UnknownSession),
+-                    Some((provider, handle)) => self
+-                        .ready(provider.to_owned())
+-                        .map(|(launch, _)| {
+-                            (handle.clone(), launch, self.models(provider.to_owned()))
+-                        })
+-                        .map_err(|reason| Rejection::ProviderUnavailable { reason }),
++                    Some((provider, handle)) => {
++                        let &provider = provider;
++                        self.ready(provider)
++                            .map(|(launch, _)| (handle.clone(), launch, self.models(provider)))
++                            .map_err(|reason| Rejection::ProviderUnavailable { reason })
++                    }
+                 };
+                 let _ = reply.send(relaunch);
+             }
+diff --git a/crates/daemon/src/session.rs b/crates/daemon/src/session.rs
+index 8fbf486..982ca55 100644
+--- a/crates/daemon/src/session.rs
++++ b/crates/daemon/src/session.rs
+@@ -74,7 +74,7 @@ pub fn choose(
+         (Some(effort), Some(choice)) => choice
+             .efforts
+             .iter()
+-            .find(|offered| offered == &&effort)
++            .find(|&&offered| offered == effort)
+             .map(|_| Choice {
+                 model: model.clone(),
+                 effort: Some(effort),
+diff --git a/crates/daemon/tests/e2e.rs b/crates/daemon/tests/e2e.rs
+index 40097b8..ae3eff7 100644
+--- a/crates/daemon/tests/e2e.rs
++++ b/crates/daemon/tests/e2e.rs
+@@ -1469,10 +1469,10 @@ async fn two_codex_sessions_share_one_server() {
+         ],
+         [CommandResult::Accepted, CommandResult::Accepted]
+     );
+-    let asked = Vec::from([
++    let asked = [
+         events_until(&mut updates, Until::Request).await,
+         events_until(&mut updates, Until::Request).await,
+-    ])
++    ]
+     .concat();
+     assert_eq!(
+         [
+@@ -1481,12 +1481,12 @@ async fn two_codex_sessions_share_one_server() {
+         ],
+         [CommandResult::Accepted, CommandResult::Accepted]
+     );
+-    let ended = Vec::from([
++    let ended = [
+         events_until(&mut updates, Until::TurnEnd).await,
+         events_until(&mut updates, Until::TurnEnd).await,
+-    ])
++    ]
+     .concat();
+-    let view = fold(Vec::from([first, second, asked, ended]).concat());
++    let view = fold([first, second, asked, ended].concat());
+     let a_call = "exec-f4c7c6d4-8255-4bcc-972d-9f106cda7991";
+     assert_eq!(
+         items(&view, 1),
+@@ -1651,11 +1651,11 @@ async fn the_app_server_exiting_closes_every_codex_session() {
+     let _ = send(&link, start(Provider::Codex, &dir)).await;
+     let first = events_until(&mut updates, Until::Ready).await;
+     let _ = send(&link, start(Provider::Codex, &dir)).await;
+-    let seen = Vec::from([
++    let seen = [
+         first,
+         events_until(&mut updates, Until::Closed).await,
+         events_until(&mut updates, Until::Closed).await,
+-    ])
++    ]
+     .concat();
+     let closed = EventKind::SessionClosed {
+         reason: CloseReason::Exited {
+@@ -2466,7 +2466,7 @@ async fn claude_reasoning_streams_live_and_is_stored_once_finished() {
+     let reasoning = EventKind::Reasoning {
+         text: String::from(THOUGHT),
+     };
+-    let stored = Vec::from([
++    let stored = [
+         opening(Provider::Claude, &dir),
+         Vec::from([
+             user("sheep?"),
+@@ -2474,7 +2474,7 @@ async fn claude_reasoning_streams_live_and_is_stored_once_finished() {
+             reply("18"),
+             turn_end(TurnOutcome::Completed),
+         ]),
+-    ])
++    ]
+     .concat();
+     assert_eq!(
+         (
+@@ -2637,7 +2637,7 @@ async fn a_killed_claude_session_continues_its_conversation() {
+             ),
+         ]
+     );
+-    let view = fold(Vec::from([first, killed, ready, after]).concat());
++    let view = fold([first, killed, ready, after].concat());
+     assert_eq!(
+         items(&view, 1)
+             .into_iter()
+diff --git a/crates/proto/src/frame.rs b/crates/proto/src/frame.rs
+index aa044c5..b55a33e 100644
+--- a/crates/proto/src/frame.rs
++++ b/crates/proto/src/frame.rs
+@@ -2,8 +2,6 @@
+ //! Callers own the I/O: read [`HEADER_LEN`] bytes, pass them to [`body_len`],
+ //! read that many bytes, pass them to [`decode`].
+ 
+-use std::cmp::Ordering;
+-
+ use serde::Serialize;
+ use serde::de::DeserializeOwned;
+ 
+@@ -22,13 +20,13 @@ pub enum FrameError {
+ 
+ pub fn encode<T: Serialize>(msg: &T) -> Result<Vec<u8>, FrameError> {
+     let body = postcard::to_allocvec(msg)?;
+-    match u32::try_from(body.len()).map(|len| (len, len.cmp(&MAX_FRAME_LEN))) {
+-        Ok((len, Ordering::Less | Ordering::Equal)) => Ok(len
++    match u32::try_from(body.len()) {
++        Ok(len @ ..=MAX_FRAME_LEN) => Ok(len
+             .to_be_bytes()
+             .into_iter()
+             .chain(body)
+             .collect::<Vec<u8>>()),
+-        Ok((_, Ordering::Greater)) | Err(_) => Err(FrameError::TooLarge(
++        Ok(_) | Err(_) => Err(FrameError::TooLarge(
+             u64::try_from(body.len()).unwrap_or(u64::MAX),
+         )),
+     }
+@@ -36,11 +34,9 @@ pub fn encode<T: Serialize>(msg: &T) -> Result<Vec<u8>, FrameError> {
+ 
+ pub fn body_len(header: [u8; HEADER_LEN]) -> Result<usize, FrameError> {
+     let len = u32::from_be_bytes(header);
+-    match len.cmp(&MAX_FRAME_LEN) {
+-        Ordering::Less | Ordering::Equal => {
+-            usize::try_from(len).map_err(|_| FrameError::TooLarge(u64::from(len)))
+-        }
+-        Ordering::Greater => Err(FrameError::TooLarge(u64::from(len))),
++    match len {
++        ..=MAX_FRAME_LEN => usize::try_from(len).map_err(|_| FrameError::TooLarge(u64::from(len))),
++        _ => Err(FrameError::TooLarge(u64::from(len))),
+     }
+ }
+ 
+diff --git a/crates/proto/src/lib.rs b/crates/proto/src/lib.rs
+index 61ee369..f71d9e8 100644
+--- a/crates/proto/src/lib.rs
++++ b/crates/proto/src/lib.rs
+@@ -724,14 +724,14 @@ mod tests {
+ 
+     #[test]
+     fn a_base_url_may_not_hide_a_secret() {
+-        let checked = Vec::from([
++        let checked = [
+             "https://gateway.example/v1",
+             "https://user:pw@gateway.example",
+             "https://gateway.example/?key=1",
+             "https://gateway.example/#k",
+             "ftp://gateway.example",
+             "gateway.example",
+-        ])
++        ]
+         .into_iter()
+         .map(|base_url| {
+             Credential::Claude(ClaudeCredential::Gateway {
