@@ -150,4 +150,5 @@ by the reduced harness.
 
 ## Owner decision
 
-Pending. This is a proposal, not an accepted subset construct.
+On 2026-11-13 the owner chose to keep 0059 proposed for now. It remains
+unaccepted and is not implemented in the checker or consumer.

@@ -260,13 +260,16 @@ sites toward the three-friction-point threshold.
 
 ## Reproduction and limits
 
-From this review worktree on Linux/WSL:
+From the repository on Linux/WSL, set `BASELINE_SUBSET` to a checker binary
+built from `64352fdd5935de3954ee06b4598789cb89f67a03`. The current repository
+binary contains the correction and must not also be used as the baseline.
+Then run:
 
 ```sh
 python3 docs/reviews/issue5-platform-attributes/measure.py \
   --conductor /home/jim/projects/apps/conductor \
   --checker "$PWD/target/debug/subset" \
-  --baseline-checker /mnt/c/Users/Jim.Lundin/Projects/subset/target/debug/subset \
+  --baseline-checker "$BASELINE_SUBSET" \
   --compile
 ```
 
