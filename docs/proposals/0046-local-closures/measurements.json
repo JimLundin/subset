@@ -1,0 +1,335 @@
+{
+  "before": {
+    "score": {
+      "by": "file",
+      "rows": [
+        {
+          "boundary": 76.0,
+          "boundary_share": 1.5762729441045318,
+          "lines": 851,
+          "name": "crates/agents/src/bin/s1.rs",
+          "per_token": 0.9428040672663277,
+          "score": 4821.5,
+          "tokens": 5114
+        },
+        {
+          "boundary": 161.0,
+          "boundary_share": 4.447513812154696,
+          "lines": 482,
+          "name": "crates/agents/src/install.rs",
+          "per_token": 1.002770083102493,
+          "score": 3620.0,
+          "tokens": 3610
+        },
+        {
+          "boundary": 25.0,
+          "boundary_share": 0.39837463150346586,
+          "lines": 1249,
+          "name": "crates/client/src/host_view.rs",
+          "per_token": 0.9458176337603617,
+          "score": 6275.5,
+          "tokens": 6635
+        },
+        {
+          "boundary": 459.0,
+          "boundary_share": 2.4260042283298096,
+          "lines": 2668,
+          "name": "crates/daemon/tests/e2e.rs",
+          "per_token": 1.053862864145268,
+          "score": 18920.0,
+          "tokens": 17953
+        }
+      ],
+      "total": {
+        "boundary": 721.0,
+        "boundary_share": 2.1434729613223533,
+        "lines": 5250,
+        "name": "total",
+        "per_token": 1.0097562439961576,
+        "score": 33637.0,
+        "tokens": 33312
+      }
+    },
+    "functions": {
+      "by": "fn",
+      "rows": [
+        {
+          "boundary": 9.0,
+          "boundary_share": 1.3996889580093312,
+          "lines": 95,
+          "name": "crates/daemon/tests/e2e.rs:2841 a_killed_codex_server_continues_the_thread",
+          "per_token": 1.064569536423841,
+          "score": 643.0,
+          "tokens": 604
+        },
+        {
+          "boundary": 6.0,
+          "boundary_share": 1.107011070110701,
+          "lines": 82,
+          "name": "crates/agents/src/bin/s1.rs:414 chosen_and_killed",
+          "per_token": 1.0018484288354899,
+          "score": 542.0,
+          "tokens": 541
+        },
+        {
+          "boundary": 9.0,
+          "boundary_share": 2.542372881355932,
+          "lines": 49,
+          "name": "crates/daemon/tests/e2e.rs:2770 a_codex_session_continues_on_the_default_when_a_new_credential_drops_its_model",
+          "per_token": 1.120253164556962,
+          "score": 354.0,
+          "tokens": 316
+        },
+        {
+          "boundary": 1.0,
+          "boundary_share": 0.34305317324185247,
+          "lines": 38,
+          "name": "crates/agents/src/install.rs:235 unpack",
+          "per_token": 0.9557377049180328,
+          "score": 291.5,
+          "tokens": 305
+        },
+        {
+          "boundary": 0.0,
+          "boundary_share": 0.0,
+          "lines": 50,
+          "name": "crates/client/src/host_view.rs:973 reasoning_streams_into_one_item_that_its_text_replaces_and_a_close_is_kept",
+          "per_token": 1.0799180327868854,
+          "score": 263.5,
+          "tokens": 244
+        },
+        {
+          "boundary": 0.0,
+          "boundary_share": 0.0,
+          "lines": 33,
+          "name": "crates/client/src/host_view.rs:1024 a_close_settles_the_reasoning_or_reply_that_was_streaming",
+          "per_token": 1.0646067415730336,
+          "score": 189.5,
+          "tokens": 178
+        },
+        {
+          "boundary": 1.0,
+          "boundary_share": 1.2738853503184715,
+          "lines": 8,
+          "name": "crates/agents/src/install.rs:312 sha256",
+          "per_token": 1.0328947368421053,
+          "score": 78.5,
+          "tokens": 76
+        },
+        {
+          "boundary": 12.0,
+          "boundary_share": 15.384615384615383,
+          "lines": 13,
+          "name": "crates/daemon/tests/e2e.rs:2820 thread_settings",
+          "per_token": 1.164179104477612,
+          "score": 78.0,
+          "tokens": 67
+        },
+        {
+          "boundary": 0.0,
+          "boundary_share": 0.0,
+          "lines": 7,
+          "name": "crates/agents/src/bin/s1.rs:402 chosen",
+          "per_token": 0.9716981132075472,
+          "score": 51.5,
+          "tokens": 53
+        },
+        {
+          "boundary": 0.0,
+          "boundary_share": 0.0,
+          "lines": 3,
+          "name": "crates/client/src/host_view.rs:633 reasoned",
+          "per_token": 1.0714285714285714,
+          "score": 22.5,
+          "tokens": 21
+        }
+      ]
+    },
+    "measure": {
+      "files": [
+        {
+          "lines": 851,
+          "path": "crates/agents/src/bin/s1.rs",
+          "tokens": 5114
+        },
+        {
+          "lines": 482,
+          "path": "crates/agents/src/install.rs",
+          "tokens": 3610
+        },
+        {
+          "lines": 1249,
+          "path": "crates/client/src/host_view.rs",
+          "tokens": 6635
+        },
+        {
+          "lines": 2668,
+          "path": "crates/daemon/tests/e2e.rs",
+          "tokens": 17953
+        }
+      ],
+      "total": {
+        "lines": 5250,
+        "tokens": 33312
+      }
+    },
+    "check": {
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  },
+  "after": {
+    "score": {
+      "by": "file",
+      "rows": [
+        {
+          "boundary": 76.0,
+          "boundary_share": 1.5818503486314914,
+          "lines": 848,
+          "name": "crates/agents/src/bin/s1.rs",
+          "per_token": 0.943168433451119,
+          "score": 4804.5,
+          "tokens": 5094
+        },
+        {
+          "boundary": 161.0,
+          "boundary_share": 4.45551404455514,
+          "lines": 483,
+          "name": "crates/agents/src/install.rs",
+          "per_token": 1.0045871559633028,
+          "score": 3613.5,
+          "tokens": 3597
+        },
+        {
+          "boundary": 25.0,
+          "boundary_share": 0.39751947845444424,
+          "lines": 1248,
+          "name": "crates/client/src/host_view.rs",
+          "per_token": 0.9459987966305656,
+          "score": 6289.0,
+          "tokens": 6648
+        },
+        {
+          "boundary": 447.0,
+          "boundary_share": 2.3594615993665875,
+          "lines": 2669,
+          "name": "crates/daemon/tests/e2e.rs",
+          "per_token": 1.0542570951585977,
+          "score": 18945.0,
+          "tokens": 17970
+        }
+      ],
+      "total": {
+        "boundary": 709.0,
+        "boundary_share": 2.1068584333769165,
+        "lines": 5248,
+        "name": "total",
+        "per_token": 1.010297517187547,
+        "score": 33652.0,
+        "tokens": 33309
+      }
+    },
+    "functions": {
+      "by": "fn",
+      "rows": [
+        {
+          "boundary": 9.0,
+          "boundary_share": 1.2958963282937364,
+          "lines": 102,
+          "name": "crates/daemon/tests/e2e.rs:2833 a_killed_codex_server_continues_the_thread",
+          "per_token": 1.075077399380805,
+          "score": 694.5,
+          "tokens": 646
+        },
+        {
+          "boundary": 6.0,
+          "boundary_share": 1.0407632263660016,
+          "lines": 86,
+          "name": "crates/agents/src/bin/s1.rs:406 chosen_and_killed",
+          "per_token": 1.004355400696864,
+          "score": 576.5,
+          "tokens": 574
+        },
+        {
+          "boundary": 9.0,
+          "boundary_share": 2.219482120838471,
+          "lines": 56,
+          "name": "crates/daemon/tests/e2e.rs:2770 a_codex_session_continues_on_the_default_when_a_new_credential_drops_its_model",
+          "per_token": 1.1326815642458101,
+          "score": 405.5,
+          "tokens": 358
+        },
+        {
+          "boundary": 1.0,
+          "boundary_share": 0.3508771929824561,
+          "lines": 40,
+          "name": "crates/agents/src/install.rs:235 unpack",
+          "per_token": 0.9693877551020408,
+          "score": 285.0,
+          "tokens": 294
+        },
+        {
+          "boundary": 0.0,
+          "boundary_share": 0.0,
+          "lines": 51,
+          "name": "crates/client/src/host_view.rs:969 reasoning_streams_into_one_item_that_its_text_replaces_and_a_close_is_kept",
+          "per_token": 1.078544061302682,
+          "score": 281.5,
+          "tokens": 261
+        },
+        {
+          "boundary": 0.0,
+          "boundary_share": 0.0,
+          "lines": 34,
+          "name": "crates/client/src/host_view.rs:1021 a_close_settles_the_reasoning_or_reply_that_was_streaming",
+          "per_token": 1.064102564102564,
+          "score": 207.5,
+          "tokens": 195
+        },
+        {
+          "boundary": 1.0,
+          "boundary_share": 1.2738853503184715,
+          "lines": 7,
+          "name": "crates/agents/src/install.rs:314 sha256",
+          "per_token": 1.060810810810811,
+          "score": 78.5,
+          "tokens": 74
+        }
+      ]
+    },
+    "measure": {
+      "files": [
+        {
+          "lines": 848,
+          "path": "crates/agents/src/bin/s1.rs",
+          "tokens": 5094
+        },
+        {
+          "lines": 483,
+          "path": "crates/agents/src/install.rs",
+          "tokens": 3597
+        },
+        {
+          "lines": 1248,
+          "path": "crates/client/src/host_view.rs",
+          "tokens": 6648
+        },
+        {
+          "lines": 2669,
+          "path": "crates/daemon/tests/e2e.rs",
+          "tokens": 17970
+        }
+      ],
+      "total": {
+        "lines": 5248,
+        "tokens": 33309
+      }
+    },
+    "check": {
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  }
+}

@@ -1,3 +1,3 @@
 $ check
 exit 1
-crates/proto/src/a_fail.rs:3:5: attr.serde: `#[serde]` only with `transparent`, `tag`, `content`, `rename_all` and `rename` (proposal 0012), `untagged`, or `skip_serializing_if = "Option::is_none"` (proposal 0043)
+crates/proto/src/a_fail.rs:3:5: attr.serde: `#[serde]` only with `transparent`, `tag`, `content`, `rename_all`, `rename`, `untagged`, `skip_serializing_if = "Option::is_none"`, plain field `default`, or tagged unit-variant `other` (proposals 0012, 0043, 0055)

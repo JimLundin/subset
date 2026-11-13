@@ -1,0 +1,54 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:3:16: pat.range: a range pattern uses integer or character bounds, as literals or constants; Rust checks endpoint types, refutability and exhaustiveness (proposal 0049)
+crates/daemon/src/a_fail.rs:10:16: pat.lit.bool: boolean patterns only for boundary-to-domain conversion in wire modules (0054)
+crates/daemon/src/a_fail.rs:10:20: pat.range: a range pattern uses integer or character bounds, as literals or constants; Rust checks endpoint types, refutability and exhaustiveness (proposal 0049)
+crates/daemon/src/a_fail.rs:10:23: pat.lit.bool: boolean patterns only for boundary-to-domain conversion in wire modules (0054)
+crates/daemon/src/a_fail.rs:17:19: pat.range: a range pattern uses integer or character bounds, as literals or constants; Rust checks endpoint types, refutability and exhaustiveness (proposal 0049)
+crates/daemon/src/a_fail.rs:24:19: expr.match.guard: a guarded arm needs a later arm with no guard whose pattern covers the guarded one, so the otherwise case is written out (proposal 0040)
+crates/daemon/src/a_fail.rs:33:19: expr.match.guard: a guarded arm needs a later arm with no guard whose pattern covers the guarded one, so the otherwise case is written out (proposal 0040)
+crates/daemon/src/a_fail.rs:42:40: expr.match.guard: a guarded arm needs a later arm with no guard whose pattern covers the guarded one, so the otherwise case is written out (proposal 0040)
+crates/daemon/src/a_fail.rs:50:15: pat.ident.at: `name @ pattern` keeps the whole value any permitted pattern matched, with no `mut` or `ref` on `name`; the inner pattern keeps its own rules (proposals 0044, 0048)
+crates/daemon/src/a_fail.rs:57:9: pat.ident.ref: `ref` binding
+crates/daemon/src/a_fail.rs:57:15: pat.ident.at: `name @ pattern` keeps the whole value any permitted pattern matched, with no `mut` or `ref` on `name`; the inner pattern keeps its own rules (proposals 0044, 0048)
+crates/daemon/src/a_fail.rs:63:18: expr.range: range expression
+crates/daemon/src/a_fail.rs:69:37: expr.match.guard: a guarded arm needs a later arm with no guard whose pattern covers the guarded one, so the otherwise case is written out (proposal 0040)
+$ score crates/daemon/src/a.rs --by construct
+exit 0
+     score   tokens   lines per token  boundary  share  count tier       construct
+     172.0      172      43     1.000       0.0   0.0%     22 neutral    item.fn
+     121.0      121      72     1.000       0.0   0.0%    113 neutral    expr.path
+      93.0      186      86     0.500       0.0   0.0%     18 encouraged expr.match
+      70.0       35      23     2.000       0.0   0.0%     35 tolerated  type.primitive
+      58.0       58      20     1.000       0.0   0.0%     24 neutral    type.path
+      52.5      105      36     0.500       0.0   0.0%     40 encouraged pat.range
+      44.0       22      11     2.000       0.0   0.0%     11 tolerated  expr.binary.eq
+      36.5       73      36     0.500       0.0   0.0%     68 encouraged pat.lit
+      26.0       13       3     2.000       0.0   0.0%      1 tolerated  expr.if_let.single
+      26.0       52      40     0.500       0.0   0.0%     53 encouraged pat.ident
+      24.0       24      17     1.000      24.0 100.0%     18 boundary   type.primitive
+      22.0       11      11     2.000       0.0   0.0%     11 tolerated  expr.match.guard
+      18.0       18      18     1.000       0.0   0.0%     18 neutral    expr.call
+      10.0       10       2     1.000       0.0   0.0%      2 neutral    item.const
+      10.0       20      19     0.500       0.0   0.0%     21 encouraged pat.ident.at
+       8.0       16       2     0.500       0.0   0.0%      4 encouraged pat.path
+       7.0       14      14     0.500       0.0   0.0%     14 encouraged pat.wild
+       6.0        6       2     1.000       0.0   0.0%      2 neutral    expr.method_call
+       4.5        9       5     0.500       0.0   0.0%      1 encouraged item.enum
+       4.0        4       4     1.000       0.0   0.0%      4 neutral    pat.paren
+       4.0        8       3     0.500       0.0   0.0%      4 encouraged pat.rest
+       4.0        8       3     0.500       0.0   0.0%      4 encouraged pat.slice
+       4.0        8       2     0.500       0.0   0.0%      2 encouraged pat.struct
+       4.0        2       1     2.000       0.0   0.0%      1 tolerated  pat.tuple
+       4.0        2       1     2.000       0.0   0.0%      1 tolerated  type.tuple
+       3.0        3       2     1.000       0.0   0.0%      1 neutral    item.mod
+       3.0        6       3     0.500       0.0   0.0%      1 encouraged item.struct.named
+       3.0        3       1     1.000       0.0   0.0%      1 neutral    stmt.let
+       2.0        2       2     1.000       0.0   0.0%      2 neutral    expr.lit
+       2.0        2       2     1.000       0.0   0.0%      2 neutral    type.reference
+       2.0        2       2     1.000       0.0   0.0%      2 neutral    type.slice
+       2.0        2       2     1.000       0.0   0.0%      2 neutral    vis.pub
+       1.0        1       1     1.000       0.0   0.0%      1 neutral    expr.reference
+       1.0        2       2     0.500       0.0   0.0%      2 encouraged pat.or
+       1.0        2       1     0.500       0.0   0.0%      1 encouraged pat.tuple_struct
+     852.5     1022     147     0.834      24.0   2.8%                   total

@@ -1,5 +1,5 @@
 #[derive(Serialize, Deserialize)]
-struct Hello {
-    #[serde(default)]
-    host: String,
+struct Flattened {
+    #[serde(flatten)]
+    value: Inner,
 }

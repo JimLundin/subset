@@ -182,13 +182,164 @@ fn every_example_passes_the_subset() {
     }
     assert_eq!(
         (files.len(), run(&dir, &["check"])),
-        (29, "exit 0\n".to_string())
+        (40, "exit 0\n".to_string())
     );
 }
 
 fn write(path: &Path, text: &str) {
     std::fs::create_dir_all(path.parent().expect("parent")).expect("directory");
     std::fs::write(path, text).expect("file");
+}
+
+/// Rust supplies type, ownership and exhaustiveness checks beyond syn.
+#[test]
+fn permitted_patterns_compile_and_refutable_lengths_need_fallbacks() {
+    let dir = scratch("compiled-patterns");
+    compile_pattern(
+        "tests/cases/array-receiver/crates/daemon/src/a.rs",
+        &dir,
+        0,
+        "",
+    );
+    compile_pattern("tests/cases/ident-at/crates/daemon/src/a.rs", &dir, 0, "");
+    compile_pattern(
+        "tests/cases/slice-pattern/crates/daemon/src/a.rs",
+        &dir,
+        0,
+        "",
+    );
+    compile_pattern("tests/compile/slice-missing-fallback.rs", &dir, 1, "E0004");
+    compile_pattern(
+        "tests/compile/slice-rest-missing-empty.rs",
+        &dir,
+        1,
+        "E0004",
+    );
+    compile_pattern(
+        "tests/compile/slice-guard-missing-fallback.rs",
+        &dir,
+        1,
+        "E0004",
+    );
+    compile_pattern("tests/compile/at-moved-fields.rs", &dir, 1, "E0382");
+}
+
+fn compile_pattern(path: &str, dir: &Path, code: i32, diagnostic: &str) {
+    let out = Command::new(std::env::var("RUSTC").unwrap_or("rustc".to_string()))
+        .arg(root().join(path))
+        .args([
+            "--edition=2024",
+            "--crate-type=lib",
+            "--crate-name=pattern_case",
+            "--emit=metadata",
+        ])
+        .arg("--out-dir")
+        .arg(dir)
+        .output()
+        .expect("compile pattern fixture");
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert_eq!(out.status.code(), Some(code), "{path}: {stderr}");
+    assert_eq!(
+        stderr.find(diagnostic).map(|_| diagnostic),
+        Some(diagnostic),
+        "{path}: {stderr}"
+    );
+}
+
+#[test]
+fn range_patterns_compile_with_exhaustive_and_irrefutable_positions() {
+    let dir = scratch("compiled-ranges");
+    compile_pattern(
+        "tests/cases/pattern-range/crates/daemon/src/a.rs",
+        &dir,
+        0,
+        "",
+    );
+    compile_pattern("tests/compile/range-missing-negative.rs", &dir, 1, "E0004");
+    compile_pattern(
+        "tests/compile/range-missing-guard-fallback.rs",
+        &dir,
+        1,
+        "E0004",
+    );
+    compile_pattern("tests/compile/range-refutable-binding.rs", &dir, 1, "E0005");
+    compile_pattern(
+        "tests/compile/range-refutable-parameter.rs",
+        &dir,
+        1,
+        "E0005",
+    );
+    compile_pattern(
+        "tests/compile/range-nonnumeric-constant.rs",
+        &dir,
+        1,
+        "E0029",
+    );
+    compile_pattern(
+        "tests/compile/range-character-missing-fallback.rs",
+        &dir,
+        1,
+        "E0004",
+    );
+    compile_pattern("tests/compile/range-reversed.rs", &dir, 1, "E0030");
+}
+
+#[test]
+fn immutable_models_and_structural_patterns_preserve_types_and_ownership() {
+    let dir = scratch("compiled-domain-models");
+    compile_pattern(
+        "tests/cases/domain-data/crates/daemon/src/a.rs",
+        &dir,
+        0,
+        "",
+    );
+    compile_pattern(
+        "tests/cases/structural-pattern/crates/daemon/src/a.rs",
+        &dir,
+        0,
+        "",
+    );
+    compile_pattern("tests/compile/array-wrong-cardinality.rs", &dir, 1, "E0308");
+    compile_pattern("tests/compile/array-moved.rs", &dir, 1, "E0382");
+    compile_pattern("tests/compile/slice-output-dangling.rs", &dir, 1, "E0515");
+    compile_pattern("tests/compile/slice-output-ambiguous.rs", &dir, 1, "E0106");
+    compile_pattern("tests/compile/generic-wrong-identity.rs", &dir, 1, "E0308");
+    compile_pattern("tests/compile/shared-pattern-move.rs", &dir, 1, "E0507");
+}
+
+#[test]
+fn boundary_forms_preserve_wire_and_error_semantics() {
+    let dir = scratch("boundary-data");
+    copy(&root().join("tests/cases/boundary-data"), &dir);
+    boundary_tests(&dir);
+    write(
+        &dir.join("crates/agents/src/codex/pins.toml"),
+        "provider = \"claude\"\n",
+    );
+    let source = dir.join("crates/agents/src/codex/protocol.rs");
+    write(
+        &source,
+        &read(&source).replace("provider = \\\"codex\\\"", "provider = \\\"claude\\\""),
+    );
+    boundary_tests(&dir);
+}
+
+fn boundary_tests(dir: &Path) {
+    let out = Command::new(std::env::var("CARGO").unwrap_or("cargo".to_string()))
+        .args(["test", "--offline", "--locked", "--quiet"])
+        .arg("--manifest-path")
+        .arg(dir.join("Cargo.toml"))
+        .arg("--target-dir")
+        .arg(root().join("target/issue6-additions/boundary-build"))
+        .output()
+        .expect("run boundary fixture tests");
+    assert_eq!(
+        out.status.code(),
+        Some(0),
+        "{}{}",
+        String::from_utf8_lossy(&out.stdout),
+        String::from_utf8_lossy(&out.stderr)
+    );
 }
 
 fn git(dir: &Path, args: &[&str]) -> String {

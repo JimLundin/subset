@@ -155,25 +155,33 @@ actor loop states and what they own, ordered newtypes, serde wire types and
 | `expr.method_call` | compare an ordered newtype as a whole, `a.cmp(&b)`, never through `.0` (proposal 0024) |
 | `attr.error` | each error variant carries one `#[error("…")]` message, never `transparent` (proposal 0010) |
 | `attr.from` | `#[from]` only on the one variant of an enum holding a given error type (proposal 0011) |
-| `attr.serde` | `#[serde]` only with `transparent`, `tag`, `content`, `rename_all` and `rename` (proposal 0012), `untagged`, or `skip_serializing_if = "Option::is_none"` (proposal 0043) |
-| `generics.type_param` | a type parameter only on a fn, with exactly one bound, `Serialize` or `DeserializeOwned`, and no `where` (proposal 0013), or the unbounded parameters of a private `ask<T>` or shared free `ask<M, T>` helper (proposal 0026, amended by issue #3) |
+| `attr.serde` | `#[serde]` only with `transparent`, `tag`, `content`, `rename_all`, `rename`, `untagged`, `skip_serializing_if = "Option::is_none"`, plain field `default`, or tagged unit-variant `other` (proposals 0012, 0043, 0055) |
+| `generics.type_param` | unbounded type parameters with no defaults or `where` on structs, enums, inherent impls and functions (0052); codec fns retain their single serde bound (0013), and request helpers their existing parameters (0026) |
 | `type.impl_trait.arg` | `impl Trait` as an argument only as the last `build` parameter of a private `ask<T>` (`FnOnce(oneshot::Sender<T>) -> Msg`), or a private or `pub(crate)` free `ask<M, T>` taking `&mpsc::Sender<M>` (`FnOnce(oneshot::Sender<T>) -> M`) (proposal 0026, amended by issue #3) |
-| `type.slice` | `&[T]` only as a parameter type or a `const` type; a `const` list is `const NAME: &[T] = &[..]` (proposal 0014) |
-| `type.array` | an array type only for bytes whose size is part of a format or API (`[u8; N]`); a `const` list is `&[T]` (proposals 0014, 0015) |
-| `expr.array` | an array literal only passed straight to a call, as in `f([a, b])` or `f(&[a, b])`, or as a `const` value (proposal 0015) |
+| `type.slice` | slices only behind a reference in parameters/consts, or a shared returned view (including Option/Result); no stored slice fields or mutable slice outputs (0014, 0051) |
+| `type.array` | an immutable domain array uses an integer-literal or constant length; mutable arrays remain byte buffers or required library signatures; cardinality must matter, while ordinary const lists use &[T] (0015, 0050) |
+| `expr.array` | array values are immutable locals, fields, returns, call arguments or constants; no literal directly borrowed mutably or initializing let mut (0015, 0047, 0050) |
 | `expr.repeat` | an array repeat only of a literal, as in `[0u8; N]` (proposal 0015) |
 | `attr.cfg` | `cfg` only with `target_family = "wasm"`, `unix` or their `not` (proposal 0016) |
 | `attr.cfg` | `cfg` only on a mod, use, fn or impl item, or as `#![cfg]` atop a test file (proposal 0016) |
 | `attr.cfg` | a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016) |
 | `type.dyn` | `dyn` only as `Closure<dyn FnMut(..)>` (proposal 0017) |
 | `expr.closure.adapter` | a closure passed to a method only to a method in `closure_methods` or `predicate_adapters`: the iterator, `Option` and `Result` methods and the library methods the config lists (proposals 0006, 0026, 0028, 0037) |
-| `expr.closure` | a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook (proposals 0006, 0017, 0018, 0026) |
+| `pat.type` | a type annotation only on a plain immutable parameter of a confined local closure (proposal 0046) |
+| `expr.closure` | a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046) |
 | `item.use.glob` | a glob import only for `dioxus::prelude::*` (proposal 0018) |
 | `attr.allow` | only `#![allow(clippy::useless_format)]` at the crate root (proposal 0018) |
 | `type.bool` | `bool` only in a type argument of a type we don't define, as a flag field of a clap `Parser` struct, or as a field of a serde wire type (proposals 0019, 0023, 0043) |
 | `attr.arg` | a choice between named values is a `ValueEnum`, not `value_parser = [...]` (proposal 0019) |
 | `attr.tokio::test` | `#[tokio::test]` takes no arguments and marks an `async fn` (proposal 0020) |
-| `pat.ident.at` | `name @ pattern` only binds a whole value matched by a struct, tuple-struct or path pattern, with no `mut` or `ref` (proposal 0044) |
+| `pat.ident.at` | `name @ pattern` keeps the whole value any permitted pattern matched, with no `mut` or `ref` on `name`; the inner pattern keeps its own rules (proposals 0044, 0048) |
+| `pat.rest` | `..` only directly in a slice, tuple or tuple-struct pattern; only a slice rest may bind an immutable name with @ (0047, 0053) |
+| `pat.reference` | explicit reference patterns are shared (&pat), never &mut pat or ref mut bindings (0053) |
+| `attr.serde` | plain #[serde(default)] only on a field of a serde-derived wire type; no container default or custom default function (0055) |
+| `attr.serde` | #[serde(other)] only on a unit variant of a tagged serde-derived wire enum (0055) |
+| `attr.source` | plain #[source] only on a field of a thiserror-derived error, with at most one causal field per error or variant (0057) |
+| `macro.allowed` | include_str! only with one literal path in a const initializer (0056) |
+| `pat.range` | a range pattern uses integer or character bounds, as literals or constants; Rust checks endpoint types, refutability and exhaustiveness (proposal 0049) |
 | `expr.lit.bool` | `true` / `false` only as an argument or field value of a fn, method or struct we don't define, or as a field value of a serde wire type (proposals 0023, 0043) |
 | `macro.env` | `env!` only for `CARGO_PKG_VERSION`, `CARGO_PKG_NAME` and `CARGO_MANIFEST_DIR` (proposal 0022) |
 

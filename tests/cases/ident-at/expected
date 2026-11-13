@@ -1,3 +1,7 @@
 $ check
 exit 1
-crates/daemon/src/a_fail.rs:3:11: pat.ident.at: `name @ pattern` only binds a whole value matched by a struct, tuple-struct or path pattern, with no `mut` or `ref` (proposal 0044)
+crates/daemon/src/a_fail.rs:3:20: pat.ident.at: `name @ pattern` keeps the whole value any permitted pattern matched, with no `mut` or `ref` on `name`; the inner pattern keeps its own rules (proposals 0044, 0048)
+crates/daemon/src/a_fail.rs:10:9: pat.ident.ref: `ref` binding
+crates/daemon/src/a_fail.rs:10:20: pat.ident.at: `name @ pattern` keeps the whole value any permitted pattern matched, with no `mut` or `ref` on `name`; the inner pattern keeps its own rules (proposals 0044, 0048)
+crates/daemon/src/a_fail.rs:17:17: pat.lit.bool: boolean patterns only for boundary-to-domain conversion in wire modules (0054)
+crates/daemon/src/a_fail.rs:17:24: pat.lit.bool: boolean patterns only for boundary-to-domain conversion in wire modules (0054)

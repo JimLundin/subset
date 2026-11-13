@@ -1,4 +1,5 @@
 $ check
 exit 1
-crates/daemon/src/a_fail.rs:1:13: type.array: an array type only for bytes whose size is part of a format or API (`[u8; N]`); a `const` list is `&[T]` (proposals 0014, 0015)
-crates/daemon/src/a_fail.rs:3:16: type.array: an array type only for bytes whose size is part of a format or API (`[u8; N]`); a `const` list is `&[T]` (proposals 0014, 0015)
+crates/daemon/src/a_fail.rs:1:27: type.array: an immutable domain array uses an integer-literal or constant length; mutable arrays remain byte buffers or required library signatures; cardinality must matter, while ordinary const lists use &[T] (0015, 0050)
+crates/daemon/src/a_fail.rs:1:34: expr.binary.add: `+` operator
+crates/daemon/src/a_fail.rs:2:29: type.array: an immutable domain array uses an integer-literal or constant length; mutable arrays remain byte buffers or required library signatures; cardinality must matter, while ordinary const lists use &[T] (0015, 0050)

@@ -122,6 +122,8 @@ pub(crate) enum Owner {
 pub(crate) enum Slot {
     Other,
     CallArg(Callee),
+    /// A temporary array may stand directly before a method call (0047).
+    MethodReceiver,
     MethodArg {
         method: String,
         receiver: Owner,
@@ -147,6 +149,13 @@ pub(crate) enum Slot {
     WireField,
     /// The `build` parameter of an `ask` helper (proposal 0026).
     AskBuild,
+    /// A local closure whose uses stay in its block (proposal 0046).
+    LocalClosure,
+    LocalClosureParam,
+    /// A `..` directly in a slice pattern, or bound there by `@` (0047).
+    SliceRest,
+    /// A literal directly lent mutably or used to initialize `let mut`.
+    MutableArray,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -226,6 +235,8 @@ pub(crate) enum ItemKind {
 pub(crate) enum Generics {
     Item,
     Fn,
+    /// A struct, enum or inherent impl carrying typed domain data (0052).
+    Data,
     /// An `ask` helper's (proposal 0026).
     Ask,
 }
@@ -242,6 +253,7 @@ pub(crate) struct Cx {
     pub(crate) iterated: Within,
     pub(crate) test: Within,
     pub(crate) in_return: Within,
+    pub(crate) mutable_type: Within,
     /// Inside the pattern of a `let` already reported as `stmt.let.mut`.
     pub(crate) let_mut: Within,
     pub(crate) in_let: Within,
@@ -279,6 +291,15 @@ pub(crate) enum Host {
     Cfg(Option<CfgItem>),
     /// `#![allow(clippy::useless_format)]` atop a crate root.
     RootAllow,
+    Field {
+        wire: Within,
+        error: Within,
+    },
+    Variant {
+        wire: Within,
+        unit: Within,
+        tagged: Within,
+    },
     Other,
 }
 
@@ -434,6 +455,7 @@ pub(crate) fn file(file: &syn::File, env: Env) -> Vec<Hit> {
             iterated: Within::Out,
             test: env.test_file,
             in_return: Within::Out,
+            mutable_type: Within::Out,
             let_mut: Within::Out,
             in_let: Within::Out,
             imp: None,
@@ -523,6 +545,15 @@ impl Walk {
         self.slots.insert(key(node), slot);
     }
 
+    /// Range endpoints are pattern syntax, including signed literals.
+    fn range_bound(&mut self, bound: &Expr) {
+        match bound {
+            Expr::Lit(lit) => self.visit_pat(&Pat::Lit(lit.clone())),
+            Expr::Path(path) => self.visit_pat(&Pat::Path(path.clone())),
+            other => self.visit_expr(other),
+        }
+    }
+
     fn host(&mut self, attrs: &[Attribute], host: Host) {
         self.hosts
             .extend(attrs.iter().map(|a| (key(a.span()), host.clone())));
@@ -571,6 +602,40 @@ impl Walk {
     fn field_slots(&mut self, fields: &Fields, slot: &Slot) {
         let slots = fields.iter().map(|f| (key(f.ty.span()), slot.clone()));
         self.slots.extend(slots);
+    }
+
+    fn data_fields(&mut self, attrs: &[Attribute], fields: &Fields) {
+        let wire = syntax::derive_named(attrs, &["Serialize", "Deserialize"])
+            .map_or(Within::Out, |_| Within::In);
+        let error = syntax::derive_named(attrs, &["Error"]).map_or(Within::Out, |_| Within::In);
+        let host = Host::Field { wire, error };
+        for field in fields {
+            self.host(&field.attrs, host.clone());
+        }
+        if let Within::In = error {
+            self.hits.extend(checks::sources(fields));
+        }
+    }
+
+    fn data_variant(
+        &mut self,
+        attrs: &[Attribute],
+        variant: &syn::Variant,
+        wire: Within,
+        tagged: Within,
+    ) {
+        self.data_fields(attrs, &variant.fields);
+        self.host(
+            &variant.attrs,
+            Host::Variant {
+                wire,
+                tagged,
+                unit: match variant.fields {
+                    Fields::Unit => Within::In,
+                    _ => Within::Out,
+                },
+            },
+        );
     }
 
     /// A fn item or method: the rules on its head and the context of its
@@ -937,6 +1002,13 @@ fn type_id(t: &Type, cx: &Cx) -> Option<(Span, String)> {
 }
 
 impl<'ast> Visit<'ast> for Walk {
+    fn visit_block(&mut self, block: &'ast syn::Block) {
+        for span in checks::local_closures(block, &self.env) {
+            self.slot(span, Slot::LocalClosure);
+        }
+        visit::visit_block(self, block);
+    }
+
     fn visit_file(&mut self, file: &'ast syn::File) {
         let hosts = file.attrs.iter().map(|a| {
             let allowed = Some(a).filter(|a| {
@@ -1162,10 +1234,16 @@ impl<'ast> Visit<'ast> for Walk {
             kind,
             trait_owner,
         }));
+        self.cx.generics = match kind {
+            ImplKind::Inherent => Generics::Data,
+            _ => Generics::Item,
+        };
         visit::visit_item_impl(self, i);
     }
 
     fn visit_item_struct(&mut self, i: &'ast syn::ItemStruct) {
+        self.cx.generics = Generics::Data;
+        self.data_fields(&i.attrs, &i.fields);
         let newtype = checks::newtype(&i.fields);
         self.cx.item = self.kind_of(
             &i.attrs,
@@ -1237,6 +1315,18 @@ impl<'ast> Visit<'ast> for Walk {
     }
 
     fn visit_item_enum(&mut self, i: &'ast syn::ItemEnum) {
+        self.cx.generics = Generics::Data;
+        let wire = syntax::derive_named(&i.attrs, &["Serialize", "Deserialize"])
+            .map_or(Within::Out, |_| Within::In);
+        let tagged = i
+            .attrs
+            .iter()
+            .any(|a| a.path().is_ident("serde") && syntax::meta_keys(a).iter().any(|k| k == "tag"))
+            .then_some(())
+            .map_or(Within::Out, |_| Within::In);
+        for variant in &i.variants {
+            self.data_variant(&i.attrs, variant, wire, tagged);
+        }
         self.cx.item = self.kind_of(&i.attrs, ItemKind::Other);
         let name = i.ident.to_string();
         self.defines(&i.ident, &i.attrs);
@@ -1609,7 +1699,8 @@ impl<'ast> Visit<'ast> for Walk {
             ("cfg", None, _) => checks::cfg(attr, &self.env, &host),
             ("allow", _, Host::RootAllow) => Vec::new(),
             ("allow", _, _) => Vec::from([flag(at, Rule::Allow)]),
-            ("serde", _, _) => checks::serde(attr),
+            ("serde", _, _) => checks::serde(attr, &host),
+            ("source", _, _) => checks::source_attr(attr, &host),
             ("arg", _, _) => when(
                 syntax::attr_tokens(attr)
                     .contains("value_parser=[")
@@ -1734,6 +1825,7 @@ impl<'ast> Visit<'ast> for Walk {
             _ => cx.typing,
         };
         if let Type::Reference(r) = t {
+            self.cx.mutable_type = r.mutability.map_or(cx.mutable_type, |_| Within::In);
             self.slot(r.elem.span(), Slot::RefTarget(Box::new(cx.slot)));
         }
         visit::visit_type(self, t);
@@ -1793,6 +1885,7 @@ impl<'ast> Visit<'ast> for Walk {
                 visit::visit_expr(self, e);
             }
             Expr::MethodCall(m) => {
+                self.slot(m.receiver.span(), Slot::MethodReceiver);
                 let method = m.method.to_string();
                 self.hits
                     .extend(
@@ -1863,6 +1956,11 @@ impl<'ast> Visit<'ast> for Walk {
                 visit::visit_expr(self, e);
             }
             Expr::Closure(c) => {
+                if let Slot::LocalClosure = cx.slot {
+                    for input in &c.inputs {
+                        self.slot(input.span(), Slot::LocalClosureParam);
+                    }
+                }
                 let name = match cx.slot {
                     Slot::MethodArg { .. } => "expr.closure.adapter",
                     _ => "expr.closure",
@@ -1896,9 +1994,17 @@ impl<'ast> Visit<'ast> for Walk {
                 visit::visit_expr(self, e);
             }
             Expr::Reference(r) => {
-                // `&[a, b]` stands where its array would.
-                if let (None, Slot::CallArg(_) | Slot::MethodArg { .. } | Slot::ConstInit) =
-                    (r.mutability, &cx.slot)
+                if let Some(_token) = r.mutability {
+                    self.slot(r.expr.span(), Slot::MutableArray);
+                }
+                // A shared reference preserves a literal array's slot.
+                if let (
+                    None,
+                    Slot::CallArg(_)
+                    | Slot::MethodArg { .. }
+                    | Slot::MethodReceiver
+                    | Slot::ConstInit,
+                ) = (r.mutability, &cx.slot)
                 {
                     self.slot(r.expr.span(), cx.slot.clone());
                 }
@@ -1912,9 +2018,23 @@ impl<'ast> Visit<'ast> for Walk {
                 visit::visit_expr(self, e);
             }
             Expr::Paren(p) => {
+                match cx.slot {
+                    Slot::Other => {}
+                    _ => self.slot(p.expr.span(), cx.slot.clone()),
+                }
                 match cx.iterated {
                     Within::In => self.iterate(&p.expr),
                     Within::Out => {}
+                }
+                visit::visit_expr(self, e);
+            }
+            Expr::Group(g) => {
+                match cx.slot {
+                    Slot::Other => {}
+                    _ => self.slot(g.expr.span(), cx.slot.clone()),
+                }
+                if let Within::In = cx.iterated {
+                    self.iterate(&g.expr);
                 }
                 visit::visit_expr(self, e);
             }
@@ -2025,6 +2145,9 @@ impl<'ast> Visit<'ast> for Walk {
         self.cx.in_let = Within::In;
         self.visit_pat(&local.pat);
         self.cx = outer;
+        if let (Some(_), Some(init)) = (syntax::mut_bindings(&local.pat).first(), &local.init) {
+            self.slot(init.expr.span(), Slot::MutableArray);
+        }
         for i in local.init.iter() {
             self.visit_local_init(i);
         }
@@ -2073,6 +2196,54 @@ impl<'ast> Visit<'ast> for Walk {
             self.id(at.to_owned(), p.span(), name);
         }
         match p {
+            Pat::Reference(reference) => {
+                self.hits.extend(when(
+                    reference.mutability.and(Some(())),
+                    flag(reference.and_token.span, Rule::SharedPattern),
+                ));
+                visit::visit_pat(self, p);
+            }
+            Pat::Tuple(tuple) => {
+                for rest in tuple.elems.iter().filter(|p| matches!(p, Pat::Rest(_))) {
+                    self.slot(rest.span(), Slot::SliceRest);
+                }
+                visit::visit_pat(self, p);
+            }
+            Pat::TupleStruct(tuple) => {
+                for rest in tuple.elems.iter().filter(|p| matches!(p, Pat::Rest(_))) {
+                    self.slot(rest.span(), Slot::SliceRest);
+                }
+                visit::visit_pat(self, p);
+            }
+            Pat::Range(range) => {
+                self.hits.extend(checks::range_pattern(range));
+                for attr in &range.attrs {
+                    self.visit_attribute(attr);
+                }
+                for bound in range.start.iter().chain(&range.end) {
+                    self.range_bound(bound);
+                }
+            }
+            Pat::Slice(slice) => {
+                for rest in slice.elems.iter().flat_map(checks::slice_rests) {
+                    self.slot(rest, Slot::SliceRest);
+                }
+                visit::visit_pat(self, p);
+            }
+            Pat::Rest(rest) => {
+                let placed = self
+                    .slots
+                    .get(&key(rest.span()))
+                    .filter(|slot| matches!(slot, Slot::SliceRest))
+                    .and(Some(()));
+                self.hits
+                    .extend(unless(placed, flag(rest.span(), Rule::SliceRest)));
+            }
+            Pat::Type(t) => {
+                self.hits
+                    .extend(checks::closure_param(t, self.slots.get(&key(p.span()))));
+                visit::visit_pat(self, p);
+            }
             Pat::Ident(i) => {
                 self.hits
                     .extend(i.subpat.iter().map(|(at, _)| at.span).map(|at| {
@@ -2103,6 +2274,10 @@ impl<'ast> Visit<'ast> for Walk {
     fn visit_macro(&mut self, m: &'ast syn::Macro) {
         let full = syntax::path_string(&m.path);
         let last = syntax::last_name(&m.path);
+        if let "include_str" = last.as_str() {
+            self.hits
+                .extend(checks::embedded_string(m, &self.at(m.span()).slot));
+        }
         let test = match self.cx.test {
             Within::In => self.env.lists.test_macros.clone(),
             Within::Out => Vec::new(),

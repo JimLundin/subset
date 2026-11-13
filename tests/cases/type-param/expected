@@ -1,4 +1,3 @@
 $ check
 exit 1
-crates/proto/src/a_fail.rs:1:19: generics.type_param: a type parameter only on a fn, with exactly one bound, `Serialize` or `DeserializeOwned`, and no `where` (proposal 0013), or the unbounded parameters of a private `ask<T>` or shared free `ask<M, T>` helper (proposal 0026, amended by issue #3)
-crates/proto/src/a_fail.rs:5:9: generics.type_param: a type parameter only on a fn, with exactly one bound, `Serialize` or `DeserializeOwned`, and no `where` (proposal 0013), or the unbounded parameters of a private `ask<T>` or shared free `ask<M, T>` helper (proposal 0026, amended by issue #3)
+crates/proto/src/a_fail.rs:1:9: generics.type_param: unbounded type parameters with no defaults or `where` on structs, enums, inherent impls and functions (0052); codec fns retain their single serde bound (0013), and request helpers their existing parameters (0026)

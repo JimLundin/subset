@@ -1,0 +1,179 @@
+diff --git a/crates/agents/src/bin/s1.rs b/crates/agents/src/bin/s1.rs
+index 0c40fac..2df1698 100644
+--- a/crates/agents/src/bin/s1.rs
++++ b/crates/agents/src/bin/s1.rs
+@@ -399,14 +399,6 @@ const CHOSEN_EFFORT: Effort = Effort::High;
+ /// The model `get_settings` reports for [`CHOSEN_MODEL`].
+ const CHOSEN_RESOLVED: &str = "claude-sonnet-5-5";
+ 
+-fn chosen(claude: &Path, resume: Option<SessionId>, stdout_log: Option<PathBuf>) -> ClaudeOptions {
+-    ClaudeOptions {
+-        model: Some(String::from(CHOSEN_MODEL)),
+-        effort: Some(CHOSEN_EFFORT),
+-        ..options(claude, resume, stdout_log)
+-    }
+-}
+-
+ /// Steps 11 to 13, in a fourth session started with a chosen model and
+ /// effort: the CLI reports them, a turn reasons, and the CLI killed in the
+ /// middle of a turn is resumed in a new process that remembers the first
+@@ -415,8 +407,13 @@ async fn chosen_and_killed(
+     claude: &Path,
+     fixtures: Option<&Path>,
+ ) -> Result<(Verdict, Verdict, Verdict)> {
++    let chosen = |resume, stdout_log| ClaudeOptions {
++        model: Some(String::from(CHOSEN_MODEL)),
++        effort: Some(CHOSEN_EFFORT),
++        ..options(claude, resume, stdout_log)
++    };
+     let log = log_path(fixtures, "session4-chosen-killed");
+-    let (session, events) = ClaudeSession::spawn(chosen(claude, None, log)).await?;
++    let (session, events) = ClaudeSession::spawn(chosen(None, log)).await?;
+     let applied = session.applied().await;
+     let model = report(
+         "11 chosen model and effort",
+@@ -459,7 +456,6 @@ async fn chosen_and_killed(
+     )
+     .await?;
+     let (session, events) = ClaudeSession::spawn(chosen(
+-        claude,
+         Some(session_id.clone()),
+         log_path(fixtures, "session5-resumed"),
+     ))
+diff --git a/crates/agents/src/install.rs b/crates/agents/src/install.rs
+index e86f4fd..f160b80 100644
+--- a/crates/agents/src/install.rs
++++ b/crates/agents/src/install.rs
+@@ -238,10 +238,12 @@ async fn unpack(
+     dir: &Path,
+     binary: &Path,
+ ) -> Result<(), InstallError> {
++    let download_error = |error| io(download, error);
++    let dir_error = |error| io(dir, error);
+     match package {
+         Package::Binary => {
+-            std::fs::create_dir_all(dir).map_err(|error| io(dir, error))?;
+-            make_executable(download).map_err(|error| io(download, error))?;
++            std::fs::create_dir_all(dir).map_err(dir_error)?;
++            make_executable(download).map_err(download_error)?;
+             std::fs::rename(download, binary).map_err(|error| io(binary, error))
+         }
+         Package::Archive => {
+@@ -255,13 +257,13 @@ async fn unpack(
+                 .arg(&staging)
+                 .status()
+                 .await
+-                .map_err(|error| io(download, error))?;
++                .map_err(download_error)?;
+             match status.code() {
+                 Some(0) => {
+                     // An earlier run may have left the directory without its binary.
+                     let _ = std::fs::remove_dir_all(dir);
+-                    std::fs::rename(&staging, dir).map_err(|error| io(dir, error))?;
+-                    std::fs::remove_file(download).map_err(|error| io(download, error))
++                    std::fs::rename(&staging, dir).map_err(dir_error)?;
++                    std::fs::remove_file(download).map_err(download_error)
+                 }
+                 _ => Err(InstallError::Unpack {
+                     archive: download.display().to_string(),
+@@ -310,12 +312,11 @@ async fn drain(
+ 
+ /// The SHA-256 of the file at `path` as it is on disk, in hex.
+ async fn sha256(path: &Path) -> Result<String, InstallError> {
+-    let file = tokio::fs::File::open(path)
+-        .await
+-        .map_err(|error| io(path, error))?;
++    let path_error = |error| io(path, error);
++    let file = tokio::fs::File::open(path).await.map_err(path_error)?;
+     digest(BufReader::with_capacity(READ_BUFFER, file), Sha256::new())
+         .await
+-        .map_err(|error| io(path, error))
++        .map_err(path_error)
+ }
+ 
+ async fn digest(
+diff --git a/crates/client/src/host_view.rs b/crates/client/src/host_view.rs
+index 0da2dd4..8f1a798 100644
+--- a/crates/client/src/host_view.rs
++++ b/crates/client/src/host_view.rs
+@@ -630,10 +630,6 @@ mod tests {
+         }
+     }
+ 
+-    fn reasoned(piece: &str) -> EventKind {
+-        EventKind::ReasoningDelta { text: text(piece) }
+-    }
+-
+     fn delta(text: &str) -> EventKind {
+         EventKind::AssistantDelta {
+             text: String::from(text),
+@@ -971,6 +967,7 @@ mod tests {
+ 
+     #[test]
+     fn reasoning_streams_into_one_item_that_its_text_replaces_and_a_close_is_kept() {
++        let reasoned = |piece| EventKind::ReasoningDelta { text: text(piece) };
+         let view = fold(Vec::from([
+             (1, created("/a")),
+             (1, EventKind::SessionReady),
+@@ -1022,6 +1019,7 @@ mod tests {
+ 
+     #[test]
+     fn a_close_settles_the_reasoning_or_reply_that_was_streaming() {
++        let reasoned = |piece| EventKind::ReasoningDelta { text: text(piece) };
+         let view = fold(Vec::from([
+             (1, created("/a")),
+             (1, EventKind::SessionReady),
+diff --git a/crates/daemon/tests/e2e.rs b/crates/daemon/tests/e2e.rs
+index 40097b8..8aec2f0 100644
+--- a/crates/daemon/tests/e2e.rs
++++ b/crates/daemon/tests/e2e.rs
+@@ -2768,6 +2768,13 @@ async fn a_codex_server_killed_mid_turn_closes_and_continues() {
+ /// turn, so it starts a thread afresh; a resume takes the same choice.)
+ #[tokio::test]
+ async fn a_codex_session_continues_on_the_default_when_a_new_credential_drops_its_model() {
++    let thread_settings = |params: &serde_json::Value| {
++        (
++            params.get("threadId").cloned(),
++            params.get("model").cloned(),
++            params.pointer("/config/model_reasoning_effort").cloned(),
++        )
++    };
+     let (fx, server) = codex_host("codex-resumed.jsonl").await;
+     std::fs::copy(
+         Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/e2e/codex-resumed-listed.jsonl"),
+@@ -2816,21 +2823,6 @@ async fn a_codex_session_continues_on_the_default_when_a_new_credential_drops_it
+     fx.router.shutdown().await.unwrap();
+ }
+ 
+-/// The thread, model and effort a `thread/start` or `thread/resume` names.
+-fn thread_settings(
+-    params: &serde_json::Value,
+-) -> (
+-    Option<serde_json::Value>,
+-    Option<serde_json::Value>,
+-    Option<serde_json::Value>,
+-) {
+-    (
+-        params.get("threadId").cloned(),
+-        params.get("model").cloned(),
+-        params.pointer("/config/model_reasoning_effort").cloned(),
+-    )
+-}
+-
+ const COUNT: &str = "Count from 1 to 300, one number per line.";
+ const PRIME: &str = "**Assessing primality**\n\nI need to determine if 1,000,003 is prime. To do this, I should check its divisors up to the square root of about 1,000. It seems I recall that 1,000,003 is a known prime number, often recognized as the first prime above one million. I think I can confidently answer \"yes\" to the user's question without needing any tools. It’s important to verify my information carefully, though!";
+ 
+@@ -2839,6 +2831,13 @@ const PRIME: &str = "**Assessing primality**\n\nI need to determine if 1,000,003
+ /// model and effort.
+ #[tokio::test]
+ async fn a_killed_codex_server_continues_the_thread() {
++    let thread_settings = |params: &serde_json::Value| {
++        (
++            params.get("threadId").cloned(),
++            params.get("model").cloned(),
++            params.pointer("/config/model_reasoning_effort").cloned(),
++        )
++    };
+     let (fx, server) = codex_host("codex-killed.jsonl").await;
+     std::fs::copy(
+         Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/e2e/codex-resumed.jsonl"),

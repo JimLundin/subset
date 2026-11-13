@@ -1,0 +1,136 @@
+{
+  "kind": "illustrative isolated examples, not Conductor source",
+  "configuration_version": 12,
+  "examples": {
+    "before": {
+      "score": {
+        "by": "fn",
+        "rows": [
+          {
+            "boundary": 4.0,
+            "boundary_share": 10.0,
+            "lines": 6,
+            "name": "docs/proposals/0047-0048-syntax/before.rs:23 payload",
+            "per_token": 0.9090909090909092,
+            "score": 40.0,
+            "tokens": 44
+          },
+          {
+            "boundary": 0.0,
+            "boundary_share": 0.0,
+            "lines": 7,
+            "name": "docs/proposals/0047-0048-syntax/before.rs:15 selected",
+            "per_token": 0.7083333333333333,
+            "score": 34.0,
+            "tokens": 48
+          },
+          {
+            "boundary": 1.0,
+            "boundary_share": 3.4482758620689653,
+            "lines": 3,
+            "name": "docs/proposals/0047-0048-syntax/before.rs:11 mapped",
+            "per_token": 0.90625,
+            "score": 29.0,
+            "tokens": 32
+          },
+          {
+            "boundary": 0.0,
+            "boundary_share": 0.0,
+            "lines": 3,
+            "name": "docs/proposals/0047-0048-syntax/before.rs:7 joined",
+            "per_token": 1.076923076923077,
+            "score": 28.0,
+            "tokens": 26
+          }
+        ],
+        "total": {
+          "boundary": 5.0,
+          "boundary_share": 3.6900369003690034,
+          "lines": 24,
+          "name": "total",
+          "per_token": 0.8522012578616353,
+          "score": 135.5,
+          "tokens": 159
+        }
+      },
+      "measure": {
+        "files": [
+          {
+            "lines": 24,
+            "path": "docs/proposals/0047-0048-syntax/before.rs",
+            "tokens": 159
+          }
+        ],
+        "total": {
+          "lines": 24,
+          "tokens": 159
+        }
+      }
+    },
+    "after": {
+      "score": {
+        "by": "fn",
+        "rows": [
+          {
+            "boundary": 4.0,
+            "boundary_share": 11.594202898550725,
+            "lines": 6,
+            "name": "docs/proposals/0047-0048-syntax/after.rs:22 payload",
+            "per_token": 0.8214285714285714,
+            "score": 34.5,
+            "tokens": 42
+          },
+          {
+            "boundary": 0.0,
+            "boundary_share": 0.0,
+            "lines": 6,
+            "name": "docs/proposals/0047-0048-syntax/after.rs:15 selected",
+            "per_token": 0.7142857142857142,
+            "score": 30.0,
+            "tokens": 42
+          },
+          {
+            "boundary": 0.0,
+            "boundary_share": 0.0,
+            "lines": 3,
+            "name": "docs/proposals/0047-0048-syntax/after.rs:7 joined",
+            "per_token": 1.0952380952380951,
+            "score": 23.0,
+            "tokens": 21
+          },
+          {
+            "boundary": 1.0,
+            "boundary_share": 4.444444444444445,
+            "lines": 3,
+            "name": "docs/proposals/0047-0048-syntax/after.rs:11 mapped",
+            "per_token": 0.9375,
+            "score": 22.5,
+            "tokens": 24
+          }
+        ],
+        "total": {
+          "boundary": 5.0,
+          "boundary_share": 4.366812227074235,
+          "lines": 23,
+          "name": "total",
+          "per_token": 0.8297101449275363,
+          "score": 114.5,
+          "tokens": 138
+        }
+      },
+      "measure": {
+        "files": [
+          {
+            "lines": 23,
+            "path": "docs/proposals/0047-0048-syntax/after.rs",
+            "tokens": 138
+          }
+        ],
+        "total": {
+          "lines": 23,
+          "tokens": 138
+        }
+      }
+    }
+  }
+}

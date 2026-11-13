@@ -1,0 +1,5 @@
+version = 11
+include = ["*.rs"]
+allowed = ["item.fn", "stmt.let", "pat.ident", "expr.closure", "expr.path", "expr.call", "expr.method_call", "type.path"]
+closure_methods = ["configured"]
+predicate_adapters = []

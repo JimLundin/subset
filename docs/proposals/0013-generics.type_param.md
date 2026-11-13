@@ -6,6 +6,12 @@ task: bootstrap round (docs/subset/bootstrap-report.txt)
 
 # Generic parameters with one serde bound
 
+Version 14 adds unbounded parameters on structs, enums, inherent impls
+and functions under [0052](0052-generic-domain-models.md). The original
+codec-bound rule and acceptance evidence below remain historical; other
+bounds, defaults and `where` are not added. 0026 separately governs request
+helpers.
+
 ## Rule
 A generic type parameter is allowed only on a codec function at the wire boundary, with exactly one bound, `T: Serialize` or `T: DeserializeOwned`, and no `where` clause. Today these are `proto::encode`, `proto::decode`, `SendHalf::write` and `RecvHalf::read`. Generic structs, enums and traits are not allowed, and neither are other bounds. 0009 covers generics that a trait impl's signature demands. The request helpers `ask<T>`/`request<T>` are rewritten per method (§A11).
 

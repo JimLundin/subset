@@ -1,0 +1,17 @@
+$ check
+exit 1
+crates/agents/src/claude/protocol.rs:2:1: attr.serde: plain #[serde(default)] only on a field of a serde-derived wire type; no container default or custom default function (0055)
+crates/agents/src/claude/protocol.rs:5:24: attr.serde: plain #[serde(default)] only on a field of a serde-derived wire type; no container default or custom default function (0055)
+crates/agents/src/claude/protocol.rs:7:33: attr.serde: #[serde(other)] only on a unit variant of a tagged serde-derived wire enum (0055)
+crates/agents/src/claude/protocol.rs:10:31: attr.serde: #[serde(other)] only on a unit variant of a tagged serde-derived wire enum (0055)
+crates/agents/src/claude/protocol.rs:11:18: attr.serde: plain #[serde(default)] only on a field of a serde-derived wire type; no container default or custom default function (0055)
+crates/agents/src/claude/protocol.rs:12:19: attr.source: plain #[source] only on a field of a thiserror-derived error, with at most one causal field per error or variant (0057)
+crates/agents/src/claude/protocol.rs:15:19: attr.source: plain #[source] only on a field of a thiserror-derived error, with at most one causal field per error or variant (0057)
+crates/agents/src/claude/protocol.rs:15:46: attr.source: plain #[source] only on a field of a thiserror-derived error, with at most one causal field per error or variant (0057)
+crates/agents/src/claude/protocol.rs:18:25: attr.source: plain #[source] only on a field of a thiserror-derived error, with at most one causal field per error or variant (0057)
+crates/agents/src/claude/protocol.rs:19:29: macro.allowed: include_str! only with one literal path in a const initializer (0056)
+crates/agents/src/claude/protocol.rs:20:23: macro.allowed: include_str! only with one literal path in a const initializer (0056)
+crates/daemon/src/invalid.rs:3:23: pat.lit.bool: boolean patterns only for boundary-to-domain conversion in wire modules (0054)
+crates/daemon/src/invalid.rs:3:57: pat.lit.bool: boolean patterns only for boundary-to-domain conversion in wire modules (0054)
+crates/daemon/src/invalid.rs:5:1: attr.derive.Deserialize: serde derives only on wire types in crates/proto and the agents' provider protocol modules (proposal 0012)
+crates/daemon/src/invalid.rs:6:22: attr.serde: serde derives only on wire types in crates/proto and the agents' provider protocol modules (proposal 0012)

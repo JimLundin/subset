@@ -1,0 +1,110 @@
+{
+  "kind": "illustrative isolated examples, not Conductor source",
+  "configuration_version": 13,
+  "examples": {
+    "before": {
+      "score": {
+        "by": "fn",
+        "rows": [
+          {
+            "boundary": 0.0,
+            "boundary_share": 0.0,
+            "lines": 12,
+            "name": "docs/proposals/0049-ranges/before.rs:7 classify",
+            "per_token": 0.8455882352941176,
+            "score": 57.5,
+            "tokens": 68
+          },
+          {
+            "boundary": 1.0,
+            "boundary_share": 4.651162790697675,
+            "lines": 3,
+            "name": "docs/proposals/0049-ranges/before.rs:20 letter",
+            "per_token": 1.0238095238095237,
+            "score": 21.5,
+            "tokens": 21
+          }
+        ],
+        "total": {
+          "boundary": 1.0,
+          "boundary_share": 1.1976047904191618,
+          "lines": 20,
+          "name": "total",
+          "per_token": 0.8520408163265305,
+          "score": 83.5,
+          "tokens": 98
+        }
+      },
+      "measure": {
+        "files": [
+          {
+            "lines": 20,
+            "path": "docs/proposals/0049-ranges/before.rs",
+            "tokens": 98
+          }
+        ],
+        "total": {
+          "lines": 20,
+          "tokens": 98
+        }
+      },
+      "check": {
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    "after": {
+      "score": {
+        "by": "fn",
+        "rows": [
+          {
+            "boundary": 0.0,
+            "boundary_share": 0.0,
+            "lines": 7,
+            "name": "docs/proposals/0049-ranges/after.rs:7 classify",
+            "per_token": 0.7790697674418604,
+            "score": 33.5,
+            "tokens": 43
+          },
+          {
+            "boundary": 1.0,
+            "boundary_share": 3.278688524590164,
+            "lines": 6,
+            "name": "docs/proposals/0049-ranges/after.rs:15 letter",
+            "per_token": 0.7439024390243902,
+            "score": 30.5,
+            "tokens": 41
+          }
+        ],
+        "total": {
+          "boundary": 1.0,
+          "boundary_share": 1.4598540145985401,
+          "lines": 18,
+          "name": "total",
+          "per_token": 0.7365591397849462,
+          "score": 68.5,
+          "tokens": 93
+        }
+      },
+      "measure": {
+        "files": [
+          {
+            "lines": 18,
+            "path": "docs/proposals/0049-ranges/after.rs",
+            "tokens": 93
+          }
+        ],
+        "total": {
+          "lines": 18,
+          "tokens": 93
+        }
+      },
+      "check": {
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    }
+  }
+}

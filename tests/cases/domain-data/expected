@@ -1,0 +1,51 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:2:22: expr.array: array values are immutable locals, fields, returns, call arguments or constants; no literal directly borrowed mutably or initializing let mut (0015, 0047, 0050)
+crates/daemon/src/a_fail.rs:5:48: expr.array: array values are immutable locals, fields, returns, call arguments or constants; no literal directly borrowed mutably or initializing let mut (0015, 0047, 0050)
+crates/daemon/src/a_fail.rs:6:32: type.array: an immutable domain array uses an integer-literal or constant length; mutable arrays remain byte buffers or required library signatures; cardinality must matter, while ordinary const lists use &[T] (0015, 0050)
+crates/daemon/src/a_fail.rs:7:44: expr.index: indexing
+crates/daemon/src/a_fail.rs:8:30: type.slice: slices only behind a reference in parameters/consts, or a shared returned view (including Option/Result); no stored slice fields or mutable slice outputs (0014, 0051)
+crates/daemon/src/a_fail.rs:9:45: type.slice: slices only behind a reference in parameters/consts, or a shared returned view (including Option/Result); no stored slice fields or mutable slice outputs (0014, 0051)
+crates/daemon/src/a_fail.rs:10:52: type.slice: slices only behind a reference in parameters/consts, or a shared returned view (including Option/Result); no stored slice fields or mutable slice outputs (0014, 0051)
+crates/daemon/src/a_fail.rs:11:16: generics.type_param: unbounded type parameters with no defaults or `where` on structs, enums, inherent impls and functions (0052); codec fns retain their single serde bound (0013), and request helpers their existing parameters (0026)
+crates/daemon/src/a_fail.rs:12:18: generics.type_param: unbounded type parameters with no defaults or `where` on structs, enums, inherent impls and functions (0052); codec fns retain their single serde bound (0013), and request helpers their existing parameters (0026)
+crates/daemon/src/a_fail.rs:13:16: generics.const_param: const generic parameter
+crates/daemon/src/a_fail.rs:14:17: generics.lifetime: lifetime parameters only in a library trait impl (proposal 0009)
+crates/daemon/src/a_fail.rs:14:31: type.lifetime: lifetimes only in a library trait impl, where its signature demands them (proposal 0009)
+crates/daemon/src/a_fail.rs:15:12: generics.type_param: unbounded type parameters with no defaults or `where` on structs, enums, inherent impls and functions (0052); codec fns retain their single serde bound (0013), and request helpers their existing parameters (0026)
+crates/daemon/src/a_fail.rs:16:21: type.bool: `bool` only in a type argument of a type we don't define, as a flag field of a clap `Parser` struct, or as a field of a serde wire type (proposals 0019, 0023, 0043)
+crates/daemon/src/a_fail.rs:16:30: type.bool: `bool` only in a type argument of a type we don't define, as a flag field of a clap `Parser` struct, or as a field of a serde wire type (proposals 0019, 0023, 0043)
+$ score crates/daemon/src/a.rs --by construct
+exit 0
+     score   tokens   lines per token  boundary  share  count tier       construct
+      99.0       99      17     1.000       0.0   0.0%     12 neutral    item.fn
+      60.0       60      15     1.000       0.0   0.0%     33 neutral    expr.path
+      45.0       45      15     1.000       0.0   0.0%     28 neutral    type.path
+      28.0       14       8     2.000       0.0   0.0%     11 tolerated  type.primitive
+      18.0        9       7     2.000       0.0   0.0%      9 tolerated  generics.type_param
+      15.5       31       4     0.500       0.0   0.0%      4 encouraged item.struct.named
+      10.0       10       4     1.000       0.0   0.0%      4 neutral    expr.array
+      10.0       10       3     1.000       0.0   0.0%      3 neutral    expr.struct
+      10.0       10       2     1.000       0.0   0.0%      2 neutral    item.const
+      10.0       20       3     0.500       0.0   0.0%      3 encouraged item.enum
+       9.0        9       2     1.000       0.0   0.0%      3 neutral    expr.method_call
+       9.0        9       1     1.000       0.0   0.0%      1 neutral    item.use
+       7.0        7       5     1.000       0.0   0.0%      7 neutral    expr.call
+       7.0       14       2     0.500       0.0   0.0%      2 encouraged expr.match
+       7.0        7       5     1.000       0.0   0.0%      7 neutral    type.reference
+       7.0        7       5     1.000       0.0   0.0%      7 neutral    type.slice
+       6.5       13      10     0.500       0.0   0.0%     13 encouraged pat.ident
+       6.0        6       3     1.000       0.0   0.0%      3 neutral    expr.field
+       6.0        6       4     1.000       0.0   0.0%      6 neutral    expr.lit
+       6.0        6       4     1.000       0.0   0.0%      2 neutral    item.impl.inherent
+       5.5       11       4     0.500       0.0   0.0%      8 encouraged type.field
+       5.0        5       1     1.000       0.0   0.0%      1 neutral    expr.struct.update
+       4.0        4       2     1.000       0.0   0.0%      2 neutral    type.array
+       3.0        3       1     1.000       0.0   0.0%      1 neutral    stmt.let
+       2.5        5       2     0.500       0.0   0.0%      3 encouraged pat.slice
+       2.0        4       2     0.500       0.0   0.0%      2 encouraged pat.rest
+       1.0        1       1     1.000       0.0   0.0%      1 neutral    expr.reference
+       1.0        2       2     0.500       0.0   0.0%      2 encouraged pat.ident.at
+       1.0        2       2     0.500       0.0   0.0%      2 encouraged pat.wild
+       0.5        1       1     0.500       0.0   0.0%      1 encouraged pat.lit
+     401.5      430      37     0.934       0.0   0.0%                   total

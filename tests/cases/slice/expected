@@ -1,3 +1,3 @@
 $ check
 exit 1
-crates/daemon/src/a_fail.rs:2:16: type.slice: `&[T]` only as a parameter type or a `const` type; a `const` list is `const NAME: &[T] = &[..]` (proposal 0014)
+crates/daemon/src/a_fail.rs:2:16: type.slice: slices only behind a reference in parameters/consts, or a shared returned view (including Option/Result); no stored slice fields or mutable slice outputs (0014, 0051)

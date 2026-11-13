@@ -1,0 +1,39 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:3:24: pat.ident.at: `name @ pattern` keeps the whole value any permitted pattern matched, with no `mut` or `ref` on `name`; the inner pattern keeps its own rules (proposals 0044, 0048)
+crates/daemon/src/a_fail.rs:9:10: pat.ident.ref: `ref` binding
+crates/daemon/src/a_fail.rs:9:24: pat.ident.at: `name @ pattern` keeps the whole value any permitted pattern matched, with no `mut` or `ref` on `name`; the inner pattern keeps its own rules (proposals 0044, 0048)
+crates/daemon/src/a_fail.rs:15:17: pat.lit.bool: boolean patterns only for boundary-to-domain conversion in wire modules (0054)
+crates/daemon/src/a_fail.rs:22:21: expr.match.guard: a guarded arm needs a later arm with no guard whose pattern covers the guarded one, so the otherwise case is written out (proposal 0040)
+crates/daemon/src/a_fail.rs:30:21: expr.match.guard: a guarded arm needs a later arm with no guard whose pattern covers the guarded one, so the otherwise case is written out (proposal 0040)
+crates/daemon/src/a_fail.rs:38:27: expr.match.guard: a guarded arm needs a later arm with no guard whose pattern covers the guarded one, so the otherwise case is written out (proposal 0040)
+$ score crates/daemon/src/a.rs --by construct
+exit 0
+     score   tokens   lines per token  boundary  share  count tier       construct
+      87.0       87      37     1.000       0.0   0.0%     60 neutral    expr.path
+      85.0       85      22     1.000       0.0   0.0%     11 neutral    item.fn
+      54.0       27      11     2.000       0.0   0.0%     18 tolerated  type.primitive
+      43.0       86      43     0.500       0.0   0.0%     10 encouraged expr.match
+      39.0       39      12     1.000       0.0   0.0%     13 neutral    expr.method_call
+      32.0       32       8     1.000      32.0 100.0%      8 boundary   type.primitive
+      24.0       24       8     1.000       0.0   0.0%     19 neutral    type.path
+      18.5       37      18     0.500       0.0   0.0%     19 encouraged pat.slice
+      17.0       34      23     0.500       0.0   0.0%     34 encouraged pat.ident
+      16.0        8       4     2.000       0.0   0.0%      4 tolerated  expr.binary.eq
+      15.0       15      14     1.000       0.0   0.0%     15 neutral    expr.call
+      11.0       22      11     0.500       0.0   0.0%     11 encouraged pat.rest
+      10.0       10      10     1.000       0.0   0.0%     10 neutral    type.reference
+      10.0       10      10     1.000       0.0   0.0%     10 neutral    type.slice
+       8.0        4       4     2.000       0.0   0.0%      4 tolerated  expr.match.guard
+       6.0        6       4     1.000       0.0   0.0%      4 neutral    expr.array
+       6.0       12       3     0.500       0.0   0.0%      4 encouraged expr.method_call.adapter
+       5.5       11       8     0.500       0.0   0.0%     11 encouraged pat.wild
+       4.0        4       4     1.000       0.0   0.0%      4 neutral    expr.reference
+       3.5        7       7     0.500       0.0   0.0%      7 encouraged pat.ident.at
+       3.0        3       1     1.000       0.0   0.0%      1 neutral    stmt.let
+       2.5        5       4     0.500       0.0   0.0%      5 encouraged pat.lit
+       2.0        2       1     1.000       0.0   0.0%      1 neutral    type.array
+       1.0        1       1     1.000       0.0   0.0%      1 neutral    expr.lit
+       1.0        1       1     1.000       0.0   0.0%      1 neutral    pat.paren
+       0.5        1       1     0.500       0.0   0.0%      1 encouraged pat.or
+     504.5      573      71     0.880      32.0   6.3%                   total

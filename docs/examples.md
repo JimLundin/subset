@@ -679,10 +679,348 @@ same place, `Range::default()`, `Range { start, end }`, `RangeFull` and
 any `Bound`. Split bytes with `split_at_checked` (§A7 of the bootstrap
 review); `split_at` panics and is flagged.
 
+## 29. A helper used in one block can be a local closure
+
+```rust
+struct Entry {
+    label: String,
+}
+
+fn entries(prefix: &str, first: Vec<String>, second: Vec<String>) -> (Vec<Entry>, Vec<Entry>) {
+    let entry = |label: String| Entry { label: format!("{prefix}{label}") };
+    (
+        first.into_iter().map(&entry).collect(),
+        second.into_iter().map(entry).collect(),
+    )
+}
+```
+
+Proposal 0046 allows an immutable `let` closure when its uses are only
+calls in the same block, including nested synchronous blocks. Call it
+directly, or pass it by value or shared reference to a call that already
+admits closures. A plain parameter may have a type annotation when
+inference needs it. Every other construct in its body keeps its rule.
+
+The closure is never unused, returned, aliased, stored, or captured by
+another closure or async block. Predicates containing boolean expressions
+and the permitted async closure bodies are still written at the adapter
+call. A helper shared across functions stays a free function.
+
+## 30. Literal arrays can receive methods
+
+```rust
+fn joined(first: String, second: String) -> String {
+    [first, second].concat()
+}
+
+fn labels() -> Vec<String> {
+    ["Claude", "Codex"].map(String::from).to_vec()
+}
+
+fn count() -> usize {
+    (&["Claude", "Codex"]).len()
+}
+```
+
+Proposal 0047 keeps the literal in its expression, including shared
+references and grouping. A local array binding or returned array literal
+remains separate from this rule; byte-array types keep 0015's limits.
+
+## 31. Keep the whole value selected by a pattern
+
+```rust
+enum Event {
+    Open,
+    Updated,
+    Closed,
+}
+
+fn live(event: Event) -> Option<Event> {
+    match event {
+        event @ (Event::Open | Event::Updated) => Some(event),
+        Event::Closed => None,
+    }
+}
+
+fn selected(value: u64) -> Option<u64> {
+    match value {
+        n @ 3 => Some(n),
+        n @ (1 | 2) => Some(n),
+        _ => None,
+    }
+}
+
+fn pair(values: (u64, u64)) -> u64 {
+    match values {
+        pair @ (a, b) => pair.0.saturating_add(a).saturating_add(b),
+    }
+}
+
+fn whole(value: String) -> String {
+    match value {
+        whole @ _ => whole,
+    }
+}
+```
+
+Proposal 0048 allows `@` around every otherwise-permitted pattern. The
+outer binding is immutable and has no `ref`. Parentheses group the inner
+pattern. Rust still checks ownership: destructuring copied tuple fields
+works, while moving owned `String` fields and retaining their tuple does
+not. Integer/character range patterns also work under 0049. Boolean
+patterns and explicit reference patterns keep their existing restrictions.
+
+## 32. Sequence patterns show lengths and payloads
+
+```rust
+fn exact(bytes: &[u8]) -> Option<Vec<u8>> {
+    match bytes {
+        [first, second] => Some(Vec::from([first.to_owned(), second.to_owned()])),
+        _ => None,
+    }
+}
+
+fn payload(bytes: &[u8]) -> Option<Vec<u8>> {
+    match bytes {
+        [0x01, remaining @ ..] => Some(remaining.to_vec()),
+        _ => None,
+    }
+}
+
+fn middle(bytes: &[u8]) -> Option<Vec<u8>> {
+    match bytes {
+        [first, middle @ .., last] => Some(middle.to_vec()),
+        _ => None,
+    }
+}
+
+fn packet(bytes: &[u8]) -> Option<Vec<u8>> {
+    match bytes {
+        bytes @ ([0x01, _, _] | [0x02, _, _]) => Some(bytes.to_vec()),
+        _ => None,
+    }
+}
+
+fn all_lengths(bytes: &[u8]) -> Vec<u8> {
+    match bytes {
+        [] => Vec::new(),
+        [first, ..] => Vec::from([first.to_owned()]),
+    }
+}
+
+fn fixed(bytes: [u8; 2]) -> Vec<u8> {
+    let [first, second] = bytes;
+    Vec::from([first, second])
+}
+```
+
+Proposal 0047 admits array/slice patterns and a rest directly within them,
+optionally bound by immutable `@`. The fallback covers other lengths and
+values; `[]` and `[first, ..]` instead partition every possible length.
+Rust rejects a match that leaves lengths uncovered, and a guarded arm
+needs an unguarded covering fallback. Version 14 also admits unbound tuple
+and tuple-struct rests and shared slice outputs (examples below).
+
+## 33. Intervals select named states directly
+
+```rust
+enum AttemptState {
+    Fresh,
+    Retrying,
+    Exhausted,
+}
+
+fn classify(attempts: u8) -> AttemptState {
+    match attempts {
+        0 => AttemptState::Fresh,
+        1..=3 => AttemptState::Retrying,
+        4.. => AttemptState::Exhausted,
+    }
+}
+
+fn signed(value: i16) -> Option<i16> {
+    match value {
+        ..=-1 => None,
+        n @ (0..=3) => Some(n),
+        4.. => None,
+    }
+}
+
+fn letter(value: char) -> Option<char> {
+    match value {
+        letter @ ('a'..='z' | 'A'..='Z') => Some(letter),
+        _ => None,
+    }
+}
+
+fn guarded(value: u8, expected: u8) -> Option<u8> {
+    match value {
+        n @ (1..=3) if n == expected => Some(n),
+        0..=4 => None,
+        _ => None,
+    }
+}
+
+fn full(value: u8) -> u8 {
+    let n @ 0..=255 = value;
+    n
+}
+```
+
+Proposal 0049 allows integer, byte, and character ranges, including
+inclusive `..=`, exclusive `..`, missing endpoints, grouping, and nesting.
+A signed match needs negative cases. A binding or parameter must cover
+its full input type. A guarded range needs a later unguarded covering
+pattern; identical symbolic bounds are recognized, while literal bounds
+also support containment. Float/boolean ranges, range expressions, and
+general comparisons keep their existing rules. Constant endpoint types
+remain a review check.
+
+## 34. Cardinality belongs in an immutable model
+
+```rust
+use std::time::Duration;
+
+struct RetrySchedule { delays: [Duration; 4] }
+fn schedule() -> RetrySchedule {
+    RetrySchedule {
+        delays: [Duration::ZERO, Duration::from_secs(1), Duration::from_secs(2), Duration::from_secs(4)],
+    }
+}
+enum Provider { Claude, Codex }
+const COUNT: usize = 2;
+fn providers() -> [Provider; COUNT] {
+    let providers = [Provider::Claude, Provider::Codex];
+    providers
+}
+fn labels(first: String, second: String) -> [String; 2] { [first, second] }
+```
+
+0050 admits any otherwise-permitted element type. Rust checks cardinality
+and ownership. Use a fixed array for a meaningful size, and a slice for an
+ordinary constant list. Mutation, indexing and computed length expressions
+keep their existing restrictions.
+
+## 35. Return a shared view
+
+```rust
+fn payload(bytes: &[u8]) -> Option<&[u8]> {
+    match bytes {
+        [0x01, remaining @ ..] => Some(remaining),
+        _ => None,
+    }
+}
+struct Packet { bytes: Vec<u8> }
+impl Packet {
+    fn bytes(&self) -> &[u8] { self.bytes.as_slice() }
+}
+```
+
+0051 adds shared outputs, including `Option<&[T]>` and `Result<&[T], E>`.
+Rust's lifetime elision ties the output to the input or `self`. A dangling
+view or ambiguous input borrow fails compilation. Stored slice fields,
+mutable outputs and explicit domain lifetimes remain outside.
+
+## 36. Preserve the identity type through a shared shape
+
+```rust
+struct Step<Id> { provider: Id, request: String }
+enum Decision<Id> { Approved(Step<Id>), Rejected(Id) }
+impl<Id> Step<Id> {
+    fn new(provider: Id, request: String) -> Self { Self { provider, request } }
+    fn with_request(self, request: String) -> Self { Self { request, ..self } }
+}
+fn keep<Id>(step: Step<Id>) -> Step<Id> { step }
+fn view<T>(values: &[T]) -> Option<&[T]> {
+    match values { [_, remaining @ ..] => Some(remaining), [] => None }
+}
+```
+
+0052 allows unbounded type parameters on structs, enums, inherent impls
+and functions, without defaults or `where`. It preserves different id
+types without converting them to strings. Codec bounds retain their
+existing exception; general bounds, const generics, generic aliases and
+user-defined traits remain outside.
+
+## 37. Match borrowed structure and omit unused fields
+
+```rust
+fn borrowed(value: &Option<u8>) -> Option<u8> {
+    match value { &Some(code) => Some(code), &None => None }
+}
+fn first(value: (u8, u8, u8)) -> u8 {
+    let (first, ..) = value;
+    first
+}
+fn ends(value: (u8, u8, u8), expected: u8) -> Option<u8> {
+    match value {
+        (first, .., last) if first == expected => Some(last),
+        (_, ..) => None,
+    }
+}
+fn keep(value: Option<String>) -> Option<String> {
+    match value { whole @ Some(..) => whole, None => None }
+}
+```
+
+0053 admits shared `&Pattern` and unbound tuple/tuple-struct rests, including
+`(.., last)` and `Some(..)`. Only slice rests may bind an immutable name
+with `@`. Rust rejects moves from borrowed owners; `&mut`, `ref`, bound
+tuple rests and expression dereferencing remain outside.
+
+## 38. Convert missing fields and flags at the wire boundary
+
+```rust
+// crates/agents/src/codex/protocol.rs
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct ModelRow {
+    #[serde(default)]
+    hidden: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    effort: Option<String>,
+}
+enum Visibility { Visible, Hidden }
+fn visibility(hidden: Option<bool>) -> Visibility {
+    match hidden {
+        Some(true) => Visibility::Hidden,
+        Some(false) | None => Visibility::Visible,
+    }
+}
+#[derive(Deserialize)]
+#[serde(tag = "kind", content = "payload")]
+enum Event { Known(String), #[serde(other)] Other }
+```
+
+0054 confines boolean patterns to wire modules and requires conversion
+to named domain states by review. 0055 permits plain field defaults and
+unit fallback variants in tagged wire enums. A missing boolean defaults
+to false; null is still an error. An optional field can retain absence.
+Review must check that defaults preserve the protocol's meaning and that
+discarding an unknown event's payload is appropriate.
+
+## 39. Embed text and retain typed error context
+
+```rust
+const PINS: &str = include_str!("pins.toml");
+
+#[derive(Debug, thiserror::Error)]
+enum LoadError {
+    #[error("loading {path}")]
+    Io { path: String, #[source] cause: std::io::Error },
+}
+```
+
+0056 permits one literal `include_str!` path in a const initializer; Rust
+checks the file and rebuilds when it changes. 0057 permits a plain source
+field on a derived error, preserving the original cause alongside context.
+At most one causal field is permitted per error struct or enum variant.
+
 ## Still outside the subset
 
-- Generic structs, enums and traits, and any bound other than the codec
-  bounds of proposal 0013.
+- Generic aliases, user-defined traits, defaults, `where`, const generics
+  and any new bound beyond the existing codec/library-trait exceptions.
 - `Display`, `FromStr` and `From` impls. Write `label`, `parse` and `to_…`
   methods instead (proposal 0009).
 - Derives beyond the listed ones, such as `Default`, and `PartialOrd` or

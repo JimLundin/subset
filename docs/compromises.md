@@ -1,8 +1,8 @@
 # Where the subset gives ground
 
 The thesis is that **every state is a named enum variant and every decision is
-a `match`**, protected by seven qualities (`docs/subset.md`). Version 9 accepts
-38 proposals, two of which (0038, 0039) only narrow the checker. Most keep all
+a `match`**, protected by seven qualities (`docs/subset.md`). Version 14 adds
+the owner-directed patterns and data models in 0050–0057. Most proposals keep all
 the qualities. The ones below don't, or they bend
 the thesis at its edges. Each is confined by its rule, and this page is the
 list to revisit first when one of them starts to spread.
@@ -16,6 +16,7 @@ list to revisit first when one of them starts to spread.
 | **0018** Dioxus (`rsx!`, signals) | **Visible branching** and **forward data flow**, inside the UI crate. Markup can branch where the checker can't see, and signals are reactive state that Dioxus owns. | There is no other way to build the UI. | `crates/app` only. Decisions are made in `client`, and markup only renders their results. |
 | **0009** trait impls | **Local reasoning**, slightly. A library calls our code from somewhere else. | There's no way around it for `Drop`, hand-written `Debug`/serde, and framework hooks such as iroh's `ProtocolHandler`. | A closed list of traits. `Display`, `From` and `FromStr` are written as plain methods instead. |
 | **0043** `bool` on wire types | **Named states**, at the wire: a protocol's flag is a `bool` field. | The vendored SDKs' JSON has `is_error` and `interrupt` flags; without it each needed a duplicate struct or a bool-carrying enum (issue #1). | Only fields of serde-derived types, which 0012 confines to the wire modules. A flag read from the wire becomes an enum before it reaches our types, by review. |
+| **0055** field defaults | **Visible branching**, at the wire: absence selects a default inside a derive. | Protocols omit fields that have a defined default; the owner approved this boundary form in #6. | Plain field metadata on serde-derived wire types. Review checks that absence means the default and preserves meaningful missing states. |
 | **0045** `Visit` | **Forward data flow** and **local reasoning**, inside a visitor: syn calls our `&mut self` methods as it walks, and state lives on the visitor. | The checker's walk is 27% smaller in tokens than one fn per syntax node kind (proposal 0045). | Only implementors of syn's `Visit`, which count as 0035 endpoints and nothing more. |
 | **0011** `#[from]` | **Local reasoning**, slightly: the error conversion isn't written at the `?`. **One way** is at risk, since `?` alone and `map_err` both exist. | It is 17% shorter across 20 sites. | Only when exactly one variant holds that error type, ours or a library's. Otherwise use `map_err`, so a fact about the enum decides between the two, not taste. |
 
@@ -30,6 +31,54 @@ list to revisit first when one of them starts to spread.
 - **Iteration outside adapters.** The actor `loop` (0007) and, since 0041, a `for` whose body only runs awaited calls with `?` are the two loops. A `for` produces no value: building or selecting values in one is a violation, and every other loop is still an adapter.
 
 ## Enforcement is partly by review
+
+**Range patterns (0049, version 13).** Integer, byte, and character
+intervals name cases directly, with immutable `@` bindings and the usual
+exhaustiveness rules. Literal bounds are checked and ordered for guarded
+fallback coverage; constant endpoint types remain review checks. Rust
+permits float constant ranges, so Rust compilation alone does not enforce
+the subset's integer/character restriction for an unresolved constant.
+Identical symbolic ranges are recognized, while different constant names,
+equivalent exclusive endpoints, and integers beyond `i128` require a
+fallback the checker can prove structurally. Range expressions keep
+their previous limits; 0054 subsequently adds scoped wire boolean patterns.
+
+**Sequence and whole-value patterns (0047/0048, version 12).** Array
+literals can be method receivers; immutable `@` bindings can wrap every
+otherwise-permitted pattern, with grouping. Slice patterns expose length
+and element shape without indexing. Rust checks exhaustiveness and
+ownership: short lengths need fallback arms, and binding an owned tuple
+while moving its non-`Copy` fields fails. Guarded sequence coverage checks
+prefixes, suffixes and minimum lengths conservatively. Versions 13/14
+add ranges, shared-reference patterns and tuple/tuple-struct rests. Only
+slice rests may bind a name; Rust checks arity and borrowed-field moves.
+
+**Immutable models (0050–0053, version 14).** Array cardinality carries
+domain meaning; incidental constant lists stay slices. Shared outputs
+borrow existing data under Rust lifetime elision. Unbounded generic
+models preserve typed identities without new trait bounds or `where`.
+The checker enforces syntax and direct mutable array restrictions;
+meaningful cardinality, appropriate abstraction, aliases and indirect
+inferred mutable uses remain review work.
+
+**Boundary data (0054–0057, version 14).** Wire boolean patterns convert
+flags to named states; location is checked, provenance and escape are
+review work. Field `serde(default)` hides an absence decision in the
+derive, so the chosen default must preserve protocol meaning. Tagged
+unit `serde(other)` makes future events explicit but discards their
+payload. `include_str!` supplies immutable build-time text; Rust checks
+the file and rebuild dependencies. Typed `#[source]` preserves the cause
+alongside error context; Rust/thiserror check trait obligations. No new
+project-wide Conductor savings are claimed for these owner extensions.
+
+**Local helpers (0046, version 11).** An immutable local closure keeps
+its captures and uses in one block, with parameter annotations only when
+needed. This adds no closure signatures or named boolean predicates.
+A helper shared across functions stays a free function; the measurement
+of two cross-test helpers grew when their bodies were copied into local
+closures. The checker verifies reference positions and conservatively
+rejects unknown macro references, while callee behavior and choosing the
+shared-function form remain review checks.
 
 `tools/subset` checks the location rules as `[[scope]]` tables in
 `subset.toml`, the shape rules it can see in the syntax, and the interior
@@ -58,9 +107,10 @@ doesn't expand macros, so a reviewer still checks these:
   typed, so `|x| x.flag` on a library `bool` passes.
 - **Why a construct is there.** 0002 `pub` only for what another crate uses,
   0006 `async fn` only for I/O, 0012 serde only on types that cross a wire
-  (the tool checks the location), 0013 generics only at the wire boundary
-  (the tool checks the bound), 0014 a slice only for a read-only sequence,
-  0015 a byte array only where its size is part of a format, 0009 generics
+  (the tool checks the location), 0013 codec bounds only at the wire boundary, 0052 generic models where
+  types preserve meaningful distinctions (the tool checks parameter shape),
+  0014/0051 slices for read-only sequences, 0015/0050 fixed arrays only
+  where cardinality matters, 0009 generics
   only where the trait's signature demands them (the tool allows any inside
   a listed trait impl). Also 0024 an order that means something (the tool
   checks that the type is a newtype), 0025 `drop` only of a value that owns
@@ -87,7 +137,7 @@ doesn't expand macros, so a reviewer still checks these:
   ordering. 0041's `try_collect` needs the list's type in its turbofish to
   be told from effects, and a stream bound to a name is followed only
   within one fn.
-- **What a table is.** 0042's row struct and keyed lookup are read from one file: a `const` of type `&[Row]` or `[Row; N]`, with `Row` resolved by its module path, whose literals stand only in such a table's array literal. The checker follows the forms around the `==` (`&&`, `||`, `!`, blocks, `any`, `enumerate`, destructured rows, `PartialEq::eq`, `cmp(..).is_eq()`, a `let` binding of the table, a table of bare `&str`). Left to review: a table passed to a helper fn, a `map` projection before the lookup, and near-equalities such as `eq_ignore_ascii_case`. The owner's ruling on 0001 (2026-11-12), clarified by the coordinator, makes a table of two or more rows whose rows have more than two fields, counted through nested tuples, a list of a named struct; it is checked on array literals, and a table built through a macro is left to review. A range built by name (`RangeInclusive::new`) is recognised by its std type name and allowed only where it is iterated at once or tested with `contains`; one bound to a name and iterated later is flagged, which is stricter than the rule needs. No rule reads macro arguments, so `assert_eq!(get(1..=2), 3)` passes.
+- **What a table is.** 0042's row struct and keyed lookup are read from one file: a `const` of type `&[Row]` or `[Row; N]`, with `Row` resolved by its module path, whose literals stand only in such a table's array literal. The checker follows the forms around the `==` (`&&`, `||`, `!`, blocks, `any`, `enumerate`, destructured rows, `PartialEq::eq`, `cmp(..).is_eq()`, a `let` binding of the table, a table of bare `&str`). Left to review: a table passed to a helper fn, a `map` projection before the lookup, and near-equalities such as `eq_ignore_ascii_case`. The owner's ruling on 0001 (2026-11-12), clarified by the coordinator, makes a table of two or more rows whose rows have more than two fields, counted through nested tuples, a list of a named struct; it is checked on array literals, and a table built through a macro is left to review. A range built by name (`RangeInclusive::new`) is recognised by its std type name and allowed only where it is iterated at once or tested with `contains`; one bound to a name and iterated later is flagged, which is stricter than the rule needs. Apart from 0046's local-closure reference check, rules do not read macro arguments, so `assert_eq!(get(1..=2), 3)` passes.
 - **Which trait a method belongs to.** 0038 matches a method call by
   name, and only in a file that imports a listed operator trait. A
   library prelude that re-exports one through a glob hides it, and in a

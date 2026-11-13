@@ -3,16 +3,19 @@
 //! the id isn't, the id itself is the violation.
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::rc::Rc;
 
 use proc_macro2::{Span, TokenTree};
+use syn::parse::Parser;
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
+use syn::visit::{self, Visit};
 use syn::{
-    Attribute, BinOp, Block, Expr, Fields, FnArg, GenericParam, Local, Meta, Pat, PathArguments,
-    Stmt, Type, TypeParamBound, UnOp, Visibility,
+    Attribute, BinOp, Block, Expr, Fields, FnArg, GenericParam, Item, Local, Meta, Pat,
+    PathArguments, Stmt, Type, TypeParamBound, UnOp, Visibility,
 };
 
-use crate::facts::{CfgItem, Element, Fact, Facts};
+use crate::facts::{CfgItem, Element, Fact, Facts, Lists};
 use crate::syntax;
 use crate::table::Rule;
 use crate::walk::{
@@ -155,19 +158,106 @@ const SERDE_KEYS: &[&str] = &[
     "rename",
     "untagged",
     "skip_serializing_if",
+    "default",
+    "other",
 ];
 
-pub(crate) fn serde(attr: &Attribute) -> Vec<Hit> {
+pub(crate) fn serde(attr: &Attribute, host: &Host) -> Vec<Hit> {
     let keys = syntax::meta_keys(attr);
     let unlisted = keys.iter().find(|k| !SERDE_KEYS.contains(&k.as_str()));
     let skip = keys
         .iter()
         .find(|k| k.as_str() == "skip_serializing_if")
         .filter(|_| !syntax::attr_tokens(attr).contains("skip_serializing_if=\"Option::is_none\""));
-    when(
+    let listed = when(
         unlisted.or(skip).and(Some(())),
         flag(attr.pound_token.span, Rule::SerdeKeys),
+    );
+    let parsed = attr.parse_args_with(Punctuated::<Meta, syn::token::Comma>::parse_terminated);
+    let extensions = parsed
+        .iter()
+        .flat_map(|entries| entries.iter())
+        .flat_map(|meta| match syntax::last_name(meta.path()).as_str() {
+            "default" => {
+                let field = match host {
+                    Host::Field {
+                        wire: Within::In, ..
+                    } => Some(()),
+                    _ => None,
+                };
+                unless(
+                    field.and(plain_meta(meta)),
+                    flag(attr.span(), Rule::SerdeDefault),
+                )
+            }
+            "other" => {
+                let variant = match host {
+                    Host::Variant {
+                        wire: Within::In,
+                        unit: Within::In,
+                        tagged: Within::In,
+                    } => Some(()),
+                    _ => None,
+                };
+                unless(
+                    variant.and(plain_meta(meta)),
+                    flag(attr.span(), Rule::SerdeOther),
+                )
+            }
+            _ => Vec::new(),
+        });
+    listed.into_iter().chain(extensions).collect()
+}
+
+fn plain_meta(meta: &Meta) -> Option<()> {
+    match meta {
+        Meta::Path(_) => Some(()),
+        _ => None,
+    }
+}
+
+pub(crate) fn sources(fields: &Fields) -> Vec<Hit> {
+    let causes = fields
+        .iter()
+        .filter(|field| {
+            field.ident.iter().any(|name| name == "source")
+                || field
+                    .attrs
+                    .iter()
+                    .any(|attr| attr.path().is_ident("source") || attr.path().is_ident("from"))
+        })
+        .count();
+    match causes {
+        0 | 1 => Vec::new(),
+        _ => fields
+            .iter()
+            .flat_map(|f| f.attrs.iter())
+            .filter(|a| a.path().is_ident("source"))
+            .map(|a| flag(a.span(), Rule::SourceField))
+            .collect(),
+    }
+}
+
+pub(crate) fn source_attr(attr: &Attribute, host: &Host) -> Vec<Hit> {
+    let field = match host {
+        Host::Field {
+            error: Within::In, ..
+        } => Some(()),
+        _ => None,
+    };
+    unless(
+        field.and(plain_meta(&attr.meta)),
+        flag(attr.span(), Rule::SourceField),
     )
+}
+
+pub(crate) fn embedded_string(mac: &syn::Macro, slot: &Slot) -> Vec<Hit> {
+    let constant = match slot {
+        Slot::ConstInit => Some(()),
+        _ => None,
+    };
+    let literal = mac.parse_body::<syn::LitStr>().ok().and(Some(()));
+    unless(constant.and(literal), flag(mac.span(), Rule::IncludeStr))
 }
 
 /// What a `thiserror::Error` derive is on.
@@ -921,8 +1011,13 @@ pub(crate) fn generic_param(p: &GenericParam, g: &syn::Generics, cx: &Cx, env: &
                 _ => None,
             };
             let codec = match cx.generics {
-                Generics::Fn => single,
+                Generics::Fn => single.or(unbounded(p)
+                    .filter(|_| g.where_clause.is_none())
+                    .and(Some(()))),
                 Generics::Ask => Some(()),
+                Generics::Data => unbounded(p)
+                    .filter(|_| g.where_clause.is_none())
+                    .and(Some(())),
                 Generics::Item => None,
             };
             unless(
@@ -1149,8 +1244,9 @@ pub(crate) fn ty(t: &Type, cx: &Cx, env: &Env) -> Vec<Hit> {
             ]))
         }
         Type::Slice(s) => {
-            let read_only = match slot {
-                Slot::RefTarget(outer) => match outer.as_ref() {
+            let read_only = match (slot, cx.in_return, cx.mutable_type) {
+                (Slot::RefTarget(_), Within::In, Within::Out) => Some(()),
+                (Slot::RefTarget(outer), Within::Out, _) => match outer.as_ref() {
                     Slot::Param | Slot::ConstType => Some(()),
                     _ => None,
                 },
@@ -1159,11 +1255,26 @@ pub(crate) fn ty(t: &Type, cx: &Cx, env: &Env) -> Vec<Hit> {
             unless(read_only, flag(s.span(), Rule::Slice))
         }
         Type::Array(a) => {
-            let bytes = match a.elem.as_ref() {
-                Type::Path(p) => p.path.is_ident("u8").then_some(()),
+            let fixed_size = match a.len {
+                Expr::Lit(syn::ExprLit {
+                    lit: syn::Lit::Int(_),
+                    ..
+                })
+                | Expr::Path(_) => Some(()),
                 _ => None,
             };
-            unless(bytes, flag(a.span(), Rule::ArrayType))
+            let mutable = match cx.mutable_type {
+                Within::Out => Some(()),
+                Within::In => match a.elem.as_ref() {
+                    Type::Path(p) => p
+                        .path
+                        .is_ident("u8")
+                        .then_some(())
+                        .or(cx.library().and(Some(()))),
+                    _ => cx.library().and(Some(())),
+                },
+            };
+            unless(fixed_size.and(mutable), flag(a.span(), Rule::ArrayType))
         }
         Type::ImplTrait(i) => match (cx.in_return, slot) {
             (Within::In, _) | (_, Slot::AskBuild) => Vec::new(),
@@ -1328,7 +1439,7 @@ pub(crate) fn matches_macro(m: &syn::Macro, cx: &Cx) -> Vec<Hit> {
 /// The fields of a row, counted through nested tuples: `(a, (b, c))` has
 /// three.
 pub(crate) fn leaves(expr: &Expr) -> usize {
-    match expr {
+    match ungroup(expr) {
         Expr::Tuple(t) => t.elems.iter().map(leaves).sum(),
         _ => 1,
     }
@@ -1425,6 +1536,9 @@ const RANGE_TYPES: &[&str] = &[
 const BOUNDS: &[&str] = &["Included", "Excluded", "Unbounded"];
 /// Callees whose closure argument 0006, 0017, 0018 and 0026 allow.
 const CLOSURE_CALLEES: &[&str] = &["unfold", "use_signal", "use_future", "use_hook", "ask"];
+/// These standard macros evaluate expression arguments at the call site.
+const CLOSURE_EXPRESSION_MACROS: &[&str] =
+    &["assert_eq", "assert_ne", "format", "write", "writeln"];
 
 /// Holds when `found` is empty.
 pub(crate) fn absent(found: Option<()>) -> Option<()> {
@@ -1516,22 +1630,309 @@ pub(crate) fn struct_expr(s: &syn::ExprStruct, owner: Owner, cx: &Cx) -> Vec<Hit
 
 pub(crate) fn closure(c: &syn::ExprClosure, slot: &Slot, env: &Env) -> Vec<Hit> {
     match slot {
+        Slot::LocalClosure => Vec::new(),
         Slot::MethodArg { method, .. } => match takes_closure(method, env) {
             Some(_) => Vec::new(),
             None => Vec::from([flag(c.span(), Rule::ClosureMethod)]),
         },
         Slot::CallArg(callee) => {
-            let names = callee
-                .path
-                .iter()
-                .map(String::as_str)
-                .collect::<Vec<&str>>();
-            let wrapped = names.ends_with(&["Closure", "new"]).then_some(());
-            let listed = CLOSURE_CALLEES.contains(&callee.last()).then_some(());
-            unless(wrapped.or(listed), flag(c.span(), Rule::Closure))
+            unless(closure_callee(&callee.path), flag(c.span(), Rule::Closure))
         }
         _ => Vec::from([flag(c.span(), Rule::Closure)]),
     }
+}
+
+fn closure_callee(path: &[String]) -> Option<()> {
+    let names = path.iter().map(String::as_str).collect::<Vec<&str>>();
+    let wrapped = names.ends_with(&["Closure", "new"]).then_some(());
+    let listed = names
+        .last()
+        .filter(|last| CLOSURE_CALLEES.contains(last))
+        .and(Some(()));
+    wrapped.or(listed)
+}
+
+/// Parentheses and token groups keep the expression in the same slot.
+fn ungroup(expr: &Expr) -> &Expr {
+    match expr {
+        Expr::Paren(p) => ungroup(&p.expr),
+        Expr::Group(g) => ungroup(&g.expr),
+        other => other,
+    }
+}
+
+/// Immutable local closures with at least one use, only called or passed
+/// to the existing closure-taking calls. Nested synchronous scopes are
+/// part of the block; another closure or async block may not capture it.
+pub(crate) fn local_closures(block: &Block, env: &Env) -> Vec<Span> {
+    block
+        .stmts
+        .iter()
+        .enumerate()
+        .filter_map(|(index, stmt)| {
+            let local = match stmt {
+                Stmt::Local(local) => Some(local),
+                _ => None,
+            }?;
+            let name = match &local.pat {
+                Pat::Ident(p) => Some(p).filter(|p| p.mutability.is_none()),
+                _ => None,
+            }
+            .filter(|p| p.by_ref.is_none() && p.subpat.is_none())?;
+            let init = local.init.as_ref().filter(|i| i.diverge.is_none())?;
+            let closure = match ungroup(&init.expr) {
+                Expr::Closure(c) => Some(c),
+                _ => None,
+            }?;
+            let mut uses = LocalClosureUses {
+                name: name.ident.to_string(),
+                lists: env.lists.clone(),
+                shadowed: Within::Out,
+                deferred: Within::Out,
+                allowed: Within::Out,
+                used: Within::Out,
+                escaped: Within::Out,
+            };
+            for later in block.stmts.iter().skip(index.saturating_add(1)) {
+                uses.visit_stmt(later);
+            }
+            match (uses.used, uses.escaped) {
+                (Within::In, Within::Out) => Some(closure.span()),
+                _ => None,
+            }
+        })
+        .collect()
+}
+
+/// Resolves one block-local binding through shadowing, and checks each
+/// reference in its parent expression. Macro references are conservative:
+/// expansion could store the closure, even when its input looks like a call.
+struct LocalClosureUses {
+    name: String,
+    lists: Rc<Lists>,
+    shadowed: Within,
+    deferred: Within,
+    allowed: Within,
+    used: Within,
+    escaped: Within,
+}
+
+impl LocalClosureUses {
+    fn shadows(&mut self, pat: &Pat) {
+        self.shadowed = syntax::idents(pat)
+            .iter()
+            .find(|p| p.ident == self.name)
+            .map_or(self.shadowed, |_| Within::In);
+    }
+
+    fn expression(&mut self, expr: &Expr, allowed: Within) {
+        self.allowed = allowed;
+        self.visit_expr(expr);
+    }
+
+    fn reference(&mut self) {
+        if let Within::Out = self.shadowed {
+            self.used = Within::In;
+            match (self.allowed, self.deferred) {
+                (Within::In, Within::Out) => {}
+                _ => self.escaped = Within::In,
+            }
+        }
+    }
+
+    fn unpermitted_reference(&mut self) {
+        self.allowed = Within::Out;
+        self.reference();
+    }
+}
+
+impl<'ast> Visit<'ast> for LocalClosureUses {
+    fn visit_expr(&mut self, expr: &'ast Expr) {
+        let allowed = self.allowed;
+        let deferred = self.deferred;
+        self.allowed = Within::Out;
+        match expr {
+            Expr::Path(p) => match p.path.get_ident().map(ToString::to_string) {
+                Some(name) if name == self.name => {
+                    self.allowed = allowed;
+                    self.reference();
+                }
+                _ => {}
+            },
+            Expr::Call(c) => {
+                self.expression(&c.func, Within::In);
+                let argument = match ungroup(&c.func) {
+                    Expr::Path(p) => closure_callee(&syntax::segments(&p.path)),
+                    _ => None,
+                }
+                .map_or(Within::Out, |_| Within::In);
+                for arg in &c.args {
+                    self.expression(arg, argument);
+                }
+            }
+            Expr::MethodCall(m) => {
+                self.expression(&m.receiver, Within::Out);
+                let method = m.method.to_string();
+                let argument = self
+                    .lists
+                    .closure_methods
+                    .iter()
+                    .chain(&self.lists.predicate_adapters)
+                    .find(|name| name.as_str() == method)
+                    .map_or(Within::Out, |_| Within::In);
+                for arg in &m.args {
+                    self.expression(arg, argument);
+                }
+            }
+            Expr::Paren(p) => self.expression(&p.expr, allowed),
+            Expr::Group(g) => self.expression(&g.expr, allowed),
+            Expr::Reference(r) => match r.mutability {
+                None => self.expression(&r.expr, allowed),
+                Some(_) => visit::visit_expr(self, expr),
+            },
+            Expr::Closure(_) | Expr::Async(_) => {
+                self.deferred = Within::In;
+                visit::visit_expr(self, expr);
+            }
+            _ => visit::visit_expr(self, expr),
+        }
+        self.allowed = allowed;
+        self.deferred = deferred;
+    }
+
+    fn visit_block(&mut self, block: &'ast Block) {
+        let shadowed = self.shadowed;
+        self.shadowed = block
+            .stmts
+            .iter()
+            .filter_map(|stmt| match stmt {
+                Stmt::Item(Item::Fn(item)) => Some(&item.sig.ident),
+                Stmt::Item(Item::Const(item)) => Some(&item.ident),
+                Stmt::Item(Item::Static(item)) => Some(&item.ident),
+                _ => None,
+            })
+            .find(|name| name.to_string() == self.name)
+            .map_or(self.shadowed, |_| Within::In);
+        visit::visit_block(self, block);
+        self.shadowed = shadowed;
+    }
+
+    fn visit_local(&mut self, local: &'ast Local) {
+        visit::visit_local(self, local);
+        self.shadows(&local.pat);
+    }
+
+    fn visit_expr_closure(&mut self, closure: &'ast syn::ExprClosure) {
+        let shadowed = self.shadowed;
+        for input in &closure.inputs {
+            self.shadows(input);
+        }
+        self.visit_expr(&closure.body);
+        self.shadowed = shadowed;
+    }
+
+    fn visit_arm(&mut self, arm: &'ast syn::Arm) {
+        let shadowed = self.shadowed;
+        self.shadows(&arm.pat);
+        visit::visit_arm(self, arm);
+        self.shadowed = shadowed;
+    }
+
+    fn visit_expr_for_loop(&mut self, loop_: &'ast syn::ExprForLoop) {
+        self.visit_expr(&loop_.expr);
+        let shadowed = self.shadowed;
+        self.shadows(&loop_.pat);
+        self.visit_block(&loop_.body);
+        self.shadowed = shadowed;
+    }
+
+    fn visit_expr_if(&mut self, expr: &'ast syn::ExprIf) {
+        self.visit_expr(&expr.cond);
+        let shadowed = self.shadowed;
+        if let Expr::Let(binding) = syntax::strip(&expr.cond) {
+            self.shadows(&binding.pat);
+        }
+        self.visit_block(&expr.then_branch);
+        self.shadowed = shadowed;
+        if let Some((_, otherwise)) = &expr.else_branch {
+            self.visit_expr(otherwise);
+        }
+    }
+
+    fn visit_expr_while(&mut self, expr: &'ast syn::ExprWhile) {
+        self.visit_expr(&expr.cond);
+        let shadowed = self.shadowed;
+        if let Expr::Let(binding) = syntax::strip(&expr.cond) {
+            self.shadows(&binding.pat);
+        }
+        self.visit_block(&expr.body);
+        self.shadowed = shadowed;
+    }
+
+    fn visit_macro(&mut self, mac: &'ast syn::Macro) {
+        let parsed = Some(syntax::last_name(&mac.path))
+            .filter(|name| CLOSURE_EXPRESSION_MACROS.contains(&name.as_str()))
+            .and_then(|_| {
+                Punctuated::<Expr, syn::token::Comma>::parse_terminated
+                    .parse2(mac.tokens.clone())
+                    .ok()
+            });
+        match parsed {
+            Some(args) => {
+                for arg in &args {
+                    self.expression(arg, Within::Out);
+                }
+                for _ in macro_captures(mac.tokens.clone(), &self.name).iter() {
+                    self.unpermitted_reference();
+                }
+            }
+            None => {
+                for _ in macro_names(mac.tokens.clone(), &self.name).iter() {
+                    self.unpermitted_reference();
+                }
+            }
+        }
+    }
+
+    fn visit_item(&mut self, _: &'ast syn::Item) {}
+}
+
+fn macro_captures(tokens: proc_macro2::TokenStream, name: &str) -> Option<()> {
+    tokens.into_iter().find_map(|token| match token {
+        TokenTree::Group(g) => macro_captures(g.stream(), name),
+        TokenTree::Literal(l) => literal_capture(&l, name),
+        _ => None,
+    })
+}
+
+pub(crate) fn closure_param(pat: &syn::PatType, slot: Option<&Slot>) -> Vec<Hit> {
+    let plain = match pat.pat.as_ref() {
+        Pat::Ident(p) => {
+            Some(p).filter(|p| p.mutability.is_none() && p.by_ref.is_none() && p.subpat.is_none())
+        }
+        _ => None,
+    };
+    match (slot, plain) {
+        (Some(Slot::LocalClosureParam), Some(_)) => Vec::new(),
+        _ => Vec::from([flag(pat.colon_token.span, Rule::ClosureParam)]),
+    }
+}
+
+fn macro_names(tokens: proc_macro2::TokenStream, name: &str) -> Option<()> {
+    tokens.into_iter().find_map(|token| match token {
+        TokenTree::Ident(i) if i == name => Some(()),
+        TokenTree::Group(g) => macro_names(g.stream(), name),
+        TokenTree::Literal(l) => literal_capture(&l, name),
+        _ => None,
+    })
+}
+
+fn literal_capture(literal: &proc_macro2::Literal, name: &str) -> Option<()> {
+    syn::parse_str::<syn::LitStr>(&literal.to_string())
+        .ok()
+        .map(|s| s.value().replace("{{", ""))
+        .filter(|s| s.contains(&format!("{{{name}}}")) || s.contains(&format!("{{{name}:")))
+        .and(Some(()))
 }
 
 fn predicate_method(method: &str, env: &Env) -> Option<()> {
@@ -1975,6 +2376,10 @@ fn covers_rest(general: &Pat, specific: &Pat) -> Option<()> {
         (Pat::Or(g), s) => g.cases.iter().find_map(|case| covers(case, s)),
         (Pat::Reference(g), Pat::Reference(s)) => covers(g.pat.as_ref(), s.pat.as_ref()),
         (Pat::Tuple(g), Pat::Tuple(s)) => all_cover(&g.elems, &s.elems),
+        (Pat::Slice(g), Pat::Slice(s)) => sequence_cover(&g.elems, &s.elems),
+        (Pat::Range(_), Pat::Range(_) | Pat::Lit(_)) => {
+            range_cover(general, specific).or_else(|| same(general, specific))
+        }
         (Pat::TupleStruct(g), Pat::TupleStruct(s)) => {
             same_path(&g.path, &s.path).and(all_cover(&g.elems, &s.elems))
         }
@@ -1990,6 +2395,112 @@ fn covers_rest(general: &Pat, specific: &Pat) -> Option<()> {
     }
 }
 
+/// Constants remain Rust's responsibility; only literal integer/character
+/// bounds can be ordered without name resolution (proposal 0049).
+#[derive(Clone, Copy)]
+enum RangeValue {
+    Integer(i128),
+    Character(char),
+}
+
+struct PatternInterval {
+    start: Option<RangeValue>,
+    end: Option<RangeValue>,
+    closed: Within,
+}
+
+fn range_literal(lit: &syn::Lit) -> Option<RangeValue> {
+    match lit {
+        syn::Lit::Int(n) => n.base10_parse().ok().map(RangeValue::Integer),
+        syn::Lit::Byte(b) => Some(RangeValue::Integer(i128::from(b.value()))),
+        syn::Lit::Char(c) => Some(RangeValue::Character(c.value())),
+        _ => None,
+    }
+}
+
+fn interval_endpoint(expr: Option<&Expr>) -> Option<Option<RangeValue>> {
+    match expr {
+        None => Some(None),
+        Some(Expr::Lit(lit)) => range_literal(&lit.lit).map(Some),
+        _ => None,
+    }
+}
+
+fn pattern_interval(pat: &Pat) -> Option<PatternInterval> {
+    match pat {
+        Pat::Range(r) => Some(PatternInterval {
+            start: interval_endpoint(r.start.as_deref())?,
+            end: interval_endpoint(r.end.as_deref())?,
+            closed: match r.limits {
+                syn::RangeLimits::Closed(_) => Within::In,
+                syn::RangeLimits::HalfOpen(_) => Within::Out,
+            },
+        }),
+        Pat::Lit(lit) => {
+            let value = range_literal(&lit.lit)?;
+            Some(PatternInterval {
+                start: Some(value),
+                end: Some(value),
+                closed: Within::In,
+            })
+        }
+        _ => None,
+    }
+}
+
+fn range_order(general: &RangeValue, specific: &RangeValue) -> Option<std::cmp::Ordering> {
+    match (general, specific) {
+        (RangeValue::Integer(g), RangeValue::Integer(s)) => Some(g.cmp(s)),
+        (RangeValue::Character(g), RangeValue::Character(s)) => Some(g.cmp(s)),
+        _ => None,
+    }
+}
+
+fn range_cover(general: &Pat, specific: &Pat) -> Option<()> {
+    let g = pattern_interval(general)?;
+    let s = pattern_interval(specific)?;
+    match (&g.start, &s.start) {
+        (None, _) => Some(()),
+        (Some(g), Some(s)) => match range_order(g, s)? {
+            std::cmp::Ordering::Less | std::cmp::Ordering::Equal => Some(()),
+            _ => None,
+        },
+        _ => None,
+    }?;
+    match (&g.end, &s.end) {
+        (None, _) => Some(()),
+        (Some(end), Some(theirs)) => match range_order(end, theirs)? {
+            std::cmp::Ordering::Greater => Some(()),
+            std::cmp::Ordering::Equal => match (g.closed, s.closed) {
+                (Within::In, _) | (_, Within::Out) => Some(()),
+                _ => None,
+            },
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+/// Explicit range bounds are pattern literals or constant paths, never
+/// boolean/float/string ranges or arbitrary computations.
+pub(crate) fn range_pattern(range: &syn::PatRange) -> Vec<Hit> {
+    let permitted = range
+        .start
+        .iter()
+        .chain(&range.end)
+        .all(|bound| {
+            matches!(
+                bound.as_ref(),
+                Expr::Lit(syn::ExprLit {
+                    lit: syn::Lit::Int(_) | syn::Lit::Byte(_) | syn::Lit::Char(_),
+                    ..
+                }) | Expr::Path(_)
+            )
+        })
+        .then_some(());
+    unless(permitted, flag(range.limits.span(), Rule::RangePattern))
+}
+
 /// Whether `general` covers `_`.
 fn wild_covered(general: &Pat) -> Option<()> {
     let wild = Pat::Wild(syn::PatWild {
@@ -1997,6 +2508,54 @@ fn wild_covered(general: &Pat) -> Option<()> {
         underscore_token: syn::token::Underscore(Span::call_site()),
     });
     covers(general, &wild)
+}
+
+/// A sequence fallback must cover the guarded pattern's lengths and all of
+/// its constrained elements. Unconstrained rest elements are wildcards.
+fn sequence_cover(
+    general: &Punctuated<Pat, syn::token::Comma>,
+    specific: &Punctuated<Pat, syn::token::Comma>,
+) -> Option<()> {
+    let g = general.iter().collect::<Vec<&Pat>>();
+    let s = specific.iter().collect::<Vec<&Pat>>();
+    let gr = g.iter().position(|p| !slice_rests(p).is_empty());
+    let sr = s.iter().position(|p| !slice_rests(p).is_empty());
+    match (gr, sr, g.len()) {
+        (None, None, _) => exact_cover(general, specific),
+        (Some(rest), None, n) if n.saturating_sub(1) <= s.len() => {
+            g.iter()
+                .take(rest)
+                .zip(&s)
+                .try_fold((), |_, (g, s)| covers(g, s))?;
+            g.iter()
+                .rev()
+                .take(g.len().saturating_sub(rest.saturating_add(1)))
+                .zip(s.iter().rev())
+                .try_fold((), |_, (g, s)| covers(g, s))
+        }
+        (Some(rest), Some(theirs), n) if n <= s.len() => {
+            g.iter()
+                .take(rest)
+                .enumerate()
+                .try_fold((), |_, (i, g)| match (s.get(i), i) {
+                    (Some(s), index) if index < theirs => covers(g, s),
+                    _ => wild_covered(g),
+                })?;
+            g.iter()
+                .rev()
+                .take(g.len().saturating_sub(rest.saturating_add(1)))
+                .enumerate()
+                .try_fold((), |_, (i, g)| match (s.iter().rev().nth(i), i) {
+                    (Some(element), index)
+                        if index < s.len().saturating_sub(theirs.saturating_add(1)) =>
+                    {
+                        covers(g, element)
+                    }
+                    _ => wild_covered(g),
+                })
+        }
+        _ => None,
+    }
 }
 
 fn same(general: &Pat, specific: &Pat) -> Option<()> {
@@ -2017,19 +2576,19 @@ fn all_cover(
     general: &Punctuated<Pat, syn::token::Comma>,
     specific: &Punctuated<Pat, syn::token::Comma>,
 ) -> Option<()> {
-    let rest = general
-        .iter()
-        .chain(specific)
-        .find(|p| matches!(p, Pat::Rest(_)));
-    match rest {
-        Some(_) => None,
-        None => match general.len() {
-            n if n == specific.len() => general
-                .iter()
-                .zip(specific)
-                .try_fold((), |_, (g, s)| covers(g, s)),
-            _ => None,
-        },
+    sequence_cover(general, specific)
+}
+
+fn exact_cover(
+    general: &Punctuated<Pat, syn::token::Comma>,
+    specific: &Punctuated<Pat, syn::token::Comma>,
+) -> Option<()> {
+    match general.len() {
+        n if n == specific.len() => general
+            .iter()
+            .zip(specific)
+            .try_fold((), |_, (g, s)| covers(g, s)),
+        _ => None,
     }
 }
 
@@ -2309,12 +2868,12 @@ pub(crate) fn expr(e: &Expr, cx: &Cx, env: &Env) -> Vec<Hit> {
             let table = a
                 .elems
                 .iter()
-                .find(|row| matches!(row, Expr::Tuple(_)) && leaves(row) > 2)
+                .find(|row| matches!(ungroup(row), Expr::Tuple(_)) && leaves(row) > 2)
                 .filter(|_| a.elems.len() >= 2)
                 .and(Some(()));
             let placed = match cx.slot {
-                Slot::CallArg(_) | Slot::MethodArg { .. } | Slot::ConstInit => Some(()),
-                _ => None,
+                Slot::MutableArray => None,
+                _ => Some(()),
             };
             when(table, flag(a.span(), Rule::TupleTable))
                 .into_iter()
@@ -2403,22 +2962,31 @@ pub(crate) fn has_let(cond: &Expr) -> Option<&Expr> {
     }
 }
 
-/// `name @ Variant { .. }`: a binding that keeps the whole value a variant
-/// pattern matched (proposal 0044).
+/// An immutable binding that keeps the whole value a permitted pattern
+/// matched (proposals 0044, 0048). Its inner pattern is checked normally.
 pub(crate) fn ident_at(p: &syn::PatIdent) -> Vec<Hit> {
     match &p.subpat {
-        Some((at, sub)) => {
-            let variant = match sub.as_ref() {
-                Pat::Struct(_) | Pat::TupleStruct(_) | Pat::Path(_) => Some(()),
-                _ => None,
-            };
+        Some((at, _)) => {
             let plain = match (p.by_ref, p.mutability) {
-                (None, None) => variant,
+                (None, None) => Some(()),
                 _ => None,
             };
             unless(plain, flag(at.span, Rule::IdentAt))
         }
         None => Vec::new(),
+    }
+}
+
+/// Find a direct rest, optionally bound by `@` in a slice.
+pub(crate) fn slice_rests(pat: &Pat) -> Vec<Span> {
+    match pat {
+        Pat::Rest(rest) => Vec::from([rest.span()]),
+        Pat::Ident(binding) => binding
+            .subpat
+            .iter()
+            .flat_map(|(_, inner)| slice_rests(inner))
+            .collect(),
+        _ => Vec::new(),
     }
 }
 

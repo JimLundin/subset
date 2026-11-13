@@ -1,0 +1,58 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:2:15: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046)
+crates/daemon/src/a_fail.rs:7:15: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046)
+crates/daemon/src/a_fail.rs:13:15: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046)
+crates/daemon/src/a_fail.rs:18:15: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046)
+crates/daemon/src/a_fail.rs:23:15: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046)
+crates/daemon/src/a_fail.rs:28:15: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046)
+crates/daemon/src/a_fail.rs:33:15: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046)
+crates/daemon/src/a_fail.rs:38:15: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046)
+crates/daemon/src/a_fail.rs:44:15: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046)
+crates/daemon/src/a_fail.rs:49:15: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046)
+crates/daemon/src/a_fail.rs:54:19: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046)
+crates/daemon/src/a_fail.rs:59:30: expr.binary.eq: a boolean expression (`matches!`, a comparison, `&&`, `||`, `!`) only as the body of a closure passed straight to a method in `predicate_adapters` (proposals 0028, 0037), or one comparison or `matches!` as a match guard (proposal 0040)
+crates/daemon/src/a_fail.rs:64:24: expr.async: an async block only as a spawn argument or the whole body of an `unfold`, `then` or `use_future` closure (proposal 0006)
+crates/daemon/src/a_fail.rs:69:15: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046)
+crates/daemon/src/a_fail.rs:76:15: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046)
+crates/daemon/src/a_fail.rs:83:19: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046)
+crates/daemon/src/a_fail.rs:89:25: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046)
+crates/daemon/src/a_fail.rs:94:12: pat.type: a type annotation only on a plain immutable parameter of a confined local closure (proposal 0046)
+crates/daemon/src/a_fail.rs:99:34: pat.type: a type annotation only on a plain immutable parameter of a confined local closure (proposal 0046)
+crates/daemon/src/a_fail.rs:103:24: type.bool: `bool` only in a type argument of a type we don't define, as a flag field of a clap `Parser` struct, or as a field of a serde wire type (proposals 0019, 0023, 0043)
+crates/daemon/src/a_fail.rs:108:15: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046)
+crates/daemon/src/a_fail.rs:109:5: macro.custom: macro not listed in `macros`
+$ score crates/daemon/src/a.rs --by construct
+exit 0
+     score   tokens   lines per token  boundary  share  count tier       construct
+      97.0       97      42     1.000       0.0   0.0%     63 neutral    expr.path
+      88.0       88      27     1.000       0.0   0.0%     13 neutral    item.fn
+      57.0       57      20     1.000       0.0   0.0%     19 neutral    stmt.let
+      54.0       27      13     2.000       0.0   0.0%     13 tolerated  expr.closure
+      39.0       39      12     1.000       0.0   0.0%     25 neutral    type.path
+      33.0       33      13     1.000       0.0   0.0%     13 neutral    expr.struct
+      30.0       15       3     2.000       0.0   0.0%      1 tolerated  expr.if_let.single
+      28.0       28      20     1.000       0.0   0.0%     30 neutral    expr.call
+      26.0       26       3     1.000       0.0   0.0%      3 neutral    macro.allowed
+      24.0       12       6     2.000       0.0   0.0%      4 tolerated  stmt.let.discard
+      22.5       45      31     0.500       0.0   0.0%     46 encouraged pat.ident
+      16.0        8       6     2.000       0.0   0.0%      6 tolerated  type.primitive
+      14.0        7       6     2.000       0.0   0.0%      3 tolerated  expr.tuple
+      12.0       12       3     1.000       0.0   0.0%      4 neutral    expr.method_call
+      12.0        6       3     2.000       0.0   0.0%      3 tolerated  type.tuple
+      11.0       22       3     0.500       0.0   0.0%      6 encouraged expr.method_call.adapter
+       8.0        4       3     2.000       0.0   0.0%      1 tolerated  expr.for
+       8.0       16       8     0.500       0.0   0.0%      2 encouraged expr.match
+       5.0        5       3     1.000       5.0 100.0%      5 boundary   type.primitive
+       3.0        3       1     1.000       0.0   0.0%      1 neutral    attr.cfg_test
+       3.0        3       5     1.000       0.0   0.0%      3 neutral    expr.block
+       3.0        6       3     0.500       0.0   0.0%      1 encouraged item.struct.named
+       2.0        2       1     1.000       0.0   0.0%      1 neutral    expr.closure.adapter
+       2.0        2       1     1.000       0.0   0.0%      2 neutral    expr.lit
+       2.0        2       2     1.000       0.0   0.0%      2 neutral    expr.paren
+       2.0        4       2     0.500       0.0   0.0%      3 encouraged pat.tuple_struct
+       2.0        1       1     2.000       0.0   0.0%      1 tolerated  pat.type
+       2.0        4       4     0.500       0.0   0.0%      4 encouraged pat.wild
+       1.0        1       1     1.000       0.0   0.0%      1 neutral    expr.reference
+       1.0        1       1     1.000       0.0   0.0%      1 neutral    type.reference
+     607.5      576      84     1.055       5.0   0.8%                   total

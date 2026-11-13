@@ -1,5 +1,5 @@
 $ check
 exit 1
 crates/agents/src/claude/session.rs:1:5: item.type: type alias
-crates/agents/src/claude/session.rs:1:17: generics.type_param: a type parameter only on a fn, with exactly one bound, `Serialize` or `DeserializeOwned`, and no `where` (proposal 0013), or the unbounded parameters of a private `ask<T>` or shared free `ask<M, T>` helper (proposal 0026, amended by issue #3)
-crates/agents/src/claude/session.rs:1:20: generics.type_param: a type parameter only on a fn, with exactly one bound, `Serialize` or `DeserializeOwned`, and no `where` (proposal 0013), or the unbounded parameters of a private `ask<T>` or shared free `ask<M, T>` helper (proposal 0026, amended by issue #3)
+crates/agents/src/claude/session.rs:1:17: generics.type_param: unbounded type parameters with no defaults or `where` on structs, enums, inherent impls and functions (0052); codec fns retain their single serde bound (0013), and request helpers their existing parameters (0026)
+crates/agents/src/claude/session.rs:1:20: generics.type_param: unbounded type parameters with no defaults or `where` on structs, enums, inherent impls and functions (0052); codec fns retain their single serde bound (0013), and request helpers their existing parameters (0026)

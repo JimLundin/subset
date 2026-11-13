@@ -1,0 +1,37 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:2:19: pat.reference: explicit reference patterns are shared (&pat), never &mut pat or ref mut bindings (0053)
+crates/daemon/src/a_fail.rs:5:19: pat.ident.ref: `ref` binding
+crates/daemon/src/a_fail.rs:8:34: pat.rest: `..` only directly in a slice, tuple or tuple-struct pattern; only a slice rest may bind an immutable name with @ (0047, 0053)
+crates/daemon/src/a_fail.rs:12:21: expr.match.guard: a guarded arm needs a later arm with no guard whose pattern covers the guarded one, so the otherwise case is written out (proposal 0040)
+crates/daemon/src/a_fail.rs:16:36: expr.unary.deref: `*` dereference
+$ score crates/daemon/src/a.rs --by construct
+exit 0
+     score   tokens   lines per token  boundary  share  count tier       construct
+      55.0       55      14     1.000       0.0   0.0%      7 neutral    item.fn
+      30.0       30      16     1.000       0.0   0.0%     30 neutral    expr.path
+      30.0       15       6     2.000       0.0   0.0%     15 tolerated  type.primitive
+      26.0       26       6     1.000       0.0   0.0%     10 neutral    type.path
+      25.5       51      17     0.500       0.0   0.0%      6 encouraged expr.match
+      24.0       12       5     2.000       0.0   0.0%      5 tolerated  pat.tuple
+      18.0        9       3     2.000       0.0   0.0%      3 tolerated  type.tuple
+      12.0        6       3     2.000       0.0   0.0%      3 tolerated  expr.binary.eq
+       9.5       19      13     0.500       0.0   0.0%     19 encouraged pat.ident
+       7.0        7       5     1.000       7.0 100.0%      7 boundary   type.primitive
+       6.0        3       3     2.000       0.0   0.0%      3 tolerated  expr.match.guard
+       6.0       12       4     0.500       0.0   0.0%      4 encouraged pat.range
+       6.0        6       4     1.000       0.0   0.0%      6 neutral    pat.reference
+       5.0       10       5     0.500       0.0   0.0%      5 encouraged pat.rest
+       4.0        4       4     1.000       0.0   0.0%      4 neutral    expr.call
+       4.0        8       4     0.500       0.0   0.0%      8 encouraged pat.lit
+       4.0        8       1     0.500       0.0   0.0%      2 encouraged pat.path
+       4.0        8       4     0.500       0.0   0.0%      4 encouraged pat.tuple_struct
+       3.0        6       1     0.500       0.0   0.0%      1 encouraged item.enum
+       3.0        3       1     1.000       0.0   0.0%      1 neutral    stmt.let
+       3.0        3       3     1.000       0.0   0.0%      3 neutral    type.reference
+       2.5        5       1     0.500       0.0   0.0%      1 encouraged item.struct.named
+       2.5        5       4     0.500       0.0   0.0%      5 encouraged pat.wild
+       2.0        2       1     1.000       0.0   0.0%      2 neutral    expr.lit
+       1.5        3       3     0.500       0.0   0.0%      3 encouraged pat.ident.at
+       1.0        2       1     0.500       0.0   0.0%      1 encouraged pat.struct
+     294.5      318      35     0.926       7.0   2.4%                   total

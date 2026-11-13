@@ -69,7 +69,8 @@ The ids are those used in `subset.toml`.
 |---|---|---|
 | Data | `item.struct.named`, `item.struct.newtype`, `item.enum` | `bool` is not a type in our code: a two-state value is a two-variant enum. IDs and units are newtypes. |
 | Behaviour | `item.fn`, `item.impl.inherent`, `item.const` | Free functions and inherent methods. |
-| Branching | `expr.match`, `pat.ident`, `pat.path`, `pat.struct`, `pat.tuple_struct`, `pat.lit`, `pat.or`, `pat.wild`, `pat.ident.at` | Matches are exhaustive. `name @ Variant { .. }` keeps the whole value a variant or struct pattern matched (0044), never with `mut`, `ref` or another kind of pattern. `true` / `false` are not patterns, because that would be a boolean check written as a match. `&pat` (`pat.reference`) and the rest pattern `..` in a tuple or tuple struct (`pat.rest`, as in `Some(..)`) are not allowed; `..` that elides fields in a struct pattern (`Open { .. }`) is part of `pat.struct`. A single-branch `if let` (0027) is the one other branching form. |
+| Local helpers | `expr.closure`, `pat.type` | Proposal 0046. `let name = \|args\| body` is immutable and used at least once, only called or passed (by value or shared reference) to an existing permitted closure-taking call in its block, including nested synchronous scopes. It is never stored, aliased, returned, or captured by another closure or async block. A plain parameter may have a type annotation when inference needs it. Boolean predicates and async bodies keep their existing inline rules. A shape shared across functions stays a free function. |
+| Branching | `expr.match`, `pat.ident`, `pat.path`, `pat.struct`, `pat.tuple_struct`, `pat.lit`, `pat.range`, `pat.or`, `pat.wild`, `pat.ident.at`, `pat.paren`, `pat.slice`, `pat.rest`, `pat.reference` | Matches are exhaustive. Immutable `name @ Pattern` keeps a whole value: `n @ 3`, `n @ (1 \| 2)`, `pair @ (a, b)`, `whole @ Some(..)`. Grouping keeps inner rules. Array/slice patterns include `[first, second]` and `[first, remaining @ ..]`; variable lengths need fallback arms or an exhaustive length partition (0047/0048). Integer, byte and character ranges include `n @ (1..=3)`, `-3..=3`, `4..` and `'a'..='z'` (0049). Shared reference patterns include `&Some(code)`; unbound tuple/tuple-struct rests include `(first, .., last)` and `Some(..)` (0053). Only a slice rest may bind an immutable name with `@`. Wire modules additionally permit boolean patterns for conversion to named states (0054). Bindings/parameters must be irrefutable; Rust checks ownership. Mutable/reference bindings and float/boolean ranges stay outside; constant endpoint types need review. Struct field elision is part of `pat.struct`. A single-branch `if let` (0027) is the other branching form. |
 | Building values | `expr.call`, `expr.method_call`, `expr.field`, `expr.struct`, `expr.path`, `expr.lit`, `expr.reference`, `expr.block`, `expr.paren` | |
 | Errors | `expr.try`, plus `Result` / `Option` through the core | `?` is the only early exit. |
 | Iteration | `expr.closure.adapter` | Collections are processed only with iterator adapters (`map`, `filter_map`, `try_fold`, `collect`, and so on). The closure must be an argument of an iterator, `Option` or `Result` method, or of a library or helper method that stands where one would (`with_context`, a stream's `then`, 0026's `ask`). `closure_methods` and `predicate_adapters` in `subset.toml` list them, and the checker rejects a closure passed to any other method. |
@@ -87,17 +88,18 @@ The ids are those used in `subset.toml`.
 | Stream endpoints | `item.fn.receiver.mut` | Proposal 0035. A type of ours on the `endpoints` list in `subset.toml` (`SendHalf`, `RecvHalf`, `ChannelRecv`, `FrameBuffer`) may have `&mut self` methods, called anywhere on a `let mut` binding, a `mut` pattern or a field. A type joins the list by review: it wraps a library stream or channel whose own API takes `&mut`, or it is the reassembly buffer of one. A type that implements syn's `Visit` counts as one (0045). The rest of 0008 holds: no `&mut` parameter of our types, no compound assignment, and data types keep value-returning methods. |
 | Library traits | `item.impl.trait`, `generics.lifetime`, `type.lifetime` | Proposal 0009. Trait impls only for `Drop`, `Debug`, `Serialize`, `Deserialize`, `ProtocolHandler` and, since 0045, syn's `Visit`, with lifetimes only where the trait's signature demands them. |
 | Scanned tables | `type.lifetime.static_str` | Proposal 0042, accepted narrow in version 8. `&'static str` only as a field type of a struct that is the row type of a `const` table (`&[Row]` or `[Row; N]`) and is built nowhere else, when the table is scanned in order with one predicate that tests the input against a field (`find`, `position`). A lookup keyed by a string stays a `match`: a predicate on such a table, or on a table of bare `&str`, that compares a row's string for equality with a non-literal is flagged in any spelling, and scans by `contains`, `starts_with` and `ends_with` stay. A row struct is built only as an element of its table's literal. A `const` table of tuples holding a `&str` is flagged: its row is a named struct. No other `'static`, and never in a signature. |
-| Error enums | `attr.derive` of `thiserror::Error`, `attr.error` | Proposal 0010. `thiserror::Error` on an error type, with one `#[error("…")]` message per variant. |
+| Error enums | `attr.derive` of `thiserror::Error`, `attr.error`, `attr.source` | 0010/0057. One message per error variant; a plain `#[source]` on a derived-error field keeps a typed cause alongside context. At most one causal field per error or variant; existing `#[from]` rules remain separate. |
 | Error conversion | `attr.from` | Proposal 0011. `#[from]` only on the one variant of an enum that holds a given error type, ours or a library's. |
-| Wire types | `attr.derive.Serialize`, `attr.derive.Deserialize`, `attr.serde` | Proposal 0012. serde derives only in `crates/proto` and the agents' provider protocol modules, with `transparent`, `tag`, `content`, `rename_all` and `rename` only. Proposal 0043 adds `untagged` and `skip_serializing_if = "Option::is_none"`, and lets a wire type's fields be `bool`, with `true` / `false` as their values: the protocol fixes that shape. |
-| Codec generics | `generics.type_param` | Proposal 0013. A type parameter only on a codec fn, with one `Serialize` or `DeserializeOwned` bound and no `where`. |
-| Slices | `type.slice` | Proposal 0014, amended in version 4. `&[T]` for a read-only sequence parameter, and a constant list is always `const NAME: &[T] = &[..]`. |
-| Arrays | `type.array`, `expr.array`, `expr.repeat` | Proposal 0015, amended in version 4. `[T; N]` only for a fixed size that is part of a format or API, such as `[u8; 32]` keys, and a literal list passed straight to a call (`f([a, b])` or `f(&[a, b])`). `const` tables became `const` lists under 0014. |
+| Wire types | `attr.derive.Serialize`, `attr.derive.Deserialize`, `attr.serde`, scoped `pat.lit.bool` | 0012/0043/0054/0055. Serde derives only in `crates/proto` and provider protocol modules. Existing `transparent`, `tag`, `content`, `rename_all`, `rename`, `untagged` and `skip_serializing_if = "Option::is_none"` remain. Plain field `#[serde(default)]` and tagged unit-variant `#[serde(other)]` are added. Wire fields may be `bool`; `Some(true)` / `Some(false)` patterns convert flags to named states before domain use. Default meaning and flag provenance require review. |
+| Type parameters | `generics.type_param` | 0052 adds unbounded parameters with no defaults or `where` on structs, enums, inherent impls and functions: `Step<Id>`, `impl<Id> Step<Id>`, `fn keep<Id>(step: Step<Id>) -> Step<Id>`. 0013 retains codec functions with one `Serialize` or `DeserializeOwned` bound. No new generic aliases, traits, other bounds, const generics or explicit domain lifetimes. |
+| Slices | `type.slice` | 0014/0051. Read-only sequence parameters and shared outputs, including `Option<&[T]>` and `Result<&[T], E>`, tied to inputs or `self` by Rust lifetime elision. No stored slice fields or mutable slice outputs. Ordinary constant lists remain `const NAME: &[T] = &[..]`. |
+| Arrays | `type.array`, `expr.array`, `expr.repeat` | 0015/0047/0050. Immutable fixed-size domain arrays may be locals, fields, parameters and returns, with an integer-literal or constant-path length: `[Duration; 4]`, `[Provider; COUNT]`. Cardinality must be meaningful; ordinary const lists remain slices. Array literals also remain call arguments and method receivers. Direct literals initializing `let mut` or borrowed with `&mut` are rejected; mutable domain-array types stay outside, with existing byte-buffer/library-trait exceptions. No indexing; repeat elements remain literals and multi-field table rows remain named structs. |
 | Platform code | `attr.cfg` | Proposal 0016. `cfg` only on `target_family = "wasm"` and `unix` (or their `not`), on items, each with its counterpart. |
 | Browser callbacks | `type.dyn`, `expr.closure` | Proposal 0017. `Closure<dyn FnMut(..)>` only in `crates/client/src/platform/`, and its closure only forwards the event to a channel. |
 | UI | `macro.rsx`, `macro.asset`, `attr.component`, `item.use.glob`, `attr.allow` | Proposal 0018. Dioxus only in `crates/app`, which renders what `client` decides. |
 | Command line | `attr.derive.Parser`, `attr.derive.Subcommand`, `attr.derive.ValueEnum`, `attr.command`, `attr.arg`, `type.bool` | Proposal 0019. clap only in a binary's `main.rs` and in `examples/`, and a flag `bool` becomes an enum before it leaves `main`. |
 | Async tests | `attr.tokio::test` | Proposal 0020. `#[tokio::test]` with no arguments on an `async fn` test. |
+| Embedded text | `macro.allowed` for `include_str` | 0056. `const PINS: &str = include_str!("pins.toml")` embeds one literal path at build time. No computed paths or runtime-position uses. Rust checks UTF-8 and rebuild dependencies. |
 | External flags | `expr.lit.bool` | Proposal 0021, replaced by 0023. `true` / `false` only at a library boundary (0023). |
 | Library boundary | `type.unit`, `expr.unit`, `type.bool`, `expr.lit.bool`, `expr.reference.mut`, `type.reference.mut` | Proposal 0023. Where a library API demands `()`, `bool` or `&mut`, the shape is allowed in a type argument, call argument or field value of something we don't define, and only there. It never becomes a field, a variant payload, a parameter or a return type of our own items. |
 | Ordered newtypes | `attr.derive` of `PartialOrd`, `Ord` | Proposal 0024. Only on a newtype whose order means something, such as `HostSeq`. Callers compare with `a.cmp(&b)` and match the `Ordering`, never through `.0`. |
@@ -120,9 +122,9 @@ Don't work around it.
 Everything else, for example `if`, `if let` with an `else` or a let-chain,
 `while`, a `for` that builds or selects values, a guard with `&&`, `||` or
 `!`, `return`, `continue`, `break` outside a drive loop,
-operators (`+`, `as`, indexing, ranges, and the boolean operators outside a
+operators (`+`, `as`, indexing, range values, and the boolean operators outside a
 predicate closure), compound assignment (`+=`), `let … else`, trait
-definitions, generic types, and unlisted macros. The operators also stay
+definitions, bounded/defaulted generic types, generic aliases, and unlisted macros. The operators also stay
 out under their trait names. A trait in `fallible_operators` in
 `subset.toml` (`std::ops::Add`, `Sub`, `Mul`, `Div`, `Rem`, `Neg`, `Shl`,
 `Shr` and their `*Assign` forms) is never imported, named in a path or
@@ -252,6 +254,32 @@ Version 9 accepts 0043 (serde wire types), 0044 (`@` bindings) and 0045
 (syn's `Visit`). Version 10 amends 0026 to share one `ask<M, T>` free
 function per crate whose actor handles use one stopped-error type, as
 requested in [issue #3](https://github.com/JimLundin/subset/issues/3).
+Version 11 accepts 0046: an immutable local closure used only by calls in
+its block, directly or as an argument of an existing permitted
+closure-taking call, as requested for the local-closure candidate in
+[issue #5](https://github.com/JimLundin/subset/issues/5). The other friction
+points in that issue remain open.
+
+Version 12 accepts 0047 and 0048: literal array method receivers,
+array/slice patterns with exhaustive length coverage, pattern grouping,
+and immutable `@` bindings around every otherwise-permitted pattern.
+The owner approved extensions beyond Conductor's examples. Further
+patterns, immutable data, and strong domain models are tracked with
+concrete syntax in [issue #6](https://github.com/JimLundin/subset/issues/6).
+
+Version 13 accepts 0049, the first scope from Astra's triage of #6:
+integer, byte, and character range patterns, including grouped `@`,
+nested patterns, and irrefutable bindings/parameters. Guard fallback
+coverage recognizes literal interval containment and identical constant
+ranges conservatively. Range expressions retain their existing rules.
+
+Version 14 accepts the approved remainder of #6 (0050–0057): immutable
+domain arrays, shared slice outputs, unbounded generic domain models,
+shared-reference and tuple/tuple-struct rest patterns, scoped wire boolean
+patterns, Serde field defaults and tagged unit fallbacks, const
+`include_str!`, and typed `#[source]` fields. The owner approved these
+extensions beyond Conductor’s examples. Compiler/runtime fixtures provide
+evidence; no new Conductor savings or publication is implied.
 
 ## Growing the subset
 

@@ -1,0 +1,17 @@
+[package]
+name = "subset-boundary-fixture"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+path = "crates/agents/src/codex/protocol.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
+
+[dev-dependencies]
+serde_json = "1"
+
+[workspace]

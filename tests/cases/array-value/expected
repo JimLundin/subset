@@ -1,3 +1,2 @@
 $ check
-exit 1
-crates/daemon/src/a_fail.rs:2:17: expr.array: an array literal only passed straight to a call, as in `f([a, b])` or `f(&[a, b])`, or as a `const` value (proposal 0015)
+exit 0
