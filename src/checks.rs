@@ -779,66 +779,123 @@ pub(crate) fn pat_ident(p: &syn::PatIdent, cx: &Cx) -> Vec<Hit> {
     }
 }
 
-/// The `build` parameter of a private fn `ask<T>` with no bound on `T`, no
-/// `where` and two parameters, the last `impl FnOnce(oneshot::Sender<T>) ->
-/// Msg` (proposal 0026).
-pub(crate) fn ask_build(vis: &Visibility, sig: &syn::Signature) -> Option<()> {
-    let t = match (sig.generics.params.first(), sig.generics.params.len()) {
-        (Some(GenericParam::Type(t)), 1) => Some(t),
+/// The `build` parameter of 0026's private `ask<T>`, or its shared free
+/// function `ask<M, T>` amendment. Both parameters are unbounded; the shared
+/// form takes `&mpsc::Sender<M>` and may be `pub(crate)`.
+pub(crate) fn ask_build(vis: &Visibility, sig: &syn::Signature, method: Within) -> Option<()> {
+    let (message, reply) = match (
+        sig.generics.params.first(),
+        sig.generics.params.last(),
+        sig.generics.params.len(),
+    ) {
+        (Some(t), _, 1) => Some((None, unbounded(t)?)),
+        (Some(m), Some(t), 2) => Some((Some(unbounded(m)?), unbounded(t)?)),
         _ => None,
     }?;
-    match (t.bounds.first(), &t.default, &sig.generics.where_clause) {
-        (None, None, None) => Some(()),
+    match (
+        sig.ident.to_string().as_str(),
+        sig.inputs.len(),
+        &sig.generics.where_clause,
+    ) {
+        ("ask", 2, None) => Some(()),
         _ => None,
     }?;
-    match (sig.ident.to_string().as_str(), vis, sig.inputs.len()) {
-        ("ask", Visibility::Inherited, 2) => Some(()),
+    match (message, vis, method) {
+        (None, Visibility::Inherited, _) => Some(()),
+        (Some(_), Visibility::Inherited, Within::Out) => Some(()),
+        (Some(_), _, Within::Out) => pub_crate(vis).and(Some(())),
         _ => None,
     }?;
     let build = match sig.inputs.last() {
-        Some(FnArg::Typed(build)) => match build.ty.as_ref() {
-            Type::ImplTrait(bound) => Some(bound),
-            _ => None,
-        },
+        Some(FnArg::Typed(build)) => Some(build),
         _ => None,
     }?;
-    let fn_once = match (build.bounds.first(), build.bounds.len()) {
+    let bound = match build.ty.as_ref() {
+        Type::ImplTrait(bound) => Some(bound),
+        _ => None,
+    }?;
+    let fn_once = match (bound.bounds.first(), bound.bounds.len()) {
         (Some(TypeParamBound::Trait(b)), 1) => Some(b),
         _ => None,
     }?;
     let segment = fn_once.path.segments.last()?;
+    match (
+        fn_once.path.segments.len(),
+        segment.ident.to_string().as_str(),
+    ) {
+        (1, "FnOnce") => Some(()),
+        _ => None,
+    }?;
     let args = match &segment.arguments {
         PathArguments::Parenthesized(args) => Some(args),
         _ => None,
     }?;
-    let sender = match (args.inputs.first(), args.inputs.len()) {
-        (Some(Type::Path(sender)), 1) => Some(sender),
+    match (args.inputs.first(), args.inputs.len()) {
+        (Some(sender), 1) => sender_type(sender, "oneshot", &reply.ident),
+        _ => None,
+    }?;
+    let output = match syntax::returned(&args.output) {
+        Some(Type::Path(p)) => Some(p),
+        _ => None,
+    }?;
+    match message {
+        None => Some(()),
+        Some(m) => {
+            let inbox = match sig.inputs.first() {
+                Some(FnArg::Typed(inbox)) => match inbox.ty.as_ref() {
+                    Type::Reference(r) => match (&r.mutability, &r.lifetime) {
+                        (None, None) => Some(r.elem.as_ref()),
+                        _ => None,
+                    },
+                    _ => None,
+                },
+                _ => None,
+            }?;
+            sender_type(inbox, "mpsc", &m.ident)?;
+            match build.pat.as_ref() {
+                Pat::Ident(p) => match p.ident.to_string().as_str() {
+                    "build" => Some(()),
+                    _ => None,
+                },
+                _ => None,
+            }?;
+            Some(output)
+                .filter(|p| p.qself.is_none() && p.path.is_ident(&m.ident))
+                .and(Some(()))?;
+            let returned = syntax::returned(&sig.output)?;
+            Some(syntax::type_segments(returned))
+                .filter(|names| !names.contains(&m.ident.to_string()))
+                .and(Some(()))
+        }
+    }
+}
+
+/// A helper's type parameter has neither a bound nor a default.
+fn unbounded(param: &GenericParam) -> Option<&syn::TypeParam> {
+    match param {
+        GenericParam::Type(t) => Some(t).filter(|t| t.bounds.is_empty() && t.default.is_none()),
+        _ => None,
+    }
+}
+
+/// A channel sender with exactly the helper's named type as its item.
+fn sender_type(ty: &Type, channel: &str, item: &syn::Ident) -> Option<()> {
+    let sender = match ty {
+        Type::Path(p) => Some(p).filter(|p| p.qself.is_none()),
         _ => None,
     }?;
     match &sender.path.segments.last()?.arguments {
         PathArguments::AngleBracketed(a) => match (a.args.first(), a.args.len()) {
-            (Some(syn::GenericArgument::Type(Type::Path(p))), 1) => {
-                p.path.is_ident(&t.ident).then_some(())
-            }
+            (Some(syn::GenericArgument::Type(Type::Path(p))), 1) => Some(p)
+                .filter(|p| p.qself.is_none() && p.path.is_ident(item))
+                .and(Some(())),
             _ => None,
         },
         _ => None,
     }?;
-    match syntax::returned(&args.output) {
-        Some(Type::Path(_)) => Some(()),
-        _ => None,
-    }?;
     let names = syntax::segments(&sender.path);
-    let tail = Vec::from(["oneshot".to_string(), "Sender".to_string()]);
-    let sender = names.ends_with(&tail).then_some(());
-    match (
-        fn_once.path.segments.len(),
-        segment.ident.to_string().as_str(),
-        sender,
-    ) {
-        (1, "FnOnce", Some(_)) => Some(()),
-        _ => None,
-    }
+    let tail = Vec::from([channel.to_string(), "Sender".to_string()]);
+    names.ends_with(&tail).then_some(())
 }
 
 /// The codec bounds of proposal 0013.

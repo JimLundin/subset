@@ -156,8 +156,8 @@ actor loop states and what they own, ordered newtypes, serde wire types and
 | `attr.error` | each error variant carries one `#[error("…")]` message, never `transparent` (proposal 0010) |
 | `attr.from` | `#[from]` only on the one variant of an enum holding a given error type (proposal 0011) |
 | `attr.serde` | `#[serde]` only with `transparent`, `tag`, `content`, `rename_all` and `rename` (proposal 0012), `untagged`, or `skip_serializing_if = "Option::is_none"` (proposal 0043) |
-| `generics.type_param` | a type parameter only on a fn, with exactly one bound, `Serialize` or `DeserializeOwned`, and no `where` (proposal 0013), or as the unbounded `T` of an `ask` helper (proposal 0026) |
-| `type.impl_trait.arg` | `impl Trait` as an argument only as `build: impl FnOnce(oneshot::Sender<T>) -> Msg`, the last parameter of a private `ask<T>` helper (proposal 0026) |
+| `generics.type_param` | a type parameter only on a fn, with exactly one bound, `Serialize` or `DeserializeOwned`, and no `where` (proposal 0013), or the unbounded parameters of a private `ask<T>` or shared free `ask<M, T>` helper (proposal 0026, amended by issue #3) |
+| `type.impl_trait.arg` | `impl Trait` as an argument only as the last `build` parameter of a private `ask<T>` (`FnOnce(oneshot::Sender<T>) -> Msg`), or a private or `pub(crate)` free `ask<M, T>` taking `&mpsc::Sender<M>` (`FnOnce(oneshot::Sender<T>) -> M`) (proposal 0026, amended by issue #3) |
 | `type.slice` | `&[T]` only as a parameter type or a `const` type; a `const` list is `const NAME: &[T] = &[..]` (proposal 0014) |
 | `type.array` | an array type only for bytes whose size is part of a format or API (`[u8; N]`); a `const` list is `&[T]` (proposals 0014, 0015) |
 | `expr.array` | an array literal only passed straight to a call, as in `f([a, b])` or `f(&[a, b])`, or as a `const` value (proposal 0015) |

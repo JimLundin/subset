@@ -1,4 +1,4 @@
 $ check
 exit 1
-crates/proto/src/a_fail.rs:1:19: generics.type_param: a type parameter only on a fn, with exactly one bound, `Serialize` or `DeserializeOwned`, and no `where` (proposal 0013), or as the unbounded `T` of an `ask` helper (proposal 0026)
-crates/proto/src/a_fail.rs:5:9: generics.type_param: a type parameter only on a fn, with exactly one bound, `Serialize` or `DeserializeOwned`, and no `where` (proposal 0013), or as the unbounded `T` of an `ask` helper (proposal 0026)
+crates/proto/src/a_fail.rs:1:19: generics.type_param: a type parameter only on a fn, with exactly one bound, `Serialize` or `DeserializeOwned`, and no `where` (proposal 0013), or the unbounded parameters of a private `ask<T>` or shared free `ask<M, T>` helper (proposal 0026, amended by issue #3)
+crates/proto/src/a_fail.rs:5:9: generics.type_param: a type parameter only on a fn, with exactly one bound, `Serialize` or `DeserializeOwned`, and no `where` (proposal 0013), or the unbounded parameters of a private `ask<T>` or shared free `ask<M, T>` helper (proposal 0026, amended by issue #3)

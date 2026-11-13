@@ -3,7 +3,7 @@
 # grows only through accepted proposals in docs/proposals/. Each id is
 # documented in docs/subset.md.
 
-version = 9
+version = 10
 
 # All of our code is written in the subset. tools/ (the checker itself) and
 # vendor/ are outside it for now.
@@ -153,7 +153,7 @@ closure_methods = [
   "try_for_each", "unwrap_or_else",
   "with_context",             # anyhow's `Result` extension
   "then",                     # a stream's `then`, whose body is an async block (0006)
-  "ask",                      # an actor handle's request helper (0026)
+  "ask",                      # an actor handle's or crate's request helper (0026, issue #3)
 ]
 
 # Proposal 0039: types and traits that read by changing their buffer, so a

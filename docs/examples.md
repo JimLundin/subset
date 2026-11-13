@@ -412,10 +412,41 @@ impl LogHandle {
 }
 ```
 
-Every request and reply round trip goes through `ask`, a private helper of
-exactly this shape (proposal 0026). The closure only builds the message
-variant. `ask` is the one place outside a codec where a fn takes a type
-parameter, and the one `impl Trait` argument in the subset.
+Every request and reply round trip goes through `ask` (proposal 0026).
+The closure only builds the message variant. A crate with one handle or
+handles that fail differently keeps this private `ask<T>` shape.
+
+A crate with multiple handles that all fail with one stopped-error type
+shares one free helper instead (issue #3's amendment). It is private or
+`pub(crate)`, with a second unbounded parameter for the message type:
+
+```rust
+pub(crate) async fn ask<M, T>(
+    inbox: &mpsc::Sender<M>,
+    build: impl FnOnce(oneshot::Sender<T>) -> M,
+) -> Result<T, Stopped> {
+    let (reply, answer) = oneshot::channel();
+    inbox.send(build(reply)).await.map_err(|_| Stopped {})?;
+    answer.await.map_err(|_| Stopped {})
+}
+
+impl Log {
+    pub async fn head(&self) -> Result<HostSeq, Stopped> {
+        ask(&self.inbox, |reply| LogMsg::Head { reply }).await
+    }
+}
+
+impl Registry {
+    pub async fn find(&self, session: SessionId) -> Result<Option<Session>, Stopped> {
+        ask(&self.inbox, |reply| RegistryMsg::Find { session, reply }).await
+    }
+}
+```
+
+The shared helper replaces the per-handle methods. `M` appears only as the
+sender's item and the builder's return type. `ask` is the one place outside
+a codec where a fn takes type parameters, and the one `impl Trait` argument
+in the subset.
 
 ## 21. Acting on one case is an `if let` with no `else`
 

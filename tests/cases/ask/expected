@@ -1,6 +1,6 @@
 $ check
 exit 1
-crates/daemon/src/a_fail.rs:2:22: generics.type_param: a type parameter only on a fn, with exactly one bound, `Serialize` or `DeserializeOwned`, and no `where` (proposal 0013), or as the unbounded `T` of an `ask` helper (proposal 0026)
-crates/daemon/src/a_fail.rs:2:39: type.impl_trait.arg: `impl Trait` as an argument only as `build: impl FnOnce(oneshot::Sender<T>) -> Msg`, the last parameter of a private `ask<T>` helper (proposal 0026)
-crates/daemon/src/a_fail.rs:7:18: generics.type_param: a type parameter only on a fn, with exactly one bound, `Serialize` or `DeserializeOwned`, and no `where` (proposal 0013), or as the unbounded `T` of an `ask` helper (proposal 0026)
-crates/daemon/src/a_fail.rs:7:35: type.impl_trait.arg: `impl Trait` as an argument only as `build: impl FnOnce(oneshot::Sender<T>) -> Msg`, the last parameter of a private `ask<T>` helper (proposal 0026)
+crates/daemon/src/a_fail.rs:2:22: generics.type_param: a type parameter only on a fn, with exactly one bound, `Serialize` or `DeserializeOwned`, and no `where` (proposal 0013), or the unbounded parameters of a private `ask<T>` or shared free `ask<M, T>` helper (proposal 0026, amended by issue #3)
+crates/daemon/src/a_fail.rs:2:39: type.impl_trait.arg: `impl Trait` as an argument only as the last `build` parameter of a private `ask<T>` (`FnOnce(oneshot::Sender<T>) -> Msg`), or a private or `pub(crate)` free `ask<M, T>` taking `&mpsc::Sender<M>` (`FnOnce(oneshot::Sender<T>) -> M`) (proposal 0026, amended by issue #3)
+crates/daemon/src/a_fail.rs:7:18: generics.type_param: a type parameter only on a fn, with exactly one bound, `Serialize` or `DeserializeOwned`, and no `where` (proposal 0013), or the unbounded parameters of a private `ask<T>` or shared free `ask<M, T>` helper (proposal 0026, amended by issue #3)
+crates/daemon/src/a_fail.rs:7:35: type.impl_trait.arg: `impl Trait` as an argument only as the last `build` parameter of a private `ask<T>` (`FnOnce(oneshot::Sender<T>) -> Msg`), or a private or `pub(crate)` free `ask<M, T>` taking `&mpsc::Sender<M>` (`FnOnce(oneshot::Sender<T>) -> M`) (proposal 0026, amended by issue #3)

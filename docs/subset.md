@@ -101,7 +101,7 @@ The ids are those used in `subset.toml`.
 | External flags | `expr.lit.bool` | Proposal 0021, replaced by 0023. `true` / `false` only at a library boundary (0023). |
 | Library boundary | `type.unit`, `expr.unit`, `type.bool`, `expr.lit.bool`, `expr.reference.mut`, `type.reference.mut` | Proposal 0023. Where a library API demands `()`, `bool` or `&mut`, the shape is allowed in a type argument, call argument or field value of something we don't define, and only there. It never becomes a field, a variant payload, a parameter or a return type of our own items. |
 | Ordered newtypes | `attr.derive` of `PartialOrd`, `Ord` | Proposal 0024. Only on a newtype whose order means something, such as `HostSeq`. Callers compare with `a.cmp(&b)` and match the `Ordering`, never through `.0`. |
-| Request helper | `type.impl_trait.arg`, `generics.type_param`, `expr.closure` | Proposal 0026. Each actor handle may have one private `ask<T>` helper taking `build: impl FnOnce(oneshot::Sender<T>) -> Msg`, and every request/reply round trip goes through it. Nothing else takes an `impl Trait` argument. |
+| Request helper | `type.impl_trait.arg`, `generics.type_param`, `expr.closure` | Proposal 0026, amended by issue #3 in version 10. A crate with multiple actor handles that all fail with one stopped-error type has one private or `pub(crate)` free `ask<M, T>`, taking `&mpsc::Sender<M>` and `build: impl FnOnce(oneshot::Sender<T>) -> M`. Both parameters are unbounded, with no defaults or `where`; `M` appears only as the sender's item and the builder's return type. Other crates keep one private `ask<T>` per handle, with a concrete message type. Every request/reply round trip goes through the helper. Nothing else takes an `impl Trait` argument. |
 | Effects in order | `expr.for` | Proposal 0041. A loop whose body only performs side effects is `for item in list { .. }`, awaited or not. Its body holds only calls: `f(item);`, `f(item)?;`, `x.method(item).await?;`, or `let _ = f(item);` to discard. An `.await` is always followed by `?`. It produces no value: building or selecting values in a `for`, in a call's arguments or in its iterator expression, is a violation; that stays the adapters' job (`map`, `filter`, `fold`, `try_fold`). `for_each`, `try_for_each` and `stream::iter(..).then(..).try_collect()` into `()` are no longer forms. A `then` chain stays for building a list from awaited steps, with the list's type in the turbofish. |
 | One-case branch | `expr.if_let.single` | Proposal 0027. `if let Pattern = expr { … }` with no `else`, no `else if` and no `&&` let-chain, the one form for "act only on this case". Anything with an alternative branch is a `match`. To act when a value is present and ignore it, name its pattern with the fields elided, `if let Some(Open { .. }) = ..`: clippy's `redundant_pattern_matching` rejects `Some(_)`, and `Some(..)` is `pat.rest`. |
 | Discarding | `stmt.let` with `_` | Proposal 0025, revised. `let _ = value;` is the one way to discard a value. `drop(..)` only releases a resource early, `drop` passed as a function (`.map(drop)`) is a discard and not allowed, and `.ok()` is never a discard. No lint is switched off. |
@@ -248,6 +248,10 @@ owner. The replaced forms are violations everywhere, and every site in
 fields only in a scanned `const` table's row struct), records the owner's
 ruling that a table whose rows have more than two fields is a named struct
 (0001), and flags a range built by name outside an iterator source.
+Version 9 accepts 0043 (serde wire types), 0044 (`@` bindings) and 0045
+(syn's `Visit`). Version 10 amends 0026 to share one `ask<M, T>` free
+function per crate whose actor handles use one stopped-error type, as
+requested in [issue #3](https://github.com/JimLundin/subset/issues/3).
 
 ## Growing the subset
 

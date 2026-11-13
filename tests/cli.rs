@@ -182,7 +182,7 @@ fn every_example_passes_the_subset() {
     }
     assert_eq!(
         (files.len(), run(&dir, &["check"])),
-        (28, "exit 0\n".to_string())
+        (29, "exit 0\n".to_string())
     );
 }
 

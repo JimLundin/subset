@@ -67,8 +67,10 @@ doesn't expand macros, so a reviewer still checks these:
   a resource released early (the tool checks that the argument is a plain
   name, and flags `drop` passed as a function), 0026 every round trip going
   through `ask` and its closure only building the variant (the tool checks
-  the helper's shape), 0036 a struct update's method-call base returning the
-  struct's own type (the tool accepts any method call), and 0028 a `fold` or
+  the helper's shape; issue #3's one shared helper in a crate whose handles
+  all use one stopped-error type remains a review check), 0036 a struct
+  update's method-call base returning the struct's own type (the tool
+  accepts any method call), and 0028 a `fold` or
   `map(..).sum()` used only to count (the tool flags
   `filter_map(..).count()`), and 0041's `stream::iter(..).then(..)` used
   only for effects (the tool flags `for_each`, `try_for_each` and a

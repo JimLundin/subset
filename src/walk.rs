@@ -581,11 +581,12 @@ impl Walk {
         vis: &Visibility,
         sig: &syn::Signature,
         block: &syn::Block,
+        method: Within,
     ) {
         let func = Rc::new(checks::func(sig, block, &self.env));
         let cx = Cx {
             func: Some(func.clone()),
-            generics: checks::ask_build(vis, sig).map_or(Generics::Fn, |_| Generics::Ask),
+            generics: checks::ask_build(vis, sig, method).map_or(Generics::Fn, |_| Generics::Ask),
             ..self.cx.clone()
         };
         self.hits.extend(checks::loop_states(sig, block, &cx));
@@ -1040,7 +1041,7 @@ impl<'ast> Visit<'ast> for Walk {
         let main = syntax::returned(&i.sig.output).filter(|_| name == "main");
         self.slots
             .extend(main.map(|t| (key(t.span()), Slot::MainReturn)));
-        self.function(&i.attrs, &i.vis, &i.sig, &i.block);
+        self.function(&i.attrs, &i.vis, &i.sig, &i.block, Within::Out);
         visit::visit_item_fn(self, i);
     }
 
@@ -1076,7 +1077,7 @@ impl<'ast> Visit<'ast> for Walk {
         }));
         let test = syntax::test_attr(&i.attrs).map_or(self.cx.test, |_| Within::In);
         self.cx.test = test;
-        self.function(&i.attrs, &i.vis, &i.sig, &i.block);
+        self.function(&i.attrs, &i.vis, &i.sig, &i.block, Within::In);
         visit::visit_impl_item_fn(self, i);
     }
 
