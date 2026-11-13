@@ -119,3 +119,55 @@ fn qualified_conversion(events: &mut External) -> External {
 }
 
 struct Receiver {}
+
+impl Receiver {
+    fn direct_self(&self) -> Option<Event> {
+        std::iter::from_fn(|| self.try_recv().ok()).find_map(|event| Some(event))
+    }
+
+    fn named_self(events: Self) -> Option<Event> {
+        std::iter::from_fn(|| events.try_recv().ok()).find_map(|event| Some(event))
+    }
+
+    fn constructed_self() -> Option<Event> {
+        let events = Self::new();
+        std::iter::from_fn(|| events.try_recv().ok()).find_map(|event| Some(event))
+    }
+}
+
+fn raw_own(events: Receiver) -> Option<Event> {
+    std::iter::from_fn(|| r#events.try_recv().ok()).find_map(|event| Some(event))
+}
+
+fn raw_declared_own(r#events: r#Own) -> Option<Event> {
+    std::iter::from_fn(|| events.try_recv().ok()).find_map(|event| Some(event))
+}
+
+struct r#Own {}
+
+fn tuple_own((events,): (Receiver,)) -> Option<Event> {
+    std::iter::from_fn(|| events.try_recv().ok()).find_map(|event| Some(event))
+}
+
+fn tuple_suffix((.., events): (String, String, Receiver)) -> Option<Event> {
+    std::iter::from_fn(|| events.try_recv().ok()).find_map(|event| Some(event))
+}
+
+fn inner_own_shadow(events: &mut External) -> Option<Event> {
+    {
+        let events = Receiver::new();
+        std::iter::from_fn(|| events.try_recv().ok()).find_map(|event| Some(event))
+    }
+}
+
+fn own_alias(source: Receiver) -> Option<Event> {
+    let events = (source);
+    std::iter::from_fn(|| events.try_recv().ok()).find_map(|event| Some(event))
+}
+
+fn typed_local_closure(source: Receiver) -> Option<Event> {
+    let drain = |events: Receiver| {
+        std::iter::from_fn(|| events.try_recv().ok()).find_map(|event| Some(event))
+    };
+    drain(source)
+}

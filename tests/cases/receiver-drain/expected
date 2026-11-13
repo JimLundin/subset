@@ -47,37 +47,64 @@ crates/daemon/src/a_fail.rs:114:5: expr.call: `std::iter::from_fn` only as the d
 crates/daemon/src/a_fail.rs:114:24: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, the immediate receiver pull of 0058, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046, 0058)
 crates/daemon/src/a_fail.rs:118:5: expr.call: `std::iter::from_fn` only as the direct receiver of inline eager `find_map`, with an inline synchronous zero-argument `receiver.try_recv().ok()` pull from a library receiver (proposal 0058)
 crates/daemon/src/a_fail.rs:118:24: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, the immediate receiver pull of 0058, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046, 0058)
+crates/daemon/src/a_fail.rs:125:9: expr.call: `std::iter::from_fn` only as the direct receiver of inline eager `find_map`, with an inline synchronous zero-argument `receiver.try_recv().ok()` pull from a library receiver (proposal 0058)
+crates/daemon/src/a_fail.rs:125:28: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, the immediate receiver pull of 0058, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046, 0058)
+crates/daemon/src/a_fail.rs:129:9: expr.call: `std::iter::from_fn` only as the direct receiver of inline eager `find_map`, with an inline synchronous zero-argument `receiver.try_recv().ok()` pull from a library receiver (proposal 0058)
+crates/daemon/src/a_fail.rs:129:28: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, the immediate receiver pull of 0058, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046, 0058)
+crates/daemon/src/a_fail.rs:134:9: expr.call: `std::iter::from_fn` only as the direct receiver of inline eager `find_map`, with an inline synchronous zero-argument `receiver.try_recv().ok()` pull from a library receiver (proposal 0058)
+crates/daemon/src/a_fail.rs:134:28: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, the immediate receiver pull of 0058, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046, 0058)
+crates/daemon/src/a_fail.rs:139:5: expr.call: `std::iter::from_fn` only as the direct receiver of inline eager `find_map`, with an inline synchronous zero-argument `receiver.try_recv().ok()` pull from a library receiver (proposal 0058)
+crates/daemon/src/a_fail.rs:139:24: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, the immediate receiver pull of 0058, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046, 0058)
+crates/daemon/src/a_fail.rs:143:5: expr.call: `std::iter::from_fn` only as the direct receiver of inline eager `find_map`, with an inline synchronous zero-argument `receiver.try_recv().ok()` pull from a library receiver (proposal 0058)
+crates/daemon/src/a_fail.rs:143:24: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, the immediate receiver pull of 0058, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046, 0058)
+crates/daemon/src/a_fail.rs:149:5: expr.call: `std::iter::from_fn` only as the direct receiver of inline eager `find_map`, with an inline synchronous zero-argument `receiver.try_recv().ok()` pull from a library receiver (proposal 0058)
+crates/daemon/src/a_fail.rs:149:24: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, the immediate receiver pull of 0058, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046, 0058)
+crates/daemon/src/a_fail.rs:153:5: expr.call: `std::iter::from_fn` only as the direct receiver of inline eager `find_map`, with an inline synchronous zero-argument `receiver.try_recv().ok()` pull from a library receiver (proposal 0058)
+crates/daemon/src/a_fail.rs:153:24: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, the immediate receiver pull of 0058, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046, 0058)
+crates/daemon/src/a_fail.rs:159:9: expr.call: `std::iter::from_fn` only as the direct receiver of inline eager `find_map`, with an inline synchronous zero-argument `receiver.try_recv().ok()` pull from a library receiver (proposal 0058)
+crates/daemon/src/a_fail.rs:159:28: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, the immediate receiver pull of 0058, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046, 0058)
+crates/daemon/src/a_fail.rs:165:5: expr.call: `std::iter::from_fn` only as the direct receiver of inline eager `find_map`, with an inline synchronous zero-argument `receiver.try_recv().ok()` pull from a library receiver (proposal 0058)
+crates/daemon/src/a_fail.rs:165:24: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, the immediate receiver pull of 0058, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046, 0058)
+crates/daemon/src/a_fail.rs:170:9: expr.call: `std::iter::from_fn` only as the direct receiver of inline eager `find_map`, with an inline synchronous zero-argument `receiver.try_recv().ok()` pull from a library receiver (proposal 0058)
+crates/daemon/src/a_fail.rs:170:28: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, the immediate receiver pull of 0058, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046, 0058)
 $ score crates/daemon/src/a.rs --by construct
 exit 0
      score   tokens   lines per token  boundary  share  count tier       construct
-      92.0       92       6     1.000       0.0   0.0%     23 neutral    type.path
-      65.0       65       9     1.000       0.0   0.0%     27 neutral    expr.path
-      42.0       42      12     1.000       0.0   0.0%      6 neutral    item.fn
-      36.0       36       6     1.000       0.0   0.0%     12 neutral    expr.method_call
-      13.0       13       6     1.000      13.0 100.0%      6 boundary   expr.closure
-      12.0       12       7     1.000       0.0   0.0%     12 neutral    expr.call
-      12.0       12       6     1.000       0.0   0.0%      6 neutral    expr.closure.adapter
-      12.0       12       6     1.000      12.0 100.0%      6 boundary   type.reference.mut
-       9.0       18       7     0.500       0.0   0.0%      6 encouraged expr.method_call.adapter
-       6.5       13      12     0.500       0.0   0.0%     13 encouraged pat.ident
-       4.0        8       4     0.500       0.0   0.0%      1 encouraged expr.match
+     237.0      237      14     1.000       0.0   0.0%     60 neutral    type.path
+     160.0      160      26     1.000       0.0   0.0%     69 neutral    expr.path
+     104.0      104      28     1.000       0.0   0.0%     14 neutral    item.fn
+      87.0       87      15     1.000       0.0   0.0%     29 neutral    expr.method_call
+      30.0       30      17     1.000       0.0   0.0%     30 neutral    expr.call
+      30.0       30      15     1.000       0.0   0.0%     15 neutral    expr.closure.adapter
+      29.0       29      14     1.000      29.0 100.0%     14 boundary   expr.closure
+      28.0       28      14     1.000      28.0 100.0%     14 boundary   type.reference.mut
+      22.5       45      17     0.500       0.0   0.0%     15 encouraged expr.method_call.adapter
+      20.0       40      33     0.500       0.0   0.0%     41 encouraged pat.ident
+      18.0        9       3     2.000       0.0   0.0%      3 tolerated  stmt.let.discard
+      16.0        8       2     2.000       0.0   0.0%      1 tolerated  expr.if_let.single
+      15.0       15       6     1.000       0.0   0.0%      5 neutral    stmt.let
+       8.0       16       8     0.500       0.0   0.0%      2 encouraged expr.match
        4.0        4       1     1.000       0.0   0.0%      4 neutral    expr.paren
        4.0        8       2     0.500       0.0   0.0%      2 encouraged pat.path
-       3.0        3       2     1.000       0.0   0.0%      1 neutral    stmt.let
+       4.0        2       1     2.000       0.0   0.0%      1 tolerated  pat.tuple
+       4.0        2       1     2.000       0.0   0.0%      1 tolerated  type.tuple
+       2.0        2       4     1.000       0.0   0.0%      2 neutral    expr.block
        2.0        2       1     1.000       0.0   0.0%      1 neutral    expr.field
-     316.5      340      22     0.931      25.0   7.9%                   total
+       1.5        3       3     0.500       0.0   0.0%      3 encouraged pat.wild
+       1.0        2       1     0.500       0.0   0.0%      2 encouraged pat.tuple_struct
+     827.0      863      61     0.958      57.0   6.9%                   total
 $ measure crates/daemon/src/a.rs --json
 exit 0
 {
   "files": [
     {
-      "lines": 22,
+      "lines": 61,
       "path": "crates/daemon/src/a.rs",
-      "tokens": 340
+      "tokens": 863
     }
   ],
   "total": {
-    "lines": 22,
-    "tokens": 340
+    "lines": 61,
+    "tokens": 863
   }
 }

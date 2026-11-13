@@ -85,7 +85,9 @@ constructor, inline zero-argument `try_recv().ok()` pull and immediately
 consuming inline `find_map` are checked. Named callbacks, constructor
 aliases and escaping generators are rejected. Known own receiver bindings
 and shadowed `std` modules are rejected where existing name facts identify
-them. Unresolved receiver fields and method semantics remain review work:
+them. Binding origins follow lexical scopes; raw names and grouped imports
+retain their logical identity. `::std` keeps the external boundary beside
+a local shadow. Unresolved receiver fields and method semantics remain review work:
 the pull must be a nonblocking external API under the existing mutation
 rule. The closure keeps its tolerated tier and library boundary pricing.
 

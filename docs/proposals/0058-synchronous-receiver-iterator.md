@@ -191,7 +191,11 @@ eager `find_map`. It rejects lazy chains, generator bindings/returns/helper
 arguments, named callbacks, constructor imports/renames and function-value
 escapes. Parentheses and `move` retain their ordinary syntax. `from_fn`
 is not added to the generic callee list, so 0046's named closures cannot
-reach it. Known local `std` modules do not qualify as library callees.
+reach it. Scoped local `std` modules do not qualify as library callees;
+their ordinary calls, imports and function values keep the existing rules.
+An explicit `::std` root identifies the library constructor even beside a
+local `std`, including its existing boundary price. Raw identifier spellings
+are normalized to their logical names.
 Actor-state discovery, mutable bindings, predicates, and genuinely awaited
 stream closures do not change. Existing `expr.closure` scoring suffices.
 
@@ -209,8 +213,9 @@ type resolution. It can verify call path, argument/body/consumer shape and
 confinement and rejects receiver bindings whose declared or constructed
 type is known to be ours. It cannot prove an unresolved receiver or field
 is Tokio's library receiver, or that a same-spelled method obeys the external
-`&mut` rule. Import resolution and local binding classification remain
-conservative, consistent with the existing checker. Type origin,
+`&mut` rule. Receiver bindings follow lexical scope and shadowing; supported
+tuple parameters retain the declared type of each bound value. Unresolved
+binding types remain conservative, consistent with the existing checker. Type origin,
 nonblocking pull/`Option` semantics and ownership therefore remain review checks plus Rust
 compilation, consistent with current 0008 boundary handling. Do not present
 a final-segment whitelist as proof of library behavior.
