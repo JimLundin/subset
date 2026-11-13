@@ -1,0 +1,33 @@
+--- a/crates/daemon/src/session.rs
++++ b/crates/daemon/src/session.rs
+@@ -248,14 +248,7 @@
+             last_request: RequestId(0),
+             declined: HashSet::new(),
+         };
+-        // The first order starts the agent, so the actor's loop does it all.
+-        let (reply, _) = oneshot::channel();
+-        let (launch, offered) = launch;
+-        let _ = inbox.try_send(SessionMsg {
+-            order: Order::Start(launch, offered),
+-            reply,
+-        });
+-        tokio::spawn(actor.run(messages));
++        tokio::spawn(actor.run(messages, launch));
+         Session { inbox }
+     }
+ 
+@@ -429,7 +422,13 @@
+ }
+ 
+ impl SessionActor {
+-    async fn run(mut self, mut inbox: mpsc::Receiver<SessionMsg>) -> Result<Infallible, Stopped> {
++    async fn run(
++        mut self,
++        mut inbox: mpsc::Receiver<SessionMsg>,
++        launch: (Launch, Models),
++    ) -> Result<Infallible, Stopped> {
++        let (launch, offered) = launch;
++        let _ = self.order(Order::Start(launch, offered)).await?;
+         loop {
+             let input = tokio::select! {
+                 msg = inbox.recv() => msg.map_or(Input::Closed, Input::Order),

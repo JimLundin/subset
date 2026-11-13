@@ -1,0 +1,66 @@
+--- a/crates/agents/src/install.rs
++++ b/crates/agents/src/install.rs
+@@ -4,7 +4,7 @@
+ //! crash leaves either nothing or a verified install. `<data>/cli/<cli>/lock`
+ //! keeps two processes from installing into one data dir at once.
+ 
+-use std::fs::{File, TryLockError};
++use std::fs::File;
+ use std::path::{Path, PathBuf};
+ use std::time::Duration;
+ 
+@@ -18,8 +18,6 @@
+ const CONNECT: Duration = Duration::from_secs(15);
+ /// A download that sends nothing for this long has stalled.
+ const STALL: Duration = Duration::from_secs(30);
+-/// How often a process waiting for another's install checks the lock.
+-const LOCK_POLL: Duration = Duration::from_millis(200);
+ const READ_BUFFER: usize = 1048576;
+ 
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+@@ -153,7 +151,7 @@
+     std::fs::create_dir_all(parent).map_err(|error| io(parent, error))?;
+     let lock_path = parent.join("lock");
+     let lock = File::create(&lock_path).map_err(|error| io(&lock_path, error))?;
+-    hold(&lock, &lock_path).await?;
++    let _lock = hold(lock, &lock_path).await?;
+     remove_others(parent, &pin.version)?;
+     let dir = parent.join(&pin.version);
+     let binary = dir.join(&pin.binary);
+@@ -185,27 +183,15 @@
+     }
+ }
+ 
+-/// Waits until this process holds the lock on `lock`. Dropping the file
+-/// releases it.
+-async fn hold(lock: &File, path: &Path) -> Result<(), InstallError> {
+-    loop {
+-        match attempt(lock).await {
+-            Ok(_) => break Ok(()),
+-            Err(TryLockError::WouldBlock) => {}
+-            Err(TryLockError::Error(error)) => break Err(io(path, error)),
+-        }
+-    }
+-}
+-
+-/// Tries the lock once, and waits a little before reporting it busy.
+-async fn attempt(lock: &File) -> Result<(), TryLockError> {
+-    match lock.try_lock() {
+-        Err(TryLockError::WouldBlock) => {
+-            tokio::time::sleep(LOCK_POLL).await;
+-            Err(TryLockError::WouldBlock)
+-        }
+-        tried => tried,
+-    }
++/// Waits until this process holds the lock, returning the file that releases it.
++async fn hold(lock: File, path: &Path) -> Result<File, InstallError> {
++    tokio::task::spawn_blocking(move || {
++        lock.lock()?;
++        Ok::<File, std::io::Error>(lock)
++    })
++    .await
++    .map_err(|error| io(path, std::io::Error::other(error)))?
++    .map_err(|error| io(path, error))
+ }
+ 
+ /// Removes everything in `parent` but the lock and the `keep` version: older
