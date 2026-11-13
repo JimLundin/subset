@@ -1,0 +1,15 @@
+$ subset measure crates/agents/src/claude/protocol.rs --json
+{
+  "files": [
+    {
+      "lines": 1253,
+      "path": "crates/agents/src/claude/protocol.rs",
+      "tokens": 6814
+    }
+  ],
+  "total": {
+    "lines": 1253,
+    "tokens": 6814
+  }
+}
+Exit: 0

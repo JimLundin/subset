@@ -1,0 +1,59 @@
+--- a/crates/daemon/src/log.rs
++++ b/crates/daemon/src/log.rs
+@@ -107 +107 @@
+-                kind: EventKind::AssistantDelta { text },
++                kind: kind @ (EventKind::AssistantDelta { .. } | EventKind::ReasoningDelta { .. }),
+@@ -112,11 +112 @@
+-                    kind: EventKind::AssistantDelta { text },
+-                });
+-            }
+-            LogMsg::Append {
+-                session,
+-                kind: EventKind::ReasoningDelta { text },
+-            } => {
+-                let _ = self.live.send(Event {
+-                    seq: self.head(),
+-                    session,
+-                    kind: EventKind::ReasoningDelta { text },
++                    kind,
+--- a/crates/daemon/src/session.rs
++++ b/crates/daemon/src/session.rs
+@@ -77 +77 @@
+-            .find(|offered| offered == &&effort)
++            .find(|&&offered| offered == effort)
+--- a/crates/daemon/src/registry.rs
++++ b/crates/daemon/src/registry.rs
+@@ -244,6 +244,6 @@
+-                    Some((provider, handle)) => self
+-                        .ready(provider.to_owned())
+-                        .map(|(launch, _)| {
+-                            (handle.clone(), launch, self.models(provider.to_owned()))
+-                        })
+-                        .map_err(|reason| Rejection::ProviderUnavailable { reason }),
++                    Some((provider, handle)) => {
++                        let &provider = provider;
++                        self.ready(provider)
++                            .map(|(launch, _)| (handle.clone(), launch, self.models(provider)))
++                            .map_err(|reason| Rejection::ProviderUnavailable { reason })
++                    }
+--- a/crates/proto/src/frame.rs
++++ b/crates/proto/src/frame.rs
+@@ -4,2 +3,0 @@
+-
+-use std::cmp::Ordering;
+@@ -25,2 +23,2 @@
+-    match u32::try_from(body.len()).map(|len| (len, len.cmp(&MAX_FRAME_LEN))) {
+-        Ok((len, Ordering::Less | Ordering::Equal)) => Ok(len
++    match u32::try_from(body.len()) {
++        Ok(len @ ..=MAX_FRAME_LEN) => Ok(len
+@@ -31 +29 @@
+-        Ok((_, Ordering::Greater)) | Err(_) => Err(FrameError::TooLarge(
++        Ok(_) | Err(_) => Err(FrameError::TooLarge(
+@@ -39,2 +37,2 @@
+-    match len.cmp(&MAX_FRAME_LEN) {
+-        Ordering::Less | Ordering::Equal => {
++    match len {
++        ..=MAX_FRAME_LEN => {
+@@ -43 +41 @@
+-        Ordering::Greater => Err(FrameError::TooLarge(u64::from(len))),
++        _ => Err(FrameError::TooLarge(u64::from(len))),

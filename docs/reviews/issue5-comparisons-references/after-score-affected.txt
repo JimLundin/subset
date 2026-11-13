@@ -1,0 +1,52 @@
+$ subset score affected --by file --json
+{
+  "by": "file",
+  "rows": [
+    {
+      "boundary": 8.0,
+      "boundary_share": 4.43213296398892,
+      "lines": 23,
+      "name": "affected/frame-functions.rs",
+      "per_token": 0.8804878048780488,
+      "score": 180.5,
+      "tokens": 205
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 42,
+      "name": "affected/log-on.rs",
+      "per_token": 0.9391891891891891,
+      "score": 208.5,
+      "tokens": 222
+    },
+    {
+      "boundary": 2.0,
+      "boundary_share": 0.47562425683709864,
+      "lines": 65,
+      "name": "affected/registry-on.rs",
+      "per_token": 0.9600456621004566,
+      "score": 420.5,
+      "tokens": 438
+    },
+    {
+      "boundary": 1.0,
+      "boundary_share": 0.5571030640668524,
+      "lines": 26,
+      "name": "affected/session-choose.rs",
+      "per_token": 0.9065656565656567,
+      "score": 179.5,
+      "tokens": 198
+    }
+  ],
+  "total": {
+    "boundary": 11.0,
+    "boundary_share": 1.1122345803842266,
+    "lines": 156,
+    "name": "total",
+    "per_token": 0.9303857008466604,
+    "score": 989.0,
+    "tokens": 1063
+  }
+}
+Exit: 0

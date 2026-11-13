@@ -1,0 +1,20 @@
+$ cargo clippy -- -D warnings
+    Updating crates.io index
+     Locking 11 packages to highest Rust 1.102.0-nightly compatible versions
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.27
+   Compiling quote v1.0.47
+   Compiling serde_core v1.0.229
+   Compiling zmij v1.0.23
+   Compiling serde_json v1.0.154
+   Compiling serde v1.0.229
+    Checking itoa v1.0.19
+    Checking memchr v2.8.3
+   Compiling syn v3.0.10
+   Compiling serde_derive v1.0.229
+    Checking issue5-grant-evidence v0.0.0 (/mnt/c/Users/Jim.Lundin/Projects/subset/target/worktrees/issue5-patterns/target/issue5-review/grant-check)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1m 23s
+Exit: 0
+
+$ cargo run --quiet
+Exit: 0

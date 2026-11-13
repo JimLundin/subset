@@ -1,0 +1,8 @@
+$ cargo clippy -- -D warnings
+    Checking serde_json v1.0.154
+    Checking issue5-grant-evidence v0.0.0 (/mnt/c/Users/Jim.Lundin/Projects/subset/target/worktrees/issue5-patterns/target/issue5-review/grant-check)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 49.32s
+Exit: 0
+
+$ cargo run --quiet
+Exit: 0

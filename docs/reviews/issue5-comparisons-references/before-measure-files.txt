@@ -1,0 +1,30 @@
+$ subset measure crates/daemon/src/log.rs crates/daemon/src/session.rs crates/daemon/src/registry.rs crates/proto/src/frame.rs --json
+{
+  "files": [
+    {
+      "lines": 201,
+      "path": "crates/daemon/src/log.rs",
+      "tokens": 1257
+    },
+    {
+      "lines": 417,
+      "path": "crates/daemon/src/registry.rs",
+      "tokens": 2687
+    },
+    {
+      "lines": 723,
+      "path": "crates/daemon/src/session.rs",
+      "tokens": 4867
+    },
+    {
+      "lines": 207,
+      "path": "crates/proto/src/frame.rs",
+      "tokens": 1248
+    }
+  ],
+  "total": {
+    "lines": 1548,
+    "tokens": 10059
+  }
+}
+Exit: 0

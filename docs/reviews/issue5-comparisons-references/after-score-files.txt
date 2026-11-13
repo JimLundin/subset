@@ -1,0 +1,52 @@
+$ subset score crates/daemon/src/log.rs crates/daemon/src/session.rs crates/daemon/src/registry.rs crates/proto/src/frame.rs --by file --json
+{
+  "by": "file",
+  "rows": [
+    {
+      "boundary": 15.0,
+      "boundary_share": 1.272264631043257,
+      "lines": 191,
+      "name": "crates/daemon/src/log.rs",
+      "per_token": 0.9719703215169002,
+      "score": 1179.0,
+      "tokens": 1213
+    },
+    {
+      "boundary": 76.0,
+      "boundary_share": 2.9079778075377845,
+      "lines": 417,
+      "name": "crates/daemon/src/registry.rs",
+      "per_token": 0.9730081906180194,
+      "score": 2613.5,
+      "tokens": 2686
+    },
+    {
+      "boundary": 179.0,
+      "boundary_share": 3.9884135472370765,
+      "lines": 723,
+      "name": "crates/daemon/src/session.rs",
+      "per_token": 0.9221286213273063,
+      "score": 4488.0,
+      "tokens": 4867
+    },
+    {
+      "boundary": 34.0,
+      "boundary_share": 2.910958904109589,
+      "lines": 206,
+      "name": "crates/proto/src/frame.rs",
+      "per_token": 0.9741451209341118,
+      "score": 1168.0,
+      "tokens": 1199
+    }
+  ],
+  "total": {
+    "boundary": 304.0,
+    "boundary_share": 3.217441921998201,
+    "lines": 1537,
+    "name": "total",
+    "per_token": 0.9481685900652284,
+    "score": 9448.5,
+    "tokens": 9965
+  }
+}
+Exit: 0

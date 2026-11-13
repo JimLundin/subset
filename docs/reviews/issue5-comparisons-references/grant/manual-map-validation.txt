@@ -1,0 +1,39 @@
+$ cargo clippy -- -D warnings
+    Checking issue5-grant-evidence v0.0.0 (/mnt/c/Users/Jim.Lundin/Projects/subset/target/worktrees/issue5-patterns/target/issue5-review/grant-check)
+error: manual implementation of `Option::map`
+  --> src/main.rs:75:5
+   |
+75 | /     match Some(rules).filter(|rules| !rules.is_empty()) {
+76 | |         Some(rules) => Some(Grant {
+77 | |             label: rules
+78 | |                 .iter()
+...  |
+89 | |         None => None,
+90 | |     }
+   | |_____^
+   |
+   = help: for further information visit https://clippy.rust-lang.org/main/index.html#manual_map
+   = note: `-D clippy::manual-map` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::manual_map)]`
+help: try
+   |
+75 ~     Some(rules).filter(|rules| !rules.is_empty()).map(|rules| Grant {
+76 +             label: rules
+77 +                 .iter()
+78 +                 .filter_map(|rule| serde_json::from_value::<Rule>(rule.clone()).ok())
+79 +                 .map(|rule| rule.label())
+80 +                 .collect::<Vec<String>>()
+81 +                 .join(", "),
+82 +             update: Update::AddRules {
+83 +                 rules: Value::Array(rules),
+84 +                 behavior: String::from("allow"),
+85 +                 destination: String::from("session"),
+86 +             },
+87 +         })
+   |
+
+error: could not compile `issue5-grant-evidence` (bin "issue5-grant-evidence") due to 1 previous error
+Exit: 101
+
+$ cargo run --quiet
+Exit: 0

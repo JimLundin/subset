@@ -1,0 +1,17 @@
+$ rg -n 'provider\.to_owned\(\)|offered == &&effort' crates
+crates\daemon\src\session.rs:77:            .find(|offered| offered == &&effort)
+crates\daemon\src\registry.rs:245:                        .ready(provider.to_owned())
+crates\daemon\src\registry.rs:247:                            (handle.clone(), launch, self.models(provider.to_owned()))
+
+$ rg -n 'kind: EventKind::(AssistantDelta|ReasoningDelta)' crates/daemon/src/log.rs
+107:                kind: EventKind::AssistantDelta { text },
+112:                    kind: EventKind::AssistantDelta { text },
+117:                kind: EventKind::ReasoningDelta { text },
+122:                    kind: EventKind::ReasoningDelta { text },
+
+$ rg -n 'cmp\(&MAX_FRAME_LEN\)' crates/proto/src/frame.rs
+25:    match u32::try_from(body.len()).map(|len| (len, len.cmp(&MAX_FRAME_LEN))) {
+39:    match len.cmp(&MAX_FRAME_LEN) {
+
+$ rg -n -- '-> bool' crates
+No matches.

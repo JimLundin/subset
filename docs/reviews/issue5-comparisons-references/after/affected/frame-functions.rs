@@ -1,0 +1,25 @@
+pub(crate) const MAX_FRAME_LEN: u32 = 16_777_216;
+
+pub fn encode<T: Serialize>(msg: &T) -> Result<Vec<u8>, FrameError> {
+    let body = postcard::to_allocvec(msg)?;
+    match u32::try_from(body.len()) {
+        Ok(len @ ..=MAX_FRAME_LEN) => Ok(len
+            .to_be_bytes()
+            .into_iter()
+            .chain(body)
+            .collect::<Vec<u8>>()),
+        Ok(_) | Err(_) => Err(FrameError::TooLarge(
+            u64::try_from(body.len()).unwrap_or(u64::MAX),
+        )),
+    }
+}
+
+pub fn body_len(header: [u8; HEADER_LEN]) -> Result<usize, FrameError> {
+    let len = u32::from_be_bytes(header);
+    match len {
+        ..=MAX_FRAME_LEN => {
+            usize::try_from(len).map_err(|_| FrameError::TooLarge(u64::from(len)))
+        }
+        _ => Err(FrameError::TooLarge(u64::from(len))),
+    }
+}

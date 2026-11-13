@@ -1,0 +1,30 @@
+$ subset measure affected --json
+{
+  "files": [
+    {
+      "lines": 23,
+      "path": "affected/frame-functions.rs",
+      "tokens": 205
+    },
+    {
+      "lines": 42,
+      "path": "affected/log-on.rs",
+      "tokens": 222
+    },
+    {
+      "lines": 65,
+      "path": "affected/registry-on.rs",
+      "tokens": 438
+    },
+    {
+      "lines": 26,
+      "path": "affected/session-choose.rs",
+      "tokens": 198
+    }
+  ],
+  "total": {
+    "lines": 156,
+    "tokens": 1063
+  }
+}
+Exit: 0

@@ -1,0 +1,673 @@
+$ subset score crates/daemon/src/log.rs crates/daemon/src/session.rs crates/daemon/src/registry.rs crates/proto/src/frame.rs --by fn --json
+{
+  "by": "fn",
+  "rows": [
+    {
+      "boundary": 25.0,
+      "boundary_share": 4.464285714285714,
+      "lines": 89,
+      "name": "crates/daemon/src/session.rs:677 SessionActor::step",
+      "per_token": 0.9427609427609427,
+      "score": 560.0,
+      "tokens": 594
+    },
+    {
+      "boundary": 5.0,
+      "boundary_share": 1.2239902080783354,
+      "lines": 65,
+      "name": "crates/daemon/src/registry.rs:228 RegistryActor::on",
+      "per_token": 0.932648401826484,
+      "score": 408.5,
+      "tokens": 438
+    },
+    {
+      "boundary": 18.0,
+      "boundary_share": 4.455445544554456,
+      "lines": 49,
+      "name": "crates/daemon/src/session.rs:514 SessionActor::order",
+      "per_token": 0.9461358313817331,
+      "score": 404.0,
+      "tokens": 427
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 76,
+      "name": "crates/proto/src/frame.rs:131 replies_and_events_wire_shapes",
+      "per_token": 1.0,
+      "score": 364.0,
+      "tokens": 364
+    },
+    {
+      "boundary": 9.0,
+      "boundary_share": 2.731411229135053,
+      "lines": 42,
+      "name": "crates/daemon/src/log.rs:185 deltas_go_live_with_the_last_seq_and_are_never_replayed",
+      "per_token": 1.046031746031746,
+      "score": 329.5,
+      "tokens": 315
+    },
+    {
+      "boundary": 5.0,
+      "boundary_share": 1.5923566878980893,
+      "lines": 42,
+      "name": "crates/daemon/src/registry.rs:434 RegistryActor::start",
+      "per_token": 1.0,
+      "score": 314.0,
+      "tokens": 314
+    },
+    {
+      "boundary": 3.0,
+      "boundary_share": 0.967741935483871,
+      "lines": 47,
+      "name": "crates/daemon/src/session.rs:566 SessionActor::reply",
+      "per_token": 0.9538461538461539,
+      "score": 310.0,
+      "tokens": 325
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 49,
+      "name": "crates/daemon/src/session.rs:304 start",
+      "per_token": 0.939236111111111,
+      "score": 270.5,
+      "tokens": 288
+    },
+    {
+      "boundary": 13.0,
+      "boundary_share": 6.326034063260341,
+      "lines": 28,
+      "name": "crates/daemon/src/registry.rs:312 RegistryActor::store",
+      "per_token": 1.2454545454545454,
+      "score": 205.5,
+      "tokens": 165
+    },
+    {
+      "boundary": 3.0,
+      "boundary_share": 1.5267175572519085,
+      "lines": 42,
+      "name": "crates/daemon/src/log.rs:102 LogActor::on",
+      "per_token": 0.8851351351351351,
+      "score": 196.5,
+      "tokens": 222
+    },
+    {
+      "boundary": 16.0,
+      "boundary_share": 8.672086720867208,
+      "lines": 25,
+      "name": "crates/daemon/src/registry.rs:343 RegistryActor::relist",
+      "per_token": 1.3178571428571428,
+      "score": 184.5,
+      "tokens": 140
+    },
+    {
+      "boundary": 1.0,
+      "boundary_share": 0.5571030640668524,
+      "lines": 26,
+      "name": "crates/daemon/src/session.rs:60 choose",
+      "per_token": 0.9065656565656567,
+      "score": 179.5,
+      "tokens": 198
+    },
+    {
+      "boundary": 5.0,
+      "boundary_share": 2.8169014084507045,
+      "lines": 22,
+      "name": "crates/daemon/src/session.rs:442 SessionActor::on",
+      "per_token": 0.9196891191709845,
+      "score": 177.5,
+      "tokens": 193
+    },
+    {
+      "boundary": 5.0,
+      "boundary_share": 2.8169014084507045,
+      "lines": 28,
+      "name": "crates/daemon/src/session.rs:485 SessionActor::offered",
+      "per_token": 0.9916201117318436,
+      "score": 177.5,
+      "tokens": 179
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 25,
+      "name": "crates/daemon/src/session.rs:824 a_reply_must_fit_what_the_request_asked",
+      "per_token": 0.9971098265895953,
+      "score": 172.5,
+      "tokens": 173
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 29,
+      "name": "crates/daemon/src/session.rs:231 Session::spawn",
+      "per_token": 1.0290322580645161,
+      "score": 159.5,
+      "tokens": 155
+    },
+    {
+      "boundary": 4.0,
+      "boundary_share": 2.515723270440252,
+      "lines": 23,
+      "name": "crates/daemon/src/session.rs:280 fits",
+      "per_token": 0.828125,
+      "score": 159.0,
+      "tokens": 192
+    },
+    {
+      "boundary": 5.0,
+      "boundary_share": 3.3222591362126246,
+      "lines": 19,
+      "name": "crates/daemon/src/registry.rs:414 RegistryActor::ready",
+      "per_token": 0.826923076923077,
+      "score": 150.5,
+      "tokens": 182
+    },
+    {
+      "boundary": 1.0,
+      "boundary_share": 0.7518796992481203,
+      "lines": 20,
+      "name": "crates/daemon/src/session.rs:372 claude_models",
+      "per_token": 1.047244094488189,
+      "score": 133.0,
+      "tokens": 127
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 20,
+      "name": "crates/daemon/src/registry.rs:389 RegistryActor::models",
+      "per_token": 0.8675496688741722,
+      "score": 131.0,
+      "tokens": 151
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 15,
+      "name": "crates/proto/src/frame.rs:71 command_frame_is_length_then_postcard",
+      "per_token": 1.0,
+      "score": 116.0,
+      "tokens": 116
+    },
+    {
+      "boundary": 4.0,
+      "boundary_share": 3.755868544600939,
+      "lines": 15,
+      "name": "crates/daemon/src/session.rs:467 SessionActor::start",
+      "per_token": 1.0142857142857145,
+      "score": 106.5,
+      "tokens": 105
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 16,
+      "name": "crates/daemon/src/registry.rs:133 Registry::spawn",
+      "per_token": 1.122340425531915,
+      "score": 105.5,
+      "tokens": 94
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 22,
+      "name": "crates/proto/src/frame.rs:87 a_credential_goes_out_whole_and_debugs_as_its_kind",
+      "per_token": 0.9952830188679245,
+      "score": 105.5,
+      "tokens": 106
+    },
+    {
+      "boundary": 3.0,
+      "boundary_share": 2.8846153846153846,
+      "lines": 17,
+      "name": "crates/daemon/src/session.rs:403 Agent::next",
+      "per_token": 0.8455284552845529,
+      "score": 104.0,
+      "tokens": 123
+    },
+    {
+      "boundary": 1.0,
+      "boundary_share": 0.9708737864077669,
+      "lines": 19,
+      "name": "crates/daemon/src/session.rs:635 SessionActor::answer",
+      "per_token": 0.8803418803418804,
+      "score": 103.0,
+      "tokens": 117
+    },
+    {
+      "boundary": 7.0,
+      "boundary_share": 7.142857142857142,
+      "lines": 13,
+      "name": "crates/proto/src/frame.rs:21 encode",
+      "per_token": 0.8448275862068966,
+      "score": 98.0,
+      "tokens": 116
+    },
+    {
+      "boundary": 19.0,
+      "boundary_share": 20.0,
+      "lines": 11,
+      "name": "crates/daemon/src/registry.rs:297 RegistryActor::readable",
+      "per_token": 0.9134615384615385,
+      "score": 95.0,
+      "tokens": 104
+    },
+    {
+      "boundary": 42.0,
+      "boundary_share": 45.16129032258065,
+      "lines": 9,
+      "name": "crates/daemon/src/session.rs:432 SessionActor::run",
+      "per_token": 1.1481481481481481,
+      "score": 93.0,
+      "tokens": 81
+    },
+    {
+      "boundary": 1.0,
+      "boundary_share": 1.1049723756906076,
+      "lines": 10,
+      "name": "crates/daemon/src/session.rs:359 list_models",
+      "per_token": 0.9141414141414143,
+      "score": 90.5,
+      "tokens": 99
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 11,
+      "name": "crates/daemon/src/registry.rs:204 Registry::ask",
+      "per_token": 1.1265822784810127,
+      "score": 89.0,
+      "tokens": 79
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 11,
+      "name": "crates/daemon/src/session.rs:266 Session::ask",
+      "per_token": 1.1265822784810127,
+      "score": 89.0,
+      "tokens": 79
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 8,
+      "name": "crates/daemon/src/log.rs:84 Log::ask",
+      "per_token": 1.1282051282051282,
+      "score": 88.0,
+      "tokens": 78
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 20,
+      "name": "crates/proto/src/frame.rs:110 hello_and_subscribe_wire_shapes",
+      "per_token": 0.9941176470588236,
+      "score": 84.5,
+      "tokens": 85
+    },
+    {
+      "boundary": 7.0,
+      "boundary_share": 8.484848484848484,
+      "lines": 9,
+      "name": "crates/daemon/src/registry.rs:481 warn_unprotected",
+      "per_token": 1.6836734693877549,
+      "score": 82.5,
+      "tokens": 49
+    },
+    {
+      "boundary": 5.0,
+      "boundary_share": 6.211180124223602,
+      "lines": 12,
+      "name": "crates/daemon/src/session.rs:782 SessionActor::withdraw",
+      "per_token": 0.9470588235294117,
+      "score": 80.5,
+      "tokens": 85
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 18,
+      "name": "crates/daemon/src/registry.rs:153 Registry::start",
+      "per_token": 1.0460526315789473,
+      "score": 79.5,
+      "tokens": 76
+    },
+    {
+      "boundary": 2.0,
+      "boundary_share": 2.564102564102564,
+      "lines": 10,
+      "name": "crates/daemon/src/session.rs:616 SessionActor::send",
+      "per_token": 0.896551724137931,
+      "score": 78.0,
+      "tokens": 87
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 12,
+      "name": "crates/daemon/src/log.rs:52 Log::spawn",
+      "per_token": 1.02,
+      "score": 76.5,
+      "tokens": 75
+    },
+    {
+      "boundary": 1.0,
+      "boundary_share": 1.3157894736842104,
+      "lines": 7,
+      "name": "crates/daemon/src/session.rs:627 SessionActor::interrupt",
+      "per_token": 0.8539325842696629,
+      "score": 76.0,
+      "tokens": 89
+    },
+    {
+      "boundary": 1.0,
+      "boundary_share": 1.3793103448275863,
+      "lines": 9,
+      "name": "crates/proto/src/frame.rs:35 body_len",
+      "per_token": 0.9177215189873418,
+      "score": 72.5,
+      "tokens": 79
+    },
+    {
+      "boundary": 2.0,
+      "boundary_share": 2.9629629629629632,
+      "lines": 9,
+      "name": "crates/daemon/src/registry.rs:218 RegistryActor::run",
+      "per_token": 1.25,
+      "score": 67.5,
+      "tokens": 54
+    },
+    {
+      "boundary": 2.0,
+      "boundary_share": 3.225806451612903,
+      "lines": 6,
+      "name": "crates/daemon/src/log.rs:95 LogActor::run",
+      "per_token": 1.24,
+      "score": 62.0,
+      "tokens": 50
+    },
+    {
+      "boundary": 4.0,
+      "boundary_share": 6.6115702479338845,
+      "lines": 9,
+      "name": "crates/daemon/src/session.rs:795 SessionActor::withdrawn",
+      "per_token": 1.043103448275862,
+      "score": 60.5,
+      "tokens": 58
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 10,
+      "name": "crates/proto/src/frame.rs:208 oversized_header_is_refused_before_reading_the_body",
+      "per_token": 1.0,
+      "score": 59.0,
+      "tokens": 59
+    },
+    {
+      "boundary": 3.0,
+      "boundary_share": 5.217391304347826,
+      "lines": 11,
+      "name": "crates/daemon/src/session.rs:657 SessionActor::note",
+      "per_token": 0.9583333333333334,
+      "score": 57.5,
+      "tokens": 60
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 7,
+      "name": "crates/daemon/src/session.rs:422 Agent::conversation",
+      "per_token": 0.7708333333333333,
+      "score": 55.5,
+      "tokens": 72
+    },
+    {
+      "boundary": 3.0,
+      "boundary_share": 5.714285714285714,
+      "lines": 7,
+      "name": "crates/daemon/src/session.rs:774 SessionActor::open",
+      "per_token": 1.0096153846153846,
+      "score": 52.5,
+      "tokens": 52
+    },
+    {
+      "boundary": 3.0,
+      "boundary_share": 6.0,
+      "lines": 7,
+      "name": "crates/daemon/src/registry.rs:175 Registry::relaunch",
+      "per_token": 1.0416666666666665,
+      "score": 50.0,
+      "tokens": 48
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 9,
+      "name": "crates/daemon/src/registry.rs:376 RegistryActor::availability",
+      "per_token": 0.8928571428571428,
+      "score": 50.0,
+      "tokens": 56
+    },
+    {
+      "boundary": 1.0,
+      "boundary_share": 2.0202020202020203,
+      "lines": 6,
+      "name": "crates/daemon/src/log.rs:67 Log::append",
+      "per_token": 1.03125,
+      "score": 49.5,
+      "tokens": 48
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 11,
+      "name": "crates/daemon/src/log.rs:172 providers",
+      "per_token": 0.9999999999999999,
+      "score": 49.0,
+      "tokens": 49
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 8,
+      "name": "crates/proto/src/frame.rs:59 frame",
+      "per_token": 1.0,
+      "score": 46.0,
+      "tokens": 46
+    },
+    {
+      "boundary": 1.0,
+      "boundary_share": 2.197802197802198,
+      "lines": 7,
+      "name": "crates/daemon/src/registry.rs:56 OwnSignIn::auth",
+      "per_token": 0.7982456140350876,
+      "score": 45.5,
+      "tokens": 57
+    },
+    {
+      "boundary": 5.0,
+      "boundary_share": 10.989010989010989,
+      "lines": 6,
+      "name": "crates/daemon/src/session.rs:670 SessionActor::apply",
+      "per_token": 1.1375,
+      "score": 45.5,
+      "tokens": 40
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 3,
+      "name": "crates/daemon/src/registry.rs:183 Registry::find",
+      "per_token": 1.05,
+      "score": 42.0,
+      "tokens": 40
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 12,
+      "name": "crates/daemon/src/registry.rs:73 Launchers::with",
+      "per_token": 0.8235294117647058,
+      "score": 42.0,
+      "tokens": 51
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 3,
+      "name": "crates/daemon/src/log.rs:76 Log::welcome",
+      "per_token": 1.0540540540540542,
+      "score": 39.0,
+      "tokens": 37
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 3,
+      "name": "crates/daemon/src/log.rs:80 Log::subscribe",
+      "per_token": 1.0540540540540542,
+      "score": 39.0,
+      "tokens": 37
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 4,
+      "name": "crates/daemon/src/registry.rs:194 Registry::set_credential",
+      "per_token": 1.0540540540540542,
+      "score": 39.0,
+      "tokens": 37
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 4,
+      "name": "crates/daemon/src/registry.rs:199 Registry::clear_credential",
+      "per_token": 1.0540540540540542,
+      "score": 39.0,
+      "tokens": 37
+    },
+    {
+      "boundary": 2.0,
+      "boundary_share": 5.128205128205128,
+      "lines": 6,
+      "name": "crates/daemon/src/session.rs:816 approval",
+      "per_token": 0.951219512195122,
+      "score": 39.0,
+      "tokens": 41
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 9,
+      "name": "crates/proto/src/frame.rs:219 an_unknown_variant_is_a_body_error",
+      "per_token": 1.0,
+      "score": 38.0,
+      "tokens": 38
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 3,
+      "name": "crates/daemon/src/session.rs:262 Session::order",
+      "per_token": 1.0588235294117647,
+      "score": 36.0,
+      "tokens": 34
+    },
+    {
+      "boundary": 1.0,
+      "boundary_share": 2.898550724637681,
+      "lines": 3,
+      "name": "crates/daemon/src/session.rs:805 SessionActor::emit",
+      "per_token": 1.078125,
+      "score": 34.5,
+      "tokens": 32
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 3,
+      "name": "crates/daemon/src/registry.rs:188 Registry::providers",
+      "per_token": 1.0806451612903225,
+      "score": 33.5,
+      "tokens": 31
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 6,
+      "name": "crates/daemon/src/registry.rs:369 RegistryActor::providers",
+      "per_token": 1.0,
+      "score": 33.0,
+      "tokens": 33
+    },
+    {
+      "boundary": 3.0,
+      "boundary_share": 9.375,
+      "lines": 3,
+      "name": "crates/proto/src/frame.rs:45 decode",
+      "per_token": 1.0,
+      "score": 32.0,
+      "tokens": 32
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 6,
+      "name": "crates/daemon/src/registry.rs:66 Launchers::of",
+      "per_token": 0.782051282051282,
+      "score": 30.5,
+      "tokens": 39
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 6,
+      "name": "crates/daemon/src/session.rs:394 Pending::native",
+      "per_token": 0.7195121951219512,
+      "score": 29.5,
+      "tokens": 41
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 5,
+      "name": "crates/daemon/src/log.rs:160 delta",
+      "per_token": 1.06,
+      "score": 26.5,
+      "tokens": 25
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 5,
+      "name": "crates/daemon/src/log.rs:166 message",
+      "per_token": 1.06,
+      "score": 26.5,
+      "tokens": 25
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 3,
+      "name": "crates/daemon/src/log.rs:147 LogActor::head",
+      "per_token": 0.9285714285714285,
+      "score": 26.0,
+      "tokens": 28
+    }
+  ],
+  "total": {
+    "boundary": 304.0,
+    "boundary_share": 3.217441921998201,
+    "lines": 1537,
+    "name": "total",
+    "per_token": 0.9481685900652284,
+    "score": 9448.5,
+    "tokens": 9965
+  }
+}
+Exit: 0

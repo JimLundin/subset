@@ -1,0 +1,412 @@
+$ subset score crates/agents/src/claude/protocol.rs --by fn --json
+{
+  "by": "fn",
+  "rows": [
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 115,
+      "name": "crates/agents/src/claude/protocol.rs:1247 tool_inputs_become_shared_tool_kinds",
+      "per_token": 0.9121887287024901,
+      "score": 696.0,
+      "tokens": 763
+    },
+    {
+      "boundary": 1.0,
+      "boundary_share": 0.29455081001472755,
+      "lines": 53,
+      "name": "crates/agents/src/claude/protocol.rs:1363 turn_results_distinguish_errors_from_interrupts",
+      "per_token": 0.8981481481481481,
+      "score": 339.5,
+      "tokens": 378
+    },
+    {
+      "boundary": 1.0,
+      "boundary_share": 0.33333333333333337,
+      "lines": 74,
+      "name": "crates/agents/src/claude/protocol.rs:447 inbound",
+      "per_token": 0.7518796992481203,
+      "score": 300.0,
+      "tokens": 399
+    },
+    {
+      "boundary": 1.0,
+      "boundary_share": 0.3395585738539898,
+      "lines": 69,
+      "name": "crates/agents/src/claude/protocol.rs:531 control_request",
+      "per_token": 0.9174454828660435,
+      "score": 294.5,
+      "tokens": 321
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 45,
+      "name": "crates/agents/src/claude/protocol.rs:1056 ask_user_question_is_a_question_answered_in_its_input",
+      "per_token": 1.0040816326530613,
+      "score": 246.0,
+      "tokens": 245
+    },
+    {
+      "boundary": 4.0,
+      "boundary_share": 1.8306636155606408,
+      "lines": 34,
+      "name": "crates/agents/src/claude/protocol.rs:365 grant",
+      "per_token": 0.8568627450980392,
+      "score": 218.5,
+      "tokens": 255
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 21,
+      "name": "crates/agents/src/claude/protocol.rs:1417 tool_results_use_the_shared_outcome_and_default_to_success",
+      "per_token": 0.7938931297709924,
+      "score": 208.0,
+      "tokens": 262
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 34,
+      "name": "crates/agents/src/claude/protocol.rs:691 models",
+      "per_token": 0.9375,
+      "score": 202.5,
+      "tokens": 216
+    },
+    {
+      "boundary": 1.0,
+      "boundary_share": 0.5050505050505051,
+      "lines": 39,
+      "name": "crates/agents/src/claude/protocol.rs:841 encode",
+      "per_token": 0.8284518828451882,
+      "score": 198.0,
+      "tokens": 239
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 12,
+      "name": "crates/agents/src/claude/protocol.rs:77 tool_kind",
+      "per_token": 0.8468208092485549,
+      "score": 146.5,
+      "tokens": 173
+    },
+    {
+      "boundary": 1.0,
+      "boundary_share": 0.7117437722419928,
+      "lines": 30,
+      "name": "crates/agents/src/claude/protocol.rs:881 verdict",
+      "per_token": 0.8028571428571428,
+      "score": 140.5,
+      "tokens": 175
+    },
+    {
+      "boundary": 2.0,
+      "boundary_share": 1.680672268907563,
+      "lines": 16,
+      "name": "crates/agents/src/claude/protocol.rs:915 answered",
+      "per_token": 0.9083969465648855,
+      "score": 119.0,
+      "tokens": 131
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 21,
+      "name": "crates/agents/src/claude/protocol.rs:610 block",
+      "per_token": 0.8013698630136986,
+      "score": 117.0,
+      "tokens": 146
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 22,
+      "name": "crates/agents/src/claude/protocol.rs:1026 a_suggested_mode_is_no_session_grant",
+      "per_token": 1.008695652173913,
+      "score": 116.0,
+      "tokens": 115
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 25,
+      "name": "crates/agents/src/claude/protocol.rs:1000 allow_for_session_adds_the_suggested_rules_for_the_session_only",
+      "per_token": 1.010204081632653,
+      "score": 99.0,
+      "tokens": 98
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 14,
+      "name": "crates/agents/src/claude/protocol.rs:967 answered",
+      "per_token": 1.0595238095238095,
+      "score": 89.0,
+      "tokens": 84
+    },
+    {
+      "boundary": 2.0,
+      "boundary_share": 2.4390243902439024,
+      "lines": 12,
+      "name": "crates/agents/src/claude/protocol.rs:727 check_version",
+      "per_token": 0.881720430107527,
+      "score": 82.0,
+      "tokens": 93
+    },
+    {
+      "boundary": 1.0,
+      "boundary_share": 1.3245033112582782,
+      "lines": 7,
+      "name": "crates/agents/src/claude/protocol.rs:439 parse_line",
+      "per_token": 0.9207317073170732,
+      "score": 75.5,
+      "tokens": 82
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 11,
+      "name": "crates/agents/src/claude/protocol.rs:1101 denied",
+      "per_token": 1.042372881355932,
+      "score": 61.5,
+      "tokens": 59
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 22,
+      "name": "crates/agents/src/claude/protocol.rs:1139 control_requests_match_the_sdk_envelope",
+      "per_token": 1.0,
+      "score": 54.0,
+      "tokens": 54
+    },
+    {
+      "boundary": 2.0,
+      "boundary_share": 3.7037037037037033,
+      "lines": 9,
+      "name": "crates/agents/src/claude/protocol.rs:956 asked",
+      "per_token": 0.7605633802816901,
+      "score": 54.0,
+      "tokens": 71
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 11,
+      "name": "crates/agents/src/claude/protocol.rs:1199 unknown_control_subtype_still_yields_its_request_id",
+      "per_token": 0.9888888888888889,
+      "score": 44.5,
+      "tokens": 45
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 11,
+      "name": "crates/agents/src/claude/protocol.rs:1211 malformed_can_use_tool_is_still_answered",
+      "per_token": 0.9888888888888889,
+      "score": 44.5,
+      "tokens": 45
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 11,
+      "name": "crates/agents/src/claude/protocol.rs:1223 can_use_tool_without_its_tool_use_id_is_refused",
+      "per_token": 0.9888888888888889,
+      "score": 44.5,
+      "tokens": 45
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 11,
+      "name": "crates/agents/src/claude/protocol.rs:1235 hook_callback_is_unsupported_not_unknown",
+      "per_token": 0.9888888888888889,
+      "score": 44.5,
+      "tokens": 45
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 10,
+      "name": "crates/agents/src/claude/protocol.rs:34 PermissionMode::wire",
+      "per_token": 0.6875,
+      "score": 44.0,
+      "tokens": 64
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 3,
+      "name": "crates/agents/src/claude/protocol.rs:400 questions",
+      "per_token": 0.9883720930232558,
+      "score": 42.5,
+      "tokens": 43
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 13,
+      "name": "crates/agents/src/claude/protocol.rs:1174 unsupported_control_request_gets_an_error_reply",
+      "per_token": 1.0,
+      "score": 40.0,
+      "tokens": 40
+    },
+    {
+      "boundary": 1.0,
+      "boundary_share": 2.5316455696202533,
+      "lines": 3,
+      "name": "crates/agents/src/claude/protocol.rs:103 field",
+      "per_token": 1.0394736842105263,
+      "score": 39.5,
+      "tokens": 38
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 6,
+      "name": "crates/agents/src/claude/protocol.rs:1048 option",
+      "per_token": 1.0833333333333333,
+      "score": 39.0,
+      "tokens": 36
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 3,
+      "name": "crates/agents/src/claude/protocol.rs:681 applied",
+      "per_token": 0.9871794871794871,
+      "score": 38.5,
+      "tokens": 39
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 6,
+      "name": "crates/agents/src/claude/protocol.rs:603 message_event",
+      "per_token": 0.9047619047619047,
+      "score": 38.0,
+      "tokens": 42
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 8,
+      "name": "crates/agents/src/claude/protocol.rs:750 ControlCall::subtype",
+      "per_token": 0.72,
+      "score": 36.0,
+      "tokens": 50
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 10,
+      "name": "crates/agents/src/claude/protocol.rs:1188 unknown_type_becomes_unknown_event_with_the_raw_json",
+      "per_token": 0.986111111111111,
+      "score": 35.5,
+      "tokens": 36
+    },
+    {
+      "boundary": 2.0,
+      "boundary_share": 5.633802816901409,
+      "lines": 6,
+      "name": "crates/agents/src/claude/protocol.rs:522 tool_outcome",
+      "per_token": 0.8452380952380952,
+      "score": 35.5,
+      "tokens": 42
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 17,
+      "name": "crates/agents/src/claude/protocol.rs:1114 deny_sends_interrupt_only_when_set",
+      "per_token": 1.0,
+      "score": 35.0,
+      "tokens": 35
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 6,
+      "name": "crates/agents/src/claude/protocol.rs:355 Rule::label",
+      "per_token": 0.8717948717948718,
+      "score": 34.0,
+      "tokens": 39
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 5,
+      "name": "crates/agents/src/claude/protocol.rs:90 one_file",
+      "per_token": 1.0,
+      "score": 33.0,
+      "tokens": 33
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 6,
+      "name": "crates/agents/src/claude/protocol.rs:96 other_tool",
+      "per_token": 1.064516129032258,
+      "score": 33.0,
+      "tokens": 31
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 6,
+      "name": "crates/agents/src/claude/protocol.rs:1131 control",
+      "per_token": 1.0535714285714286,
+      "score": 29.5,
+      "tokens": 28
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 10,
+      "name": "crates/agents/src/claude/protocol.rs:1163 user_text_is_sent_as_one_text_block",
+      "per_token": 1.0,
+      "score": 28.0,
+      "tokens": 28
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 9,
+      "name": "crates/agents/src/claude/protocol.rs:990 allow_echoes_the_proposed_input_as_updated_input",
+      "per_token": 1.0,
+      "score": 25.0,
+      "tokens": 25
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 3,
+      "name": "crates/agents/src/claude/protocol.rs:946 json",
+      "per_token": 1.175,
+      "score": 23.5,
+      "tokens": 20
+    },
+    {
+      "boundary": 0.0,
+      "boundary_share": 0.0,
+      "lines": 3,
+      "name": "crates/agents/src/claude/protocol.rs:950 sent",
+      "per_token": 1.0789473684210527,
+      "score": 20.5,
+      "tokens": 19
+    }
+  ],
+  "total": {
+    "boundary": 644.0,
+    "boundary_share": 10.723503455166098,
+    "lines": 1254,
+    "name": "total",
+    "per_token": 0.8817354279841433,
+    "score": 6005.5,
+    "tokens": 6811
+  }
+}
+Exit: 0

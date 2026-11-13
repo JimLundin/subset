@@ -1,0 +1,2 @@
+$ subset check
+Exit: 0

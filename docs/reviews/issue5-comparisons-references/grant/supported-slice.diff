@@ -1,0 +1,23 @@
+--- published/grant
++++ slice/grant
+@@ -15,9 +15,9 @@
+         })
+         .flatten()
+         .collect::<Vec<Value>>();
+-    Some(rules)
+-        .filter(|rules| !rules.is_empty())
+-        .map(|rules| Grant {
++    match rules.as_slice() {
++        [] => None,
++        _ => Some(Grant {
+             label: rules
+                 .iter()
+                 .filter_map(|rule| serde_json::from_value::<Rule>(rule.clone()).ok())
+@@ -29,5 +29,6 @@
+                 behavior: String::from("allow"),
+                 destination: String::from("session"),
+             },
+-        })
++        }),
++    }
+ }
