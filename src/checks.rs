@@ -347,6 +347,18 @@ pub(crate) fn from_once(variants: &Punctuated<syn::Variant, syn::token::Comma>) 
         .collect()
 }
 
+/// Raw and ordinary identifier spellings share one logical cfg name.
+pub(crate) fn cfg_key(name: &str) -> String {
+    name.strip_prefix("r#").unwrap_or(name).to_string()
+}
+
+fn cfg_path_keys(path: &syn::Path) -> Vec<String> {
+    path.segments
+        .iter()
+        .map(|s| cfg_key(&s.ident.to_string()))
+        .collect()
+}
+
 /// Normalize module-relative owner paths and alpha-renamed type parameters.
 pub(crate) fn cfg_owner(i: &syn::ItemImpl, scope: &CfgScope) -> CfgOwner {
     let bound = i
@@ -354,7 +366,7 @@ pub(crate) fn cfg_owner(i: &syn::ItemImpl, scope: &CfgScope) -> CfgOwner {
         .params
         .iter()
         .filter_map(|p| match p {
-            GenericParam::Type(t) => Some(t.ident.to_string()),
+            GenericParam::Type(t) => Some(cfg_key(&t.ident.to_string())),
             GenericParam::Lifetime(l) => Some(l.lifetime.to_string()),
             _ => None,
         })
@@ -419,7 +431,7 @@ impl<'ast> Visit<'ast> for CfgOwnerNames {
         let parameter = path
             .segments
             .first()
-            .and_then(|s| self.bound.get(&s.ident.to_string()))
+            .and_then(|s| self.bound.get(&cfg_key(&s.ident.to_string())))
             .filter(|_| path.leading_colon.is_none())
             .cloned();
         let blocks = match parameter {
@@ -429,7 +441,7 @@ impl<'ast> Visit<'ast> for CfgOwnerNames {
             }
             None => {
                 cfg_path_base(
-                    &syntax::segments(path),
+                    &cfg_path_keys(path),
                     &self.scope,
                     path.leading_colon.map_or(Within::Out, |_| Within::In),
                     self.scope.names.len().saturating_add(1),
@@ -452,7 +464,7 @@ fn cfg_owner_type(ty: &Type, scope: &CfgScope, parameters: &BTreeMap<String, Str
         Type::Path(t) => t
             .path
             .get_ident()
-            .and_then(|name| parameters.get(&name.to_string())),
+            .and_then(|name| parameters.get(&cfg_key(&name.to_string()))),
         _ => None,
     };
     match (ty, parameter) {
@@ -507,11 +519,11 @@ fn cfg_owner_path(
     scope: &CfgScope,
     parameters: &BTreeMap<String, String>,
 ) -> syn::Path {
-    let names = syntax::segments(path);
+    let names = cfg_path_keys(path);
     let parameter = path
         .segments
         .first()
-        .and_then(|s| parameters.get(&s.ident.to_string()));
+        .and_then(|s| parameters.get(&cfg_key(&s.ident.to_string())));
     let base = match (path.leading_colon, parameter) {
         (None, Some(name)) => CfgPath {
             root: CfgRoot::Parameter,
@@ -556,10 +568,11 @@ fn cfg_owner_path(
             None => PathArguments::None,
         };
         syn::PathSegment {
-            ident: name.strip_prefix("r#").map_or_else(
-                || syn::Ident::new(name, Span::call_site()),
-                |raw| syn::Ident::new_raw(raw, Span::call_site()),
-            ),
+            ident: match name.as_str() {
+                "crate" | "self" | "super" | "Self" => syn::Ident::new(name, Span::call_site()),
+                _ => syn::parse_str::<syn::Ident>(name)
+                    .unwrap_or_else(|_| syn::Ident::new_raw(name, Span::call_site())),
+            },
             arguments,
         }
     });

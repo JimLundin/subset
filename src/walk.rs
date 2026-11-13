@@ -482,7 +482,7 @@ impl<'ast> Visit<'ast> for CfgRoots {
             self.names.push(CfgName {
                 module: self.module.clone(),
                 blocks: self.blocks.clone(),
-                name: name.to_string(),
+                name: checks::cfg_key(&name.to_string()),
                 target: None,
                 absolute: Within::Out,
                 kind: match item {
@@ -495,7 +495,7 @@ impl<'ast> Visit<'ast> for CfgRoots {
     }
 
     fn visit_item_mod(&mut self, item: &'ast syn::ItemMod) {
-        self.module.push(item.ident.to_string());
+        self.module.push(checks::cfg_key(&item.ident.to_string()));
         visit::visit_item_mod(self, item);
         let _ = self.module.pop();
     }
@@ -512,8 +512,12 @@ impl<'ast> Visit<'ast> for CfgRoots {
             .filter_map(|path| {
                 let target = match path.segments.split_last() {
                     Some((last, prefix)) => match last.as_str() {
-                        "self" => prefix.to_vec(),
-                        _ => path.segments.clone(),
+                        "self" => prefix.iter().map(|name| checks::cfg_key(name)).collect(),
+                        _ => path
+                            .segments
+                            .iter()
+                            .map(|name| checks::cfg_key(name))
+                            .collect(),
                     },
                     None => Vec::new(),
                 };
@@ -524,7 +528,7 @@ impl<'ast> Visit<'ast> for CfgRoots {
                 name.map(|name| CfgName {
                     module: self.module.clone(),
                     blocks: self.blocks.clone(),
-                    name,
+                    name: checks::cfg_key(&name),
                     target: Some(target),
                     absolute: item.leading_colon.map_or(Within::Out, |_| Within::In),
                     kind: CfgBindingKind::Import,
@@ -655,10 +659,15 @@ impl Walk {
 
     fn cfg_item(&self, kind: CfgKind, name: String) -> CfgItem {
         CfgItem {
-            module: self.cx.module.as_ref().clone(),
+            module: self
+                .cx
+                .module
+                .iter()
+                .map(|name| checks::cfg_key(name))
+                .collect(),
             block: self.cfg_blocks.last().copied(),
             owner: self.cx.imp.as_ref().map(|imp| imp.cfg_owner.clone()),
-            ..CfgItem::new(kind, name)
+            ..CfgItem::new(kind, checks::cfg_key(&name))
         }
     }
 
@@ -1335,7 +1344,12 @@ impl<'ast> Visit<'ast> for Walk {
         self.hits
             .extend(visitor.map(|name| Hit::Fact(Fact::Visitor(name))));
         let scope = CfgScope {
-            module: self.cx.module.as_ref().clone(),
+            module: self
+                .cx
+                .module
+                .iter()
+                .map(|name| checks::cfg_key(name))
+                .collect(),
             blocks: self.cfg_blocks.clone(),
             names: self.env.cfg_names.clone(),
         };

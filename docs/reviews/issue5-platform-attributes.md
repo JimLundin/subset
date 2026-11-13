@@ -92,9 +92,11 @@ cannot change external root interpretation. Qualified `crate`, `self`, and
 shadows. Local declarations retain their defining block origins in the
 owner identity. Both bare and qualified paths walk intermediate imported
 module bindings. A grouped `self` leaf imports its parent module name and
-target, as in `use super::owners::{self, Port}`. Reconstructed raw identifiers
-retain their raw form, so an accepted type named `r#type` cannot panic the
-normalizer. Bound type/lifetime names normalize separately;
+target, as in `use super::owners::{self, Port}`. Raw prefixes normalize in
+logical declaration, import, module, function, binder, and path keys:
+`Foo` and `r#Foo` denote the same owner. Reconstructed keyword names retain
+valid raw identifiers, so an accepted type named `r#type` cannot panic the
+normalizer. This normalization is confined to cfg metadata. Bound type/lifetime names normalize separately;
 a bound type variable uses a private marker that cannot equal a concrete
 Rust type path. Token spans do not affect identity. This distinguishes
 different types and traits while preserving compatible spellings and
@@ -119,8 +121,11 @@ that enforce accepted policy. The fixture and verbatim before/after
 outputs are included in the reproducible evidence.
 
 All 28 attributes in the negative fixture now produce missing-counterpart
-findings; the baseline produced none. The positive fixture produces none.
-It contains 48 allowed platform attributes plus one test-only re-export.
+findings; none of those negative sites produced baseline findings. The
+expanded positive fixture produces none with the correction; the baseline
+flags eight valid raw/import spelling sites in that expanded fixture.
+Both verbatim outputs remain in the JSON evidence.
+It contains 58 allowed platform attributes plus one test-only re-export.
 The separate 16-case matrix confirms the predicate and host boundaries:
 
 | Form | Observed checker result |

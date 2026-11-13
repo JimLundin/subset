@@ -2,7 +2,7 @@
   "conductor_commit": "79568ce8a55b266fe1cf96b17dd5b2bc2dfa0c8c",
   "subset_baseline_commit": "64352fdd5935de3954ee06b4598789cb89f67a03",
   "configuration_version": 14,
-  "checker_sha256": "942adf914605fa44f6478d6abb978e51664dfa58f1490a39b8b5a1c1051cb31f",
+  "checker_sha256": "ed2a09e5f0dfd9be00983af77b0c2165997aca4372af649e08d7462047ba68a5",
   "proposed_tier": "tolerated",
   "proposed_weight": 2.0,
   "boundary_applies": false,
@@ -5328,7 +5328,7 @@
   },
   "regression_before": {
     "exit": 1,
-    "stdout": "crates/daemon/src/a.rs:218:5: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\n",
+    "stdout": "crates/daemon/src/a.rs:218:5: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a.rs:385:5: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a.rs:392:5: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a.rs:404:1: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a.rs:411:1: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a.rs:431:9: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a.rs:441:5: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\ncrates/daemon/src/a.rs:448:5: attr.cfg: a `cfg` fn, impl or use needs its counterpart for the other platform in the same file (proposal 0016)\n",
     "stderr": ""
   },
   "checker_matrix": {

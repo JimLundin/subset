@@ -364,3 +364,91 @@ mod raw_name {
         }
     }
 }
+
+mod mixed_raw {
+    struct Foo(u8);
+
+    impl Foo {
+        #[cfg(unix)]
+        fn value(&self) -> u8 {
+            self.0
+        }
+    }
+
+    impl r#Foo {
+        #[cfg(not(unix))]
+        fn value(&self) -> u8 {
+            self.0
+        }
+    }
+
+    #[cfg(unix)]
+    impl Foo {
+        fn whole(&self) -> u8 {
+            self.0
+        }
+    }
+
+    #[cfg(not(unix))]
+    impl r#Foo {
+        fn whole(&self) -> u8 {
+            self.0
+        }
+    }
+}
+
+mod owner_names {
+    pub(crate) struct Foo(pub(crate) u8);
+}
+
+#[cfg(unix)]
+impl owner_names::Foo {
+    fn mixed_module(&self) -> u8 {
+        self.0
+    }
+}
+
+#[cfg(not(unix))]
+impl r#owner_names::r#Foo {
+    fn mixed_module(&self) -> u8 {
+        self.0
+    }
+}
+
+mod r#raw_scope {
+    struct Wrapper<Id> {
+        value: Id,
+    }
+
+    impl<Id> Wrapper<r#Id> {
+        #[cfg(unix)]
+        fn value(&self) -> &r#Id {
+            &self.value
+        }
+    }
+
+    impl<r#Key> self::r#Wrapper<Key> {
+        #[cfg(not(unix))]
+        fn r#value(&self) -> &Key {
+            &self.value
+        }
+    }
+}
+
+mod raw_import {
+    use super::r#owner_names::{self, r#Foo};
+
+    #[cfg(unix)]
+    impl Foo {
+        fn imported_raw(&self) -> u8 {
+            self.0
+        }
+    }
+
+    #[cfg(not(unix))]
+    impl owner_names::r#Foo {
+        fn imported_raw(&self) -> u8 {
+            self.0
+        }
+    }
+}
