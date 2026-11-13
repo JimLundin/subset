@@ -82,7 +82,7 @@ fn read(path: &Path) -> String {
 /// Runs one case; a difference from `expected` is its name.
 fn case(name: &str) -> Option<String> {
     let case = root().join("tests/cases").join(name);
-    let dir = scratch(name);
+    let dir = scratch(&format!("case-{name}"));
     copy(&case, &dir);
     let _ = std::fs::remove_file(dir.join("cmd"));
     let _ = std::fs::remove_file(dir.join("expected"));
