@@ -207,6 +207,19 @@ and named enums, and should go together), `choose.method`, `if.*`,
 `closure.block`, `fn.depth`, `fn.lines`. The shape limits go last because
 every earlier rewrite changes fn sizes.
 
+## Gaps found by the sufficiency trial
+
+[`sufficiency.md`](sufficiency.md) rewrote two pieces of `src/` in version
+15. Four points have no form in the spec as written and need an owner
+ruling before package 5 and package 9:
+
+| Gap | Recommendation | Package |
+|---|---|---|
+| G1. Building pairs for `collect` into a map or `Map::from` | a tuple may be built as the item a library consumes as a pair | 6 |
+| G2. Ordering by a composite key | `Ord` on a named struct used only as a key | 3 |
+| G3. A predicate answering "no" in a fallback case | `matches!(v, P if cond)` is the form; drop the no-guard clause of `MatchesForm` | 5 |
+| G4. Method names a library trait fixes | name and parameter limits skip library trait impl signatures | 7 |
+
 ## Details the rulings left open
 
 Each has a default so work is not blocked. Confirm with the owner before
