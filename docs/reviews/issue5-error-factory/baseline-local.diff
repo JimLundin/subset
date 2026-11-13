@@ -1,0 +1,27 @@
+--- a/crates/agents/src/install.rs
++++ b/crates/agents/src/install.rs
+@@ -240,0 +241,2 @@
++    let download_error = |error| io(download, error);
++    let dir_error = |error| io(dir, error);
+@@ -243,2 +245,2 @@
+-            std::fs::create_dir_all(dir).map_err(|error| io(dir, error))?;
+-            make_executable(download).map_err(|error| io(download, error))?;
++            std::fs::create_dir_all(dir).map_err(dir_error)?;
++            make_executable(download).map_err(download_error)?;
+@@ -258 +260 @@
+-                .map_err(|error| io(download, error))?;
++                .map_err(download_error)?;
+@@ -263,2 +265,2 @@
+-                    std::fs::rename(&staging, dir).map_err(|error| io(dir, error))?;
+-                    std::fs::remove_file(download).map_err(|error| io(download, error))
++                    std::fs::rename(&staging, dir).map_err(dir_error)?;
++                    std::fs::remove_file(download).map_err(download_error)
+@@ -313,3 +315,2 @@
+-    let file = tokio::fs::File::open(path)
+-        .await
+-        .map_err(|error| io(path, error))?;
++    let path_error = |error| io(path, error);
++    let file = tokio::fs::File::open(path).await.map_err(path_error)?;
+@@ -318 +319 @@
+-        .map_err(|error| io(path, error))
++        .map_err(path_error)

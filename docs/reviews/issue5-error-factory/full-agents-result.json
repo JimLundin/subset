@@ -1,0 +1,17 @@
+{
+  "python_pid": 2028608,
+  "cargo_pid": 2028611,
+  "root": "/home/jim/projects/apps/conductor-issue5-v14",
+  "target": "/home/jim/projects/apps/conductor-issue5-v14/crates/agents/src/install.rs",
+  "backup": "/home/jim/projects/apps/conductor-issue5-v14/.audit/0059-original-install.rs",
+  "candidate": "/mnt/c/Users/Jim.Lundin/Projects/subset/target/worktrees/issue5-patterns/target/issue5-error-factory/after/crates/agents/src/install.rs",
+  "original_install_sha256": "12d32fa7cac9e78ce7510d1ee5f09f0e60b674a81ca8f6022efdf0c4332ab78c",
+  "original_diff_sha256": "0b12a5eca06c18e47388fbd537af3d8a2357d7819996eb1101ce0c2e00eeb6bd",
+  "candidate_install_sha256": "5804caec05b8d2f30e2c2e25f7c0f984a2ac4f5e69861fbdf4799a5c539f63dc",
+  "phase": "restored",
+  "cargo_exit_code": 0,
+  "restored_install_sha256": "12d32fa7cac9e78ce7510d1ee5f09f0e60b674a81ca8f6022efdf0c4332ab78c",
+  "restored_diff_sha256": "0b12a5eca06c18e47388fbd537af3d8a2357d7819996eb1101ce0c2e00eeb6bd",
+  "install_restored": true,
+  "full_diff_restored": true
+}

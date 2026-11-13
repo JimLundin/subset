@@ -1,0 +1,60 @@
+--- a/crates/agents/src/install.rs
++++ b/crates/agents/src/install.rs
+@@ -153 +153 @@
+-    std::fs::create_dir_all(parent).map_err(|error| io(parent, error))?;
++    std::fs::create_dir_all(parent).map_err(io_error(parent))?;
+@@ -155 +155 @@
+-    let lock = File::create(&lock_path).map_err(|error| io(&lock_path, error))?;
++    let lock = File::create(&lock_path).map_err(io_error(&lock_path))?;
+@@ -215 +215 @@
+-        .map_err(|error| io(parent, error))?
++        .map_err(io_error(parent))?
+@@ -230 +230 @@
+-        .map_err(|error| io(path, error))
++        .map_err(io_error(path))
+@@ -241,2 +240,0 @@
+-    let download_error = |error| io(download, error);
+-    let dir_error = |error| io(dir, error);
+@@ -245,3 +243,3 @@
+-            std::fs::create_dir_all(dir).map_err(dir_error)?;
+-            make_executable(download).map_err(download_error)?;
+-            std::fs::rename(download, binary).map_err(|error| io(binary, error))
++            std::fs::create_dir_all(dir).map_err(io_error(dir))?;
++            make_executable(download).map_err(io_error(download))?;
++            std::fs::rename(download, binary).map_err(io_error(binary))
+@@ -252 +250 @@
+-            std::fs::create_dir_all(&staging).map_err(|error| io(&staging, error))?;
++            std::fs::create_dir_all(&staging).map_err(io_error(&staging))?;
+@@ -260 +258 @@
+-                .map_err(download_error)?;
++                .map_err(io_error(download))?;
+@@ -265,2 +263,2 @@
+-                    std::fs::rename(&staging, dir).map_err(dir_error)?;
+-                    std::fs::remove_file(download).map_err(download_error)
++                    std::fs::rename(&staging, dir).map_err(io_error(dir))?;
++                    std::fs::remove_file(download).map_err(io_error(download))
+@@ -290,3 +288 @@
+-    let file = tokio::fs::File::create(to)
+-        .await
+-        .map_err(|error| io(to, error))?;
++    let file = tokio::fs::File::create(to).await.map_err(io_error(to))?;
+@@ -304,5 +300,2 @@
+-            Some(chunk) => file
+-                .write_all(&chunk)
+-                .await
+-                .map_err(|error| io(to, error))?,
+-            None => break file.sync_all().await.map_err(|error| io(to, error)),
++            Some(chunk) => file.write_all(&chunk).await.map_err(io_error(to))?,
++            None => break file.sync_all().await.map_err(io_error(to)),
+@@ -315,2 +308 @@
+-    let path_error = |error| io(path, error);
+-    let file = tokio::fs::File::open(path).await.map_err(path_error)?;
++    let file = tokio::fs::File::open(path).await.map_err(io_error(path))?;
+@@ -319 +311 @@
+-        .map_err(path_error)
++        .map_err(io_error(path))
+@@ -341,0 +334,4 @@
++}
++
++fn io_error(path: &Path) -> impl FnOnce(std::io::Error) -> InstallError {
++    move |error| io(path, error)

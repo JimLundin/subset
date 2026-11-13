@@ -1,0 +1,532 @@
+{
+  "conductor_commit": "79568ce8a55b266fe1cf96b17dd5b2bc2dfa0c8c",
+  "subset_commit": "64352fdd5935de3954ee06b4598789cb89f67a03",
+  "subset_version": 14,
+  "baseline_sha256": "12d32fa7cac9e78ce7510d1ee5f09f0e60b674a81ca8f6022efdf0c4332ab78c",
+  "remaining_inline_sites": [
+    {
+      "line": 153,
+      "source": "std::fs::create_dir_all(parent).map_err(|error| io(parent, error))?;"
+    },
+    {
+      "line": 155,
+      "source": "let lock = File::create(&lock_path).map_err(|error| io(&lock_path, error))?;"
+    },
+    {
+      "line": 215,
+      "source": ".map_err(|error| io(parent, error))?"
+    },
+    {
+      "line": 230,
+      "source": ".map_err(|error| io(path, error))"
+    },
+    {
+      "line": 247,
+      "source": "std::fs::rename(download, binary).map_err(|error| io(binary, error))"
+    },
+    {
+      "line": 252,
+      "source": "std::fs::create_dir_all(&staging).map_err(|error| io(&staging, error))?;"
+    },
+    {
+      "line": 292,
+      "source": ".map_err(|error| io(to, error))?;"
+    },
+    {
+      "line": 307,
+      "source": ".map_err(|error| io(to, error))?,"
+    },
+    {
+      "line": 308,
+      "source": "None => break file.sync_all().await.map_err(|error| io(to, error)),"
+    }
+  ],
+  "all_io_textual_uses_before": [
+    {
+      "line": 153,
+      "source": "std::fs::create_dir_all(parent).map_err(|error| io(parent, error))?;"
+    },
+    {
+      "line": 155,
+      "source": "let lock = File::create(&lock_path).map_err(|error| io(&lock_path, error))?;"
+    },
+    {
+      "line": 195,
+      "source": "Err(TryLockError::Error(error)) => break Err(io(path, error)),"
+    },
+    {
+      "line": 215,
+      "source": ".map_err(|error| io(parent, error))?"
+    },
+    {
+      "line": 230,
+      "source": ".map_err(|error| io(path, error))"
+    },
+    {
+      "line": 241,
+      "source": "let download_error = |error| io(download, error);"
+    },
+    {
+      "line": 242,
+      "source": "let dir_error = |error| io(dir, error);"
+    },
+    {
+      "line": 247,
+      "source": "std::fs::rename(download, binary).map_err(|error| io(binary, error))"
+    },
+    {
+      "line": 252,
+      "source": "std::fs::create_dir_all(&staging).map_err(|error| io(&staging, error))?;"
+    },
+    {
+      "line": 292,
+      "source": ".map_err(|error| io(to, error))?;"
+    },
+    {
+      "line": 307,
+      "source": ".map_err(|error| io(to, error))?,"
+    },
+    {
+      "line": 308,
+      "source": "None => break file.sync_all().await.map_err(|error| io(to, error)),"
+    },
+    {
+      "line": 315,
+      "source": "let path_error = |error| io(path, error);"
+    },
+    {
+      "line": 344,
+      "source": "fn io(path: &Path, error: std::io::Error) -> InstallError {"
+    }
+  ],
+  "measurements": {
+    "before": {
+      "check": {
+        "command": [
+          "/mnt/c/Users/Jim.Lundin/Projects/subset/target/debug/subset",
+          "check"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "score-file": {
+        "command": [
+          "/mnt/c/Users/Jim.Lundin/Projects/subset/target/debug/subset",
+          "score",
+          "crates/agents/src/install.rs",
+          "--by",
+          "file",
+          "--json"
+        ],
+        "exit": 0,
+        "total": {
+          "boundary": 161.0,
+          "boundary_share": 4.45551404455514,
+          "lines": 483,
+          "name": "total",
+          "per_token": 1.0045871559633028,
+          "score": 3613.5,
+          "tokens": 3597
+        }
+      },
+      "score-fn": {
+        "command": [
+          "/mnt/c/Users/Jim.Lundin/Projects/subset/target/debug/subset",
+          "score",
+          "crates/agents/src/install.rs",
+          "--by",
+          "fn",
+          "--json"
+        ],
+        "exit": 0,
+        "total": {
+          "boundary": 161.0,
+          "boundary_share": 4.45551404455514,
+          "lines": 483,
+          "name": "total",
+          "per_token": 1.0045871559633028,
+          "score": 3613.5,
+          "tokens": 3597
+        },
+        "affected": [
+          {
+            "boundary": 63.0,
+            "boundary_share": 19.565217391304348,
+            "lines": 35,
+            "name": "crates/agents/src/install.rs:152 put",
+            "per_token": 0.9907692307692307,
+            "score": 322.0,
+            "tokens": 325
+          },
+          {
+            "boundary": 1.0,
+            "boundary_share": 0.3508771929824561,
+            "lines": 40,
+            "name": "crates/agents/src/install.rs:235 unpack",
+            "per_token": 0.9693877551020408,
+            "score": 285.0,
+            "tokens": 294
+          },
+          {
+            "boundary": 1.0,
+            "boundary_share": 0.8064516129032258,
+            "lines": 15,
+            "name": "crates/agents/src/install.rs:278 fetch",
+            "per_token": 1.0598290598290598,
+            "score": 124.0,
+            "tokens": 117
+          },
+          {
+            "boundary": 2.0,
+            "boundary_share": 1.82648401826484,
+            "lines": 12,
+            "name": "crates/agents/src/install.rs:213 remove_others",
+            "per_token": 0.9954545454545454,
+            "score": 109.5,
+            "tokens": 110
+          },
+          {
+            "boundary": 5.0,
+            "boundary_share": 4.975124378109452,
+            "lines": 15,
+            "name": "crates/agents/src/install.rs:297 drain",
+            "per_token": 1.046875,
+            "score": 100.5,
+            "tokens": 96
+          },
+          {
+            "boundary": 1.0,
+            "boundary_share": 1.2738853503184715,
+            "lines": 7,
+            "name": "crates/agents/src/install.rs:314 sha256",
+            "per_token": 1.060810810810811,
+            "score": 78.5,
+            "tokens": 74
+          },
+          {
+            "boundary": 16.0,
+            "boundary_share": 24.427480916030532,
+            "lines": 6,
+            "name": "crates/agents/src/install.rs:226 remove",
+            "per_token": 0.9776119402985074,
+            "score": 65.5,
+            "tokens": 67
+          },
+          {
+            "boundary": 0.0,
+            "boundary_share": 0.0,
+            "lines": 6,
+            "name": "crates/agents/src/install.rs:344 io",
+            "per_token": 0.9736842105263157,
+            "score": 37.0,
+            "tokens": 38
+          }
+        ]
+      },
+      "score-construct": {
+        "command": [
+          "/mnt/c/Users/Jim.Lundin/Projects/subset/target/debug/subset",
+          "score",
+          "crates/agents/src/install.rs",
+          "--by",
+          "construct",
+          "--json"
+        ],
+        "exit": 0,
+        "total": {
+          "boundary": 161.0,
+          "boundary_share": 4.45551404455514,
+          "lines": 483,
+          "name": "total",
+          "per_token": 1.0045871559633028,
+          "score": 3613.5,
+          "tokens": 3597
+        },
+        "outside": []
+      },
+      "measure": {
+        "command": [
+          "/mnt/c/Users/Jim.Lundin/Projects/subset/target/debug/subset",
+          "measure",
+          "crates/agents/src/install.rs",
+          "--json"
+        ],
+        "exit": 0,
+        "total": {
+          "lines": 483,
+          "tokens": 3597
+        }
+      }
+    },
+    "after": {
+      "check": {
+        "command": [
+          "/mnt/c/Users/Jim.Lundin/Projects/subset/target/debug/subset",
+          "check"
+        ],
+        "exit": 1,
+        "stdout": "crates/agents/src/install.rs:336:29: type.impl_trait.ret: `impl Trait` in a return type\ncrates/agents/src/install.rs:337:5: expr.closure: a closure outside a method call only as the argument of `Closure::new`, `unfold`, `ask` or a Dioxus hook, or an immutable local binding used only in calls in its block, directly or as an argument of the permitted closure-taking calls; never stored, aliased, unused or captured by another closure or async block (proposals 0006, 0017, 0018, 0026, 0046)\n",
+        "stderr": ""
+      },
+      "score-file": {
+        "command": [
+          "/mnt/c/Users/Jim.Lundin/Projects/subset/target/debug/subset",
+          "score",
+          "crates/agents/src/install.rs",
+          "--by",
+          "file",
+          "--json"
+        ],
+        "exit": 0,
+        "total": {
+          "boundary": 161.0,
+          "boundary_share": 4.45859872611465,
+          "lines": 478,
+          "name": "total",
+          "per_token": 1.0137563166760248,
+          "score": 3611.0,
+          "tokens": 3562
+        }
+      },
+      "score-fn": {
+        "command": [
+          "/mnt/c/Users/Jim.Lundin/Projects/subset/target/debug/subset",
+          "score",
+          "crates/agents/src/install.rs",
+          "--by",
+          "fn",
+          "--json"
+        ],
+        "exit": 0,
+        "total": {
+          "boundary": 161.0,
+          "boundary_share": 4.45859872611465,
+          "lines": 478,
+          "name": "total",
+          "per_token": 1.0137563166760248,
+          "score": 3611.0,
+          "tokens": 3562
+        },
+        "affected": [
+          {
+            "boundary": 63.0,
+            "boundary_share": 20.12779552715655,
+            "lines": 35,
+            "name": "crates/agents/src/install.rs:152 put",
+            "per_token": 0.9936507936507937,
+            "score": 313.0,
+            "tokens": 315
+          },
+          {
+            "boundary": 1.0,
+            "boundary_share": 0.38461538461538464,
+            "lines": 38,
+            "name": "crates/agents/src/install.rs:235 unpack",
+            "per_token": 0.962962962962963,
+            "score": 260.0,
+            "tokens": 270
+          },
+          {
+            "boundary": 1.0,
+            "boundary_share": 0.8368200836820083,
+            "lines": 13,
+            "name": "crates/agents/src/install.rs:276 fetch",
+            "per_token": 1.0669642857142856,
+            "score": 119.5,
+            "tokens": 112
+          },
+          {
+            "boundary": 2.0,
+            "boundary_share": 1.9047619047619049,
+            "lines": 12,
+            "name": "crates/agents/src/install.rs:213 remove_others",
+            "per_token": 1.0,
+            "score": 105.0,
+            "tokens": 105
+          },
+          {
+            "boundary": 5.0,
+            "boundary_share": 5.46448087431694,
+            "lines": 12,
+            "name": "crates/agents/src/install.rs:293 drain",
+            "per_token": 1.063953488372093,
+            "score": 91.5,
+            "tokens": 86
+          },
+          {
+            "boundary": 1.0,
+            "boundary_share": 1.4388489208633095,
+            "lines": 6,
+            "name": "crates/agents/src/install.rs:307 sha256",
+            "per_token": 1.053030303030303,
+            "score": 69.5,
+            "tokens": 66
+          },
+          {
+            "boundary": 0.0,
+            "boundary_share": 0.0,
+            "lines": 3,
+            "name": "crates/agents/src/install.rs:336 io_error",
+            "per_token": 1.96875,
+            "score": 63.0,
+            "tokens": 32
+          },
+          {
+            "boundary": 16.0,
+            "boundary_share": 26.229508196721312,
+            "lines": 6,
+            "name": "crates/agents/src/install.rs:226 remove",
+            "per_token": 0.9838709677419355,
+            "score": 61.0,
+            "tokens": 62
+          },
+          {
+            "boundary": 0.0,
+            "boundary_share": 0.0,
+            "lines": 6,
+            "name": "crates/agents/src/install.rs:340 io",
+            "per_token": 0.9736842105263157,
+            "score": 37.0,
+            "tokens": 38
+          }
+        ]
+      },
+      "score-construct": {
+        "command": [
+          "/mnt/c/Users/Jim.Lundin/Projects/subset/target/debug/subset",
+          "score",
+          "crates/agents/src/install.rs",
+          "--by",
+          "construct",
+          "--json"
+        ],
+        "exit": 0,
+        "total": {
+          "boundary": 161.0,
+          "boundary_share": 4.45859872611465,
+          "lines": 478,
+          "name": "total",
+          "per_token": 1.0137563166760248,
+          "score": 3611.0,
+          "tokens": 3562
+        },
+        "outside": [
+          {
+            "boundary": 0.0,
+            "boundary_share": 0.0,
+            "count": 1,
+            "lines": 1,
+            "name": "type.impl_trait.ret",
+            "per_token": 5.0,
+            "score": 25.0,
+            "tier": "outside",
+            "tokens": 5
+          },
+          {
+            "boundary": 0.0,
+            "boundary_share": 0.0,
+            "count": 1,
+            "lines": 1,
+            "name": "expr.closure",
+            "per_token": 5.0,
+            "score": 15.0,
+            "tier": "outside",
+            "tokens": 3
+          }
+        ]
+      },
+      "measure": {
+        "command": [
+          "/mnt/c/Users/Jim.Lundin/Projects/subset/target/debug/subset",
+          "measure",
+          "crates/agents/src/install.rs",
+          "--json"
+        ],
+        "exit": 0,
+        "total": {
+          "lines": 478,
+          "tokens": 3562
+        }
+      }
+    }
+  },
+  "validation": {
+    "compile": {
+      "command": [
+        "rustc",
+        "--edition",
+        "2024",
+        "--test",
+        "-D",
+        "warnings",
+        "/mnt/c/Users/Jim.Lundin/Projects/subset/target/worktrees/issue5-patterns/target/issue5-error-factory/validation.rs",
+        "-o",
+        "/mnt/c/Users/Jim.Lundin/Projects/subset/target/worktrees/issue5-patterns/target/issue5-error-factory/validation"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "clippy": {
+      "command": [
+        "clippy-driver",
+        "--edition",
+        "2024",
+        "--test",
+        "-D",
+        "warnings",
+        "/mnt/c/Users/Jim.Lundin/Projects/subset/target/worktrees/issue5-patterns/target/issue5-error-factory/validation.rs",
+        "-o",
+        "/mnt/c/Users/Jim.Lundin/Projects/subset/target/worktrees/issue5-patterns/target/issue5-error-factory/validation-clippy"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "behavior": {
+      "command": [
+        "/mnt/c/Users/Jim.Lundin/Projects/subset/target/worktrees/issue5-patterns/target/issue5-error-factory/validation",
+        "--test-threads=1"
+      ],
+      "exit": 0,
+      "stdout": "\nrunning 6 tests\ntest actual_read_dir_failure_keeps_its_path_and_io_cause ... ok\ntest actual_synchronous_remove_callers_retain_the_keep_and_lock_paths ... ok\ntest awaited_result_mapping_accepts_the_same_factory_after_the_await ... ok\ntest pathbuf_and_temporary_path_borrows_finish_at_the_map_err_expression ... ok\ntest repeated_local_helpers_and_fresh_factories_produce_the_same_owned_error ... ok\ntest success_does_not_construct_an_error_and_hold_keeps_the_direct_constructor ... ok\n\ntest result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s\n\n",
+      "stderr": ""
+    },
+    "reuse": {
+      "command": [
+        "rustc",
+        "--edition",
+        "2024",
+        "/mnt/c/Users/Jim.Lundin/Projects/subset/target/worktrees/issue5-patterns/target/issue5-error-factory/reuse.rs",
+        "-o",
+        "/mnt/c/Users/Jim.Lundin/Projects/subset/target/worktrees/issue5-patterns/target/issue5-error-factory/reuse"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "warning: unused import: `PathBuf`\n --> /mnt/c/Users/Jim.Lundin/Projects/subset/target/worktrees/issue5-patterns/target/issue5-error-factory/reuse.rs:1:22\n  |\n1 | use std::path::{Path,PathBuf};\n  |                      ^^^^^^^\n  |\n  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default\n\nerror[E0382]: use of moved value: `mapping`\n  --> /mnt/c/Users/Jim.Lundin/Projects/subset/target/worktrees/issue5-patterns/target/issue5-error-factory/reuse.rs:14:198\n   |\n14 | ...et mapping = io_error(path); let _: Result<(),_> = Err(std::io::Error::other(\"first\")).map_err(mapping); let _: Result<(),_> = Err(std::io::Error::other(\"second\")).map_err(mapping); }\n   |       -------                                                                                     ------- value moved here                                                     ^^^^^^^ value used here after move\n   |       |\n   |       move occurs because `mapping` has type `impl FnOnce(std::io::Error) -> InstallError`, which does not implement the `Copy` trait\n\nerror: aborting due to 1 previous error; 1 warning emitted\n\nFor more information about this error, try `rustc --explain E0382`.\n"
+    },
+    "escape": {
+      "command": [
+        "rustc",
+        "--edition",
+        "2024",
+        "/mnt/c/Users/Jim.Lundin/Projects/subset/target/worktrees/issue5-patterns/target/issue5-error-factory/escape.rs",
+        "-o",
+        "/mnt/c/Users/Jim.Lundin/Projects/subset/target/worktrees/issue5-patterns/target/issue5-error-factory/escape"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "error[E0597]: `path` does not live long enough\n  --> /mnt/c/Users/Jim.Lundin/Projects/subset/target/worktrees/issue5-patterns/target/issue5-error-factory/escape.rs:14:105\n   |\n14 | fn escape() -> impl FnOnce(std::io::Error) -> InstallError { let path = PathBuf::from(\"gone\"); io_error(&path) }\n   |                                                                  ----                                   ^^^^^  -- borrow later used here\n   |                                                                  |                                      |      |\n   |                                                                  |                                      |      `path` dropped here while still borrowed\n   |                                                                  binding `path` declared here           borrowed value does not live long enough\n   |\nnote: this call may capture more lifetimes than intended, because Rust 2024 has adjusted the `impl Trait` lifetime capture rules\n  --> /mnt/c/Users/Jim.Lundin/Projects/subset/target/worktrees/issue5-patterns/target/issue5-error-factory/escape.rs:14:96\n   |\n14 | fn escape() -> impl FnOnce(std::io::Error) -> InstallError { let path = PathBuf::from(\"gone\"); io_error(&path) }\n   |                                                                                                ^^^^^^^^^^^^^^^\nhelp: use the precise capturing `use<...>` syntax to make the captures explicit\n   |\n10 | fn io_error(path: &Path) -> impl FnOnce(std::io::Error) -> InstallError + use<> {\n   |                                                                         +++++++\n\nerror: aborting due to 1 previous error\n\nFor more information about this error, try `rustc --explain E0597`.\n"
+    },
+    "rustc-version": {
+      "command": [
+        "rustc",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "rustc 1.102.0-nightly (ac8310ba6 2026-11-09)\n",
+      "stderr": ""
+    }
+  }
+}
