@@ -1,0 +1,227 @@
+[
+  {
+    "path": "crates/agents/src/claude/mod.rs",
+    "line": 9,
+    "source": "#[cfg(test)]"
+  },
+  {
+    "path": "crates/agents/src/claude/mod.rs",
+    "line": 10,
+    "source": "pub(crate) use protocol::check_version;"
+  },
+  {
+    "path": "crates/agents/src/claude/protocol.rs",
+    "line": 726,
+    "source": "pub(crate) fn check_version(initialize: Value) -> Result<(), UnsupportedVersion> {"
+  },
+  {
+    "path": "crates/agents/src/claude/protocol.rs",
+    "line": 931,
+    "source": "#[cfg(test)]"
+  },
+  {
+    "path": "crates/agents/src/claude/session.rs",
+    "line": 23,
+    "source": "    PermissionRequestId, SessionId, UnsupportedVersion, applied, check_version, encode, models,"
+  },
+  {
+    "path": "crates/agents/src/claude/session.rs",
+    "line": 191,
+    "source": "        match (check_version(initialize), opts.versions) {"
+  },
+  {
+    "path": "crates/agents/src/claude/session.rs",
+    "line": 360,
+    "source": "    match (std::env::consts::OS, missing) {"
+  },
+  {
+    "path": "crates/agents/src/claude/session.rs",
+    "line": 732,
+    "source": "#[cfg(test)]"
+  },
+  {
+    "path": "crates/agents/src/codex/config.rs",
+    "line": 103,
+    "source": "#[cfg(test)]"
+  },
+  {
+    "path": "crates/agents/src/codex/protocol.rs",
+    "line": 1314,
+    "source": "#[cfg(test)]"
+  },
+  {
+    "path": "crates/agents/src/codex/server.rs",
+    "line": 607,
+    "source": "#[cfg(test)]"
+  },
+  {
+    "path": "crates/agents/src/install.rs",
+    "line": 68,
+    "source": "    match (std::env::consts::OS, std::env::consts::ARCH) {"
+  },
+  {
+    "path": "crates/agents/src/install.rs",
+    "line": 88,
+    "source": "        os: String::from(std::env::consts::OS),"
+  },
+  {
+    "path": "crates/agents/src/install.rs",
+    "line": 350,
+    "source": "#[cfg(unix)]"
+  },
+  {
+    "path": "crates/agents/src/install.rs",
+    "line": 356,
+    "source": "#[cfg(not(unix))]"
+  },
+  {
+    "path": "crates/agents/src/install.rs",
+    "line": 364,
+    "source": "#[cfg(test)]"
+  },
+  {
+    "path": "crates/agents/src/install.rs",
+    "line": 374,
+    "source": "    use crate::claude::check_version;"
+  },
+  {
+    "path": "crates/agents/src/install.rs",
+    "line": 457,
+    "source": "            check_version(initialize),"
+  },
+  {
+    "path": "crates/agents/src/process.rs",
+    "line": 13,
+    "source": "#[cfg(not(unix))]"
+  },
+  {
+    "path": "crates/agents/src/process.rs",
+    "line": 22,
+    "source": "#[cfg(unix)]"
+  },
+  {
+    "path": "crates/agents/tests/codex_replay.rs",
+    "line": 7,
+    "source": "#![cfg(unix)]"
+  },
+  {
+    "path": "crates/agents/tests/replay.rs",
+    "line": 5,
+    "source": "#![cfg(unix)]"
+  },
+  {
+    "path": "crates/app/src/ticket.rs",
+    "line": 88,
+    "source": "#[cfg(test)]"
+  },
+  {
+    "path": "crates/client/src/answers.rs",
+    "line": 96,
+    "source": "#[cfg(test)]"
+  },
+  {
+    "path": "crates/client/src/device.rs",
+    "line": 75,
+    "source": "#[cfg(test)]"
+  },
+  {
+    "path": "crates/client/src/host_view.rs",
+    "line": 604,
+    "source": "#[cfg(test)]"
+  },
+  {
+    "path": "crates/client/src/link.rs",
+    "line": 790,
+    "source": "#[cfg(test)]"
+  },
+  {
+    "path": "crates/client/src/new_session.rs",
+    "line": 120,
+    "source": "#[cfg(test)]"
+  },
+  {
+    "path": "crates/client/src/platform/mod.rs",
+    "line": 5,
+    "source": "#[cfg(not(target_family = \"wasm\"))]"
+  },
+  {
+    "path": "crates/client/src/platform/mod.rs",
+    "line": 7,
+    "source": "#[cfg(target_family = \"wasm\")]"
+  },
+  {
+    "path": "crates/client/src/platform/mod.rs",
+    "line": 13,
+    "source": "#[cfg(not(target_family = \"wasm\"))]"
+  },
+  {
+    "path": "crates/client/src/platform/mod.rs",
+    "line": 15,
+    "source": "#[cfg(target_family = \"wasm\")]"
+  },
+  {
+    "path": "crates/client/src/platform/native.rs",
+    "line": 8,
+    "source": "    ClientName(String::from(std::env::consts::OS))"
+  },
+  {
+    "path": "crates/daemon/src/lib.rs",
+    "line": 121,
+    "source": "#[cfg(unix)]"
+  },
+  {
+    "path": "crates/daemon/src/lib.rs",
+    "line": 129,
+    "source": "#[cfg(not(unix))]"
+  },
+  {
+    "path": "crates/daemon/src/lib.rs",
+    "line": 137,
+    "source": "#[cfg(unix)]"
+  },
+  {
+    "path": "crates/daemon/src/lib.rs",
+    "line": 142,
+    "source": "#[cfg(not(unix))]"
+  },
+  {
+    "path": "crates/daemon/src/lib.rs",
+    "line": 163,
+    "source": "#[cfg(test)]"
+  },
+  {
+    "path": "crates/daemon/src/log.rs",
+    "line": 162,
+    "source": "#[cfg(test)]"
+  },
+  {
+    "path": "crates/daemon/src/mapping.rs",
+    "line": 285,
+    "source": "#[cfg(test)]"
+  },
+  {
+    "path": "crates/daemon/src/session.rs",
+    "line": 810,
+    "source": "#[cfg(test)]"
+  },
+  {
+    "path": "crates/proto/src/frame.rs",
+    "line": 51,
+    "source": "#[cfg(test)]"
+  },
+  {
+    "path": "crates/proto/src/lib.rs",
+    "line": 721,
+    "source": "#[cfg(test)]"
+  },
+  {
+    "path": "crates/proto/src/relay.rs",
+    "line": 19,
+    "source": "#[cfg(test)]"
+  },
+  {
+    "path": "crates/proto/src/ticket.rs",
+    "line": 110,
+    "source": "#[cfg(test)]"
+  }
+]

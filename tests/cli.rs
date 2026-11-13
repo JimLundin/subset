@@ -247,6 +247,18 @@ fn compile_pattern(path: &str, dir: &Path, code: i32, diagnostic: &str) {
 }
 
 #[test]
+fn cfg_owner_imports_local_types_and_reordered_binders_compile() {
+    let dir = scratch("cfg-owners");
+    let positive = read(&root().join("tests/cases/cfg-scope/crates/daemon/src/a.rs"));
+    let (_, tail) = positive
+        .split_once("mod owners {")
+        .expect("self-contained owner cases");
+    let source = dir.join("owners.rs");
+    write(&source, &format!("mod owners {{{tail}"));
+    compile_pattern(source.to_str().expect("fixture path"), &dir, 0, "");
+}
+
+#[test]
 fn range_patterns_compile_with_exhaustive_and_irrefutable_positions() {
     let dir = scratch("compiled-ranges");
     compile_pattern(

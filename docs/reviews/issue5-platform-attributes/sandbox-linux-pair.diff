@@ -1,0 +1,23 @@
+--- a/crates/agents/src/claude/session.rs
++++ b/crates/agents/src/claude/session.rs
+@@ -348 +347,0 @@
+-const SANDBOX_TOOLS: &[&str] = &["bwrap", "socat"];
+@@ -353,0 +353 @@
++#[cfg(target_os = "linux")]
+@@ -354,0 +355 @@
++    const SANDBOX_TOOLS: &[&str] = &["bwrap", "socat"];
+@@ -360,3 +361,11 @@
+-    match (std::env::consts::OS, missing) {
+-        ("macos", _) | ("linux", None) => Sandbox::Available,
+-        (_, _) => Sandbox::Missing,
++    match missing {
++        None => Sandbox::Available,
++        Some(_) => Sandbox::Missing,
++    }
++}
++
++#[cfg(not(target_os = "linux"))]
++pub fn sandbox() -> Sandbox {
++    match std::env::consts::OS {
++        "macos" => Sandbox::Available,
++        _ => Sandbox::Missing,

@@ -16,7 +16,10 @@ use syn::{
 };
 
 use crate::checks;
-use crate::facts::{CfgItem, CfgKind, Element, Fact, Facts, FileNames, Lists, Tables, UsePath};
+use crate::facts::{
+    CfgBindingKind, CfgItem, CfgKind, CfgName, CfgOwner, CfgScope, Element, Fact, Facts, FileNames,
+    Lists, Tables, UsePath,
+};
 use crate::syntax::{self, Extent, Pos};
 use crate::table::{self, Rule};
 
@@ -183,6 +186,7 @@ pub(crate) struct Imp {
     pub(crate) self_ty: Option<String>,
     pub(crate) kind: ImplKind,
     pub(crate) trait_owner: Owner,
+    pub(crate) cfg_owner: Rc<CfgOwner>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -311,6 +315,7 @@ pub(crate) struct Env {
     /// The methods of the fallible operator traits this file imports.
     pub(crate) operator_methods: BTreeSet<String>,
     pub(crate) cfg_items: Vec<CfgItem>,
+    pub(crate) cfg_names: Rc<Vec<CfgName>>,
     pub(crate) tables: Tables,
     pub(crate) test_file: Within,
     pub(crate) crate_root: Within,
@@ -445,6 +450,96 @@ const INTERIOR_MUT: &[&str] = &[
     "RwLock",
 ];
 
+/// Scoped declarations and imports gathered before both owner-normalizing passes.
+pub(crate) fn cfg_names(file: &syn::File) -> Vec<CfgName> {
+    let mut roots = CfgRoots {
+        names: Vec::new(),
+        module: Vec::new(),
+        blocks: Vec::new(),
+    };
+    roots.visit_file(file);
+    roots.names
+}
+
+struct CfgRoots {
+    names: Vec<CfgName>,
+    module: Vec<String>,
+    blocks: Vec<Extent>,
+}
+
+impl<'ast> Visit<'ast> for CfgRoots {
+    fn visit_item(&mut self, item: &'ast Item) {
+        let name = match item {
+            Item::Mod(i) => Some(&i.ident),
+            Item::Struct(i) => Some(&i.ident),
+            Item::Enum(i) => Some(&i.ident),
+            Item::Union(i) => Some(&i.ident),
+            Item::Trait(i) => Some(&i.ident),
+            Item::Type(i) => Some(&i.ident),
+            _ => None,
+        };
+        if let Some(name) = name {
+            self.names.push(CfgName {
+                module: self.module.clone(),
+                blocks: self.blocks.clone(),
+                name: checks::cfg_key(&name.to_string()),
+                target: None,
+                absolute: Within::Out,
+                kind: match item {
+                    Item::Mod(_) => CfgBindingKind::Module,
+                    _ => CfgBindingKind::Type,
+                },
+            });
+        }
+        visit::visit_item(self, item);
+    }
+
+    fn visit_item_mod(&mut self, item: &'ast syn::ItemMod) {
+        self.module.push(checks::cfg_key(&item.ident.to_string()));
+        visit::visit_item_mod(self, item);
+        let _ = self.module.pop();
+    }
+
+    fn visit_block(&mut self, block: &'ast syn::Block) {
+        self.blocks.push(syntax::extent(block.span()));
+        visit::visit_block(self, block);
+        let _ = self.blocks.pop();
+    }
+
+    fn visit_item_use(&mut self, item: &'ast syn::ItemUse) {
+        let names = use_paths(&item.tree, &Vec::new())
+            .into_iter()
+            .filter_map(|path| {
+                let target = match path.segments.split_last() {
+                    Some((last, prefix)) => match last.as_str() {
+                        "self" => prefix.iter().map(|name| checks::cfg_key(name)).collect(),
+                        _ => path
+                            .segments
+                            .iter()
+                            .map(|name| checks::cfg_key(name))
+                            .collect(),
+                    },
+                    None => Vec::new(),
+                };
+                let name = match path.name.as_deref() {
+                    Some("self") => target.last().cloned(),
+                    _ => path.name,
+                };
+                name.map(|name| CfgName {
+                    module: self.module.clone(),
+                    blocks: self.blocks.clone(),
+                    name: checks::cfg_key(&name),
+                    target: Some(target),
+                    absolute: item.leading_colon.map_or(Within::Out, |_| Within::In),
+                    kind: CfgBindingKind::Import,
+                })
+            })
+            .collect::<Vec<CfgName>>();
+        self.names.extend(names);
+        visit::visit_item_use(self, item);
+    }
+}
+
 /// The hits of one file.
 pub(crate) fn file(file: &syn::File, env: Env) -> Vec<Hit> {
     let mut walk = Walk {
@@ -475,6 +570,7 @@ pub(crate) fn file(file: &syn::File, env: Env) -> Vec<Hit> {
         builds: BTreeSet::new(),
         statics: BTreeSet::new(),
         hosts: BTreeMap::new(),
+        cfg_blocks: Vec::new(),
     };
     walk.visit_file(file);
     walk.hits
@@ -503,6 +599,8 @@ struct Walk {
     statics: BTreeSet<(usize, usize)>,
     /// Where each attribute that may carry `cfg` stands.
     hosts: BTreeMap<(usize, usize), Host>,
+    /// Ordinary lexical blocks keep nested items from pairing across bodies.
+    cfg_blocks: Vec<Extent>,
 }
 
 impl Walk {
@@ -559,16 +657,29 @@ impl Walk {
             .extend(attrs.iter().map(|a| (key(a.span()), host.clone())));
     }
 
-    fn cfg_facts(&mut self, attrs: &[Attribute], kind: CfgKind, name: &str) {
+    fn cfg_item(&self, kind: CfgKind, name: String) -> CfgItem {
+        CfgItem {
+            module: self
+                .cx
+                .module
+                .iter()
+                .map(|name| checks::cfg_key(name))
+                .collect(),
+            block: self.cfg_blocks.last().copied(),
+            owner: self.cx.imp.as_ref().map(|imp| imp.cfg_owner.clone()),
+            ..CfgItem::new(kind, checks::cfg_key(&name))
+        }
+    }
+
+    fn cfg_facts(&mut self, attrs: &[Attribute], item: &CfgItem) {
         let items = attrs
             .iter()
             .filter(|a| a.path().is_ident("cfg") && syntax::cfg_test(a).is_none())
             .filter_map(checks::cfg_predicate)
             .map(|predicate| {
                 Hit::Fact(Fact::Cfg(CfgItem {
-                    kind,
-                    name: name.to_string(),
                     predicate,
+                    ..item.clone()
                 }))
             });
         self.hits.extend(items);
@@ -656,14 +767,18 @@ impl Walk {
         };
         self.hits.extend(checks::loop_states(sig, block, &cx));
         self.hits.extend(checks::fn_attrs(attrs, sig));
-        self.cfg_facts(attrs, CfgKind::Fn, &sig.ident.to_string());
+        let item = CfgItem {
+            owner: match method {
+                Within::In => self.cx.imp.as_ref().map(|imp| imp.cfg_owner.clone()),
+                Within::Out => None,
+            },
+            ..self.cfg_item(CfgKind::Fn, sig.ident.to_string())
+        };
+        self.cfg_facts(attrs, &item);
         self.hits
             .extend(checks::receiver(sig, &func, &cx, &self.env));
         self.hits.extend(checks::mut_params(sig, &cx, &self.env));
-        self.host(
-            attrs,
-            Host::Cfg(Some(CfgItem::new(CfgKind::Fn, sig.ident.to_string()))),
-        );
+        self.host(attrs, Host::Cfg(Some(item)));
         self.cx = cx;
     }
 
@@ -1006,7 +1121,9 @@ impl<'ast> Visit<'ast> for Walk {
         for span in checks::local_closures(block, &self.env) {
             self.slot(span, Slot::LocalClosure);
         }
+        self.cfg_blocks.push(syntax::extent(block.span()));
         visit::visit_block(self, block);
+        let _ = self.cfg_blocks.pop();
     }
 
     fn visit_file(&mut self, file: &'ast syn::File) {
@@ -1226,13 +1343,28 @@ impl<'ast> Visit<'ast> for Walk {
             .and(syntax::type_name(&i.self_ty));
         self.hits
             .extend(visitor.map(|name| Hit::Fact(Fact::Visitor(name))));
-        let name = checks::impl_name(i);
-        self.cfg_facts(&i.attrs, CfgKind::Impl, &name);
-        self.host(&i.attrs, Host::Cfg(Some(CfgItem::new(CfgKind::Impl, name))));
+        let scope = CfgScope {
+            module: self
+                .cx
+                .module
+                .iter()
+                .map(|name| checks::cfg_key(name))
+                .collect(),
+            blocks: self.cfg_blocks.clone(),
+            names: self.env.cfg_names.clone(),
+        };
+        let cfg_owner = Rc::new(checks::cfg_owner(i, &scope));
+        let item = CfgItem {
+            owner: Some(cfg_owner.clone()),
+            ..self.cfg_item(CfgKind::Impl, String::new())
+        };
+        self.cfg_facts(&i.attrs, &item);
+        self.host(&i.attrs, Host::Cfg(Some(item)));
         self.cx.imp = Some(Rc::new(Imp {
             self_ty: syntax::type_name(&i.self_ty),
             kind,
             trait_owner,
+            cfg_owner,
         }));
         self.cx.generics = match kind {
             ImplKind::Inherent => Generics::Data,
@@ -1378,11 +1510,9 @@ impl<'ast> Visit<'ast> for Walk {
         self.hits.extend(named.collect::<Vec<Hit>>());
         self.hits
             .extend(paths.into_iter().map(|p| Hit::Fact(Fact::Use(p))));
-        self.cfg_facts(&i.attrs, CfgKind::Use, "");
-        self.host(
-            &i.attrs,
-            Host::Cfg(Some(CfgItem::new(CfgKind::Use, String::new()))),
-        );
+        let item = self.cfg_item(CfgKind::Use, String::new());
+        self.cfg_facts(&i.attrs, &item);
+        self.host(&i.attrs, Host::Cfg(Some(item)));
         visit::visit_item_use(self, i);
     }
 
