@@ -510,11 +510,22 @@ impl<'ast> Visit<'ast> for CfgRoots {
         let names = use_paths(&item.tree, &Vec::new())
             .into_iter()
             .filter_map(|path| {
-                path.name.map(|name| CfgName {
+                let target = match path.segments.split_last() {
+                    Some((last, prefix)) => match last.as_str() {
+                        "self" => prefix.to_vec(),
+                        _ => path.segments.clone(),
+                    },
+                    None => Vec::new(),
+                };
+                let name = match path.name.as_deref() {
+                    Some("self") => target.last().cloned(),
+                    _ => path.name,
+                };
+                name.map(|name| CfgName {
                     module: self.module.clone(),
                     blocks: self.blocks.clone(),
                     name,
-                    target: Some(path.segments),
+                    target: Some(target),
                     absolute: item.leading_colon.map_or(Within::Out, |_| Within::In),
                     kind: CfgBindingKind::Import,
                 })

@@ -2,7 +2,7 @@
   "conductor_commit": "79568ce8a55b266fe1cf96b17dd5b2bc2dfa0c8c",
   "subset_baseline_commit": "64352fdd5935de3954ee06b4598789cb89f67a03",
   "configuration_version": 14,
-  "checker_sha256": "662e83b5d5f65ccb1fb84b02c0304f610e4569037162d838ef30b87fb95cfeb0",
+  "checker_sha256": "942adf914605fa44f6478d6abb978e51664dfa58f1490a39b8b5a1c1051cb31f",
   "proposed_tier": "tolerated",
   "proposed_weight": 2.0,
   "boundary_applies": false,

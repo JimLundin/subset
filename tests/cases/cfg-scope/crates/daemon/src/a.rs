@@ -314,3 +314,53 @@ impl<X, Y> Pair<Y, X> {
         &self.first
     }
 }
+
+mod grouped_self {
+    use super::owners::{self, Port};
+
+    #[cfg(unix)]
+    impl owners::Port {
+        fn grouped(&self) -> Option<u8> {
+            Some(self.0)
+        }
+    }
+
+    #[cfg(not(unix))]
+    impl super::owners::Port {
+        fn grouped(&self) -> Option<u8> {
+            None
+        }
+    }
+
+    impl Port {
+        #[cfg(unix)]
+        fn grouped_method(&self) -> Option<u8> {
+            Some(self.0)
+        }
+    }
+
+    impl super::owners::Port {
+        #[cfg(not(unix))]
+        fn grouped_method(&self) -> Option<u8> {
+            None
+        }
+    }
+}
+
+mod raw_name {
+    struct r#type(u8);
+
+    #[cfg(unix)]
+    impl r#type {
+        fn value(&self) -> u8 {
+            self.0
+        }
+    }
+
+    #[cfg(not(unix))]
+    impl r#type {
+        fn value(&self) -> u8 {
+            self.0
+        }
+    }
+}

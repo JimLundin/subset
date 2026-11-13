@@ -556,7 +556,10 @@ fn cfg_owner_path(
             None => PathArguments::None,
         };
         syn::PathSegment {
-            ident: syn::Ident::new(name, Span::call_site()),
+            ident: name.strip_prefix("r#").map_or_else(
+                || syn::Ident::new(name, Span::call_site()),
+                |raw| syn::Ident::new_raw(raw, Span::call_site()),
+            ),
             arguments,
         }
     });

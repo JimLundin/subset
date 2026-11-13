@@ -91,7 +91,10 @@ cannot change external root interpretation. Qualified `crate`, `self`, and
 `super` lookup begins in the actual module scope, excluding function-local
 shadows. Local declarations retain their defining block origins in the
 owner identity. Both bare and qualified paths walk intermediate imported
-module bindings. Bound type/lifetime names normalize separately;
+module bindings. A grouped `self` leaf imports its parent module name and
+target, as in `use super::owners::{self, Port}`. Reconstructed raw identifiers
+retain their raw form, so an accepted type named `r#type` cannot panic the
+normalizer. Bound type/lifetime names normalize separately;
 a bound type variable uses a private marker that cannot equal a concrete
 Rust type path. Token spans do not affect identity. This distinguishes
 different types and traits while preserving compatible spellings and
@@ -117,7 +120,7 @@ outputs are included in the reproducible evidence.
 
 All 28 attributes in the negative fixture now produce missing-counterpart
 findings; the baseline produced none. The positive fixture produces none.
-It contains 42 allowed platform attributes plus one test-only re-export.
+It contains 48 allowed platform attributes plus one test-only re-export.
 The separate 16-case matrix confirms the predicate and host boundaries:
 
 | Form | Observed checker result |
