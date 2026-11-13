@@ -74,6 +74,7 @@ The ids are those used in `subset.toml`.
 | Building values | `expr.call`, `expr.method_call`, `expr.field`, `expr.struct`, `expr.path`, `expr.lit`, `expr.reference`, `expr.block`, `expr.paren` | |
 | Errors | `expr.try`, plus `Result` / `Option` through the core | `?` is the only early exit. |
 | Iteration | `expr.closure.adapter` | Collections are processed only with iterator adapters (`map`, `filter_map`, `try_fold`, `collect`, and so on). The closure must be an argument of an iterator, `Option` or `Result` method, or of a library or helper method that stands where one would (`with_context`, a stream's `then`, 0026's `ask`). `closure_methods` and `predicate_adapters` in `subset.toml` list them, and the checker rejects a closure passed to any other method. |
+| Synchronous receiver drain | `expr.closure` | Proposal 0058. Exact `std::iter::from_fn(\|\| receiver.try_recv().ok())` immediately consumed by inline synchronous `find_map`. The pull is zero-argument and nonblocking, with no block, arguments, generics or intervening adapters. Only the terminal result may be bound or returned. Constructor aliases, function values, named callbacks and escaping generators stay outside. Known own receiver types are rejected; library origin and method semantics require review where syntax cannot resolve them. Existing mutation rules hold. The tier remains tolerated, with boundary pricing for the library argument. |
 | Predicates | `macro.matches`, `expr.binary.{eq,ne,lt,le,gt,ge,and,or}`, `expr.unary.not` | Proposals 0028 and 0037. A closure passed straight to a method in `predicate_adapters` in `subset.toml` (`filter`, `find`, `rfind`, `any`, `all`, `position`, `take_while`, `skip_while`, `retain`, and tokio's `wait_for`) may have a boolean expression as its body: `matches!`, a comparison, `&&`, `\|\|`, `!`. The other place is a match guard (0040). Nowhere else, and never a `true`/`false` literal. Counting is `filter(\|x\| matches!(x, ..)).count()`. |
 | Guards | `expr.match.guard` | Proposal 0040. A match arm may have a guard that is one comparison (`==`, `!=`, `<`, `<=`, `>`, `>=`) or one `matches!`, with no `&&`, `\|\|` or `!`, when the arm depends on a value its pattern bound being equal to, or ordered against, another runtime value. A later arm with no guard covers the same pattern, so the otherwise case is written out. A guard against a literal, a variant or a constant is a pattern instead, and a `matches!` guard takes a call on a bound value. The guard is the one form for choosing an arm by comparing two runtime values, and several equalities are one guard over a tuple: `Some(x).filter(\|x\| ..)` and `a.eq(b).then_some(..)` with one comparison, any comparison by name (`a.lt(&b)`, `a.cmp(&b).is_eq()`, `PartialEq::eq`) outside a predicate closure, and a `filter` of one comparison matched at once are violations. A `filter` or `then_some` that combines booleans with `&&`, `\|\|` or `!` stays, since a guard can't hold it. |
 | Bindings | `stmt.let` | Immutable, with a pattern. |
@@ -280,6 +281,12 @@ patterns, Serde field defaults and tagged unit fallbacks, const
 `include_str!`, and typed `#[source]` fields. The owner approved these
 extensions beyond Conductor’s examples. Compiler/runtime fixtures provide
 evidence; no new Conductor savings or publication is implied.
+
+Version 15 accepts 0058, the synchronous receiver drain from #5: the exact
+`std::iter::from_fn(|| receiver.try_recv().ok())` constructor stands only
+as the direct receiver of inline eager `find_map`. The closure keeps its
+tolerated tier and existing library boundary pricing. General generators
+and named callbacks remain outside; 0059 remains proposed.
 
 ## Growing the subset
 

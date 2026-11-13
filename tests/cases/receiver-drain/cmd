@@ -1,0 +1,3 @@
+check
+score crates/daemon/src/a.rs --by construct
+measure crates/daemon/src/a.rs --json

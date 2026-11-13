@@ -16,7 +16,7 @@ use syn::{
 };
 
 use crate::facts::{
-    CfgBindingKind, CfgItem, CfgName, CfgOwner, CfgScope, Element, Fact, Facts, Lists,
+    CfgBindingKind, CfgItem, CfgName, CfgOwner, CfgScope, Element, Fact, Facts, Lists, UsePath,
 };
 use crate::syntax;
 use crate::table::Rule;
@@ -1993,10 +1993,17 @@ pub(crate) fn call(c: &syn::ExprCall, callee: &Callee, cx: &Cx) -> Vec<Hit> {
             flag(c.func.span(), Rule::DropDiscard),
         ),
         when(range.and(Some(())), flag(c.func.span(), Rule::RangeCall)),
+        when(
+            match callee.receiver {
+                Within::In => absent(receiver_drain(c, callee, cx)),
+                Within::Out => None,
+            },
+            flag(c.span(), Rule::ReceiverDrain),
+        ),
     ]))
 }
 
-pub(crate) fn path_expr(p: &syn::ExprPath, cx: &Cx, env: &Env) -> Vec<Hit> {
+pub(crate) fn path_expr(p: &syn::ExprPath, cx: &Cx, env: &Env, scope: &CfgScope) -> Vec<Hit> {
     let argument = match cx.slot {
         Slot::CallArg(_) | Slot::MethodArg { .. } => Some(()),
         _ => None,
@@ -2007,11 +2014,19 @@ pub(crate) fn path_expr(p: &syn::ExprPath, cx: &Cx, env: &Env) -> Vec<Hit> {
         ("RangeFull" | "Unbounded", Owner::Theirs) => Some(()),
         _ => None,
     };
-    match (drop, range) {
+    let receiver_value = match cx.slot {
+        Slot::CallCallee => None,
+        _ => receiver_constructor(&p.path, scope),
+    };
+    let existing = match (drop, range) {
         (Some(_), _) => Vec::from([flag(p.span(), Rule::DropFn)]),
         (None, Some(_)) => Vec::from([flag(p.span(), Rule::RangePath)]),
         (None, None) => Vec::new(),
-    }
+    };
+    join(Vec::from([
+        existing,
+        when(receiver_value, flag(p.span(), Rule::ReceiverValue)),
+    ]))
 }
 
 pub(crate) fn struct_expr(s: &syn::ExprStruct, owner: Owner, cx: &Cx) -> Vec<Hit> {
@@ -2030,17 +2045,353 @@ pub(crate) fn struct_expr(s: &syn::ExprStruct, owner: Owner, cx: &Cx) -> Vec<Hit
     ]))
 }
 
-pub(crate) fn closure(c: &syn::ExprClosure, slot: &Slot, env: &Env) -> Vec<Hit> {
-    match slot {
+pub(crate) fn closure(c: &syn::ExprClosure, cx: &Cx, env: &Env) -> Vec<Hit> {
+    match &cx.slot {
         Slot::LocalClosure => Vec::new(),
         Slot::MethodArg { method, .. } => match takes_closure(method, env) {
             Some(_) => Vec::new(),
             None => Vec::from([flag(c.span(), Rule::ClosureMethod)]),
         },
         Slot::CallArg(callee) => {
-            unless(closure_callee(&callee.path), flag(c.span(), Rule::Closure))
+            let receiver = receiver_callee(&callee.path)
+                .filter(|_| matches!(callee.receiver, Within::In))
+                .and(receiver_pull(c, cx));
+            unless(
+                closure_callee(&callee.path).or(receiver),
+                flag(c.span(), Rule::Closure),
+            )
         }
         _ => Vec::from([flag(c.span(), Rule::Closure)]),
+    }
+}
+
+/// The one eagerly consumed generator boundary added by proposal 0058.
+pub(crate) fn eager_find_map(method: &syn::ExprMethodCall) -> Option<()> {
+    match (
+        method.method.to_string().as_str(),
+        method.args.first(),
+        method.args.len(),
+    ) {
+        ("find_map", Some(consumer), 1) => match ungroup(consumer) {
+            Expr::Closure(c) => {
+                synchronous_closure(c).filter(|_| c.inputs.len() == 1 && method.turbofish.is_none())
+            }
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+fn receiver_callee(path: &[String]) -> Option<()> {
+    match path
+        .iter()
+        .map(|name| cfg_key(name))
+        .collect::<Vec<String>>()
+        .iter()
+        .map(String::as_str)
+        .collect::<Vec<&str>>()
+        .as_slice()
+    {
+        ["std", "iter", "from_fn"] => Some(()),
+        _ => None,
+    }
+}
+
+/// Resolve only this library constructor using the existing lexical import
+/// metadata. An explicit external root bypasses a same-named local module.
+pub(crate) fn receiver_constructor(path: &syn::Path, scope: &CfgScope) -> Option<()> {
+    let resolved = cfg_owner_path(path, scope, &BTreeMap::new());
+    resolved
+        .leading_colon
+        .and(receiver_callee(&syntax::segments(&resolved)))
+}
+
+pub(crate) fn receiver_imports(
+    item: &syn::ItemUse,
+    paths: &[UsePath],
+    scope: &CfgScope,
+) -> Vec<Hit> {
+    paths
+        .iter()
+        .filter_map(|import| {
+            let parsed = syn::parse_str::<syn::Path>(&import.segments.join("::")).ok()?;
+            let path = syn::Path {
+                leading_colon: item.leading_colon,
+                ..parsed
+            };
+            receiver_constructor(&path, scope).map(|_| flag(import.span, Rule::ReceiverImport))
+        })
+        .collect()
+}
+
+fn known_own_receiver(path: &syn::Path, cx: &Cx, env: &Env, scope: &CfgScope) -> Option<()> {
+    let names = cfg_path_keys(path);
+    match names.first().map(String::as_str) {
+        Some("Self") => cx
+            .receiver_bindings
+            .get("Self")
+            .filter(|owner| matches!(owner, Owner::Ours))
+            .and(Some(())),
+        _ => {
+            let resolved = cfg_path_base(
+                &names,
+                scope,
+                path.leading_colon.map_or(Within::Out, |_| Within::In),
+                scope.names.len().saturating_add(1),
+            );
+            let named = resolved.names.last().and_then(|name| {
+                env.facts
+                    .types
+                    .iter()
+                    .find_map(|known| match cfg_key(known) {
+                        known if &known == name => Some(()),
+                        _ => None,
+                    })
+            });
+            match (resolved.root, resolved.names.as_slice()) {
+                (CfgRoot::Local, _) | (_, [_]) => named,
+                _ => resolved
+                    .names
+                    .first()
+                    .and_then(|root| env.facts.crates.get(root))
+                    .and(named),
+            }
+        }
+    }
+}
+
+fn receiver_type(ty: &Type, cx: &Cx, env: &Env, scope: &CfgScope) -> Owner {
+    let own = match ty {
+        Type::Path(path) => known_own_receiver(&path.path, cx, env, scope),
+        Type::Reference(reference) => match receiver_type(&reference.elem, cx, env, scope) {
+            Owner::Ours => Some(()),
+            Owner::Theirs => None,
+        },
+        Type::Paren(group) => match receiver_type(&group.elem, cx, env, scope) {
+            Owner::Ours => Some(()),
+            Owner::Theirs => None,
+        },
+        Type::Group(group) => match receiver_type(&group.elem, cx, env, scope) {
+            Owner::Ours => Some(()),
+            Owner::Theirs => None,
+        },
+        _ => None,
+    };
+    own.map_or(Owner::Theirs, |_| Owner::Ours)
+}
+
+pub(crate) fn receiver_shadow(pat: &Pat) -> BTreeMap<String, Owner> {
+    syntax::idents(pat)
+        .into_iter()
+        .map(|name| (cfg_key(&name.ident.to_string()), Owner::Theirs))
+        .collect()
+}
+
+pub(crate) fn receiver_input(
+    pat: &Pat,
+    cx: &Cx,
+    env: &Env,
+    scope: &CfgScope,
+) -> BTreeMap<String, Owner> {
+    match pat {
+        Pat::Type(typed) => receiver_pattern(&typed.pat, &typed.ty, cx, env, scope),
+        _ => receiver_shadow(pat),
+    }
+}
+
+fn receiver_pattern(
+    pat: &Pat,
+    ty: &Type,
+    cx: &Cx,
+    env: &Env,
+    scope: &CfgScope,
+) -> BTreeMap<String, Owner> {
+    match (pat, ty) {
+        (Pat::Paren(group), _) => receiver_pattern(&group.pat, ty, cx, env, scope),
+        (Pat::Reference(pattern), Type::Reference(reference)) => {
+            receiver_pattern(&pattern.pat, &reference.elem, cx, env, scope)
+        }
+        (_, Type::Reference(reference)) => receiver_pattern(pat, &reference.elem, cx, env, scope),
+        (_, Type::Paren(group)) => receiver_pattern(pat, &group.elem, cx, env, scope),
+        (_, Type::Group(group)) => receiver_pattern(pat, &group.elem, cx, env, scope),
+        (Pat::Ident(name), _) => receiver_shadow(pat)
+            .into_iter()
+            .chain(Some((
+                cfg_key(&name.ident.to_string()),
+                receiver_type(ty, cx, env, scope),
+            )))
+            .collect(),
+        (Pat::Tuple(pattern), Type::Tuple(types)) => {
+            let rest = pattern.elems.iter().position(|p| matches!(p, Pat::Rest(_)));
+            pattern
+                .elems
+                .iter()
+                .enumerate()
+                .flat_map(|(index, pat)| {
+                    let at = match (rest, index) {
+                        (Some(rest), index) if index > rest => types
+                            .elems
+                            .len()
+                            .saturating_sub(pattern.elems.len().saturating_sub(index)),
+                        _ => index,
+                    };
+                    types.elems.iter().nth(at).map_or_else(
+                        || receiver_shadow(pat),
+                        |ty| receiver_pattern(pat, ty, cx, env, scope),
+                    )
+                })
+                .collect()
+        }
+        _ => receiver_shadow(pat),
+    }
+}
+
+pub(crate) fn receiver_params(
+    sig: &syn::Signature,
+    method: Within,
+    cx: &Cx,
+    env: &Env,
+    scope: &CfgScope,
+) -> BTreeMap<String, Owner> {
+    let owner = match method {
+        Within::In => cx
+            .imp
+            .as_ref()
+            .map(|imp| receiver_type(&imp.cfg_owner.self_ty, cx, env, scope)),
+        Within::Out => None,
+    };
+    let bindings = owner
+        .map(|owner| (String::from("Self"), owner))
+        .into_iter()
+        .collect();
+    let cx = Cx {
+        receiver_bindings: Rc::new(bindings),
+        ..cx.clone()
+    };
+    cx.receiver_bindings
+        .as_ref()
+        .clone()
+        .into_iter()
+        .chain(sig.inputs.iter().flat_map(|argument| {
+            match argument {
+                FnArg::Typed(typed) => receiver_pattern(&typed.pat, &typed.ty, &cx, env, scope),
+                FnArg::Receiver(_) => owner
+                    .map(|owner| (String::from("self"), owner))
+                    .into_iter()
+                    .collect(),
+            }
+        }))
+        .collect()
+}
+
+fn receiver_origin(expr: &Expr, cx: &Cx, env: &Env, scope: &CfgScope) -> Owner {
+    match ungroup(expr) {
+        Expr::Path(path) => syntax::ident_of(ungroup(expr))
+            .and_then(|name| cx.receiver_bindings.get(&cfg_key(&name)))
+            .copied()
+            .unwrap_or_else(|| {
+                known_own_receiver(&path.path, cx, env, scope)
+                    .map_or(Owner::Theirs, |_| Owner::Ours)
+            }),
+        Expr::Reference(reference) => receiver_origin(&reference.expr, cx, env, scope),
+        Expr::Struct(value) => {
+            known_own_receiver(&value.path, cx, env, scope).map_or(Owner::Theirs, |_| Owner::Ours)
+        }
+        Expr::Call(call) => match ungroup(&call.func) {
+            Expr::Path(function) => {
+                let mut path = function.path.clone();
+                let _ = path.segments.pop();
+                known_own_receiver(&function.path, cx, env, scope)
+                    .or_else(|| known_own_receiver(&path, cx, env, scope))
+                    .map_or(Owner::Theirs, |_| Owner::Ours)
+            }
+            _ => Owner::Theirs,
+        },
+        _ => Owner::Theirs,
+    }
+}
+
+pub(crate) fn receiver_local(
+    local: &Local,
+    cx: &Cx,
+    env: &Env,
+    scope: &CfgScope,
+) -> BTreeMap<String, Owner> {
+    let origin = match (&local.pat, &local.init) {
+        (Pat::Ident(name), Some(init)) => Some((
+            cfg_key(&name.ident.to_string()),
+            receiver_origin(&init.expr, cx, env, scope),
+        )),
+        _ => None,
+    };
+    receiver_shadow(&local.pat)
+        .into_iter()
+        .chain(origin)
+        .collect()
+}
+
+fn synchronous_closure(c: &syn::ExprClosure) -> Option<()> {
+    match (c.asyncness, c.constness, c.movability, &c.output) {
+        (None, None, None, syn::ReturnType::Default) => Some(()),
+        _ => None,
+    }
+}
+
+fn receiver_place(expr: &Expr) -> Option<()> {
+    match ungroup(expr) {
+        Expr::Path(path) => path.qself.is_none().then_some(()),
+        Expr::Field(field) => receiver_place(&field.base),
+        _ => None,
+    }
+}
+
+fn receiver_pull(c: &syn::ExprClosure, cx: &Cx) -> Option<()> {
+    synchronous_closure(c).filter(|_| c.inputs.is_empty())?;
+    let ok = match ungroup(&c.body) {
+        Expr::MethodCall(method) => Some(method),
+        _ => None,
+    }?;
+    Some(ok).filter(|method| {
+        method.method == "ok" && method.args.is_empty() && method.turbofish.is_none()
+    })?;
+    let pull = match ungroup(&ok.receiver) {
+        Expr::MethodCall(method) => Some(method),
+        _ => None,
+    }?;
+    Some(pull).filter(|method| {
+        method.method == "try_recv" && method.args.is_empty() && method.turbofish.is_none()
+    })?;
+    receiver_place(&pull.receiver)?;
+    let own = syntax::ident_of(ungroup(&pull.receiver))
+        .and_then(|name| cx.receiver_bindings.get(&cfg_key(&name)))
+        .filter(|owner| matches!(owner, Owner::Ours));
+    absent(own.and(Some(())))
+}
+
+fn receiver_drain(c: &syn::ExprCall, callee: &Callee, cx: &Cx) -> Option<()> {
+    receiver_callee(&callee.path)?;
+    match (callee.receiver, &cx.slot) {
+        (Within::In, Slot::ReceiverDrain) => Some(()),
+        _ => None,
+    }?;
+    let path = match ungroup(&c.func) {
+        Expr::Path(path) => Some(path),
+        _ => None,
+    }?;
+    Some(path).filter(|path| {
+        path.qself.is_none()
+            && path
+                .path
+                .segments
+                .iter()
+                .all(|segment| matches!(segment.arguments, PathArguments::None))
+    })?;
+    match (c.args.first(), c.args.len()) {
+        (Some(argument), 1) => match ungroup(argument) {
+            Expr::Closure(closure) => receiver_pull(closure, cx),
+            _ => None,
+        },
+        _ => None,
     }
 }
 
@@ -2055,7 +2406,7 @@ fn closure_callee(path: &[String]) -> Option<()> {
 }
 
 /// Parentheses and token groups keep the expression in the same slot.
-fn ungroup(expr: &Expr) -> &Expr {
+pub(crate) fn ungroup(expr: &Expr) -> &Expr {
     match expr {
         Expr::Paren(p) => ungroup(&p.expr),
         Expr::Group(g) => ungroup(&g.expr),
@@ -3264,7 +3615,7 @@ fn literal(expr: &Expr) -> Option<()> {
 }
 
 /// The shape rules of one expression that read only the node and its slot.
-pub(crate) fn expr(e: &Expr, cx: &Cx, env: &Env) -> Vec<Hit> {
+pub(crate) fn expr(e: &Expr, cx: &Cx, env: &Env, scope: &CfgScope) -> Vec<Hit> {
     match e {
         Expr::Array(a) => {
             let table = a
@@ -3331,7 +3682,7 @@ pub(crate) fn expr(e: &Expr, cx: &Cx, env: &Env) -> Vec<Hit> {
             filtered_once(&m.expr),
             flag(m.match_token.span, Rule::LiftMatched),
         ),
-        Expr::Path(p) => path_expr(p, cx, env),
+        Expr::Path(p) => path_expr(p, cx, env, scope),
         Expr::Repeat(r) => {
             let literal = match r.expr.as_ref() {
                 Expr::Lit(_) => Some(()),

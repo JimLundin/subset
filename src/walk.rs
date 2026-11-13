@@ -125,8 +125,12 @@ pub(crate) enum Owner {
 pub(crate) enum Slot {
     Other,
     CallArg(Callee),
+    /// A function path invoked immediately, rather than retained as a value.
+    CallCallee,
     /// A temporary array may stand directly before a method call (0047).
     MethodReceiver,
+    /// The direct receiver of an inline eager `find_map` (0058).
+    ReceiverDrain,
     MethodArg {
         method: String,
         receiver: Owner,
@@ -165,6 +169,8 @@ pub(crate) enum Slot {
 pub(crate) struct Callee {
     pub(crate) path: Vec<String>,
     pub(crate) owner: Owner,
+    /// This path resolves to the library receiver constructor (0058).
+    pub(crate) receiver: Within,
 }
 
 impl Callee {
@@ -263,6 +269,8 @@ pub(crate) struct Cx {
     pub(crate) in_let: Within,
     pub(crate) imp: Option<Rc<Imp>>,
     pub(crate) func: Option<Rc<Func>>,
+    /// Receiver origins of bindings visible in this lexical scope (0058).
+    pub(crate) receiver_bindings: Rc<BTreeMap<String, Owner>>,
     pub(crate) lp: Loop,
     pub(crate) place: Option<Place>,
     /// Whether the score's typing notes the types walked.
@@ -555,6 +563,7 @@ pub(crate) fn file(file: &syn::File, env: Env) -> Vec<Hit> {
             in_let: Within::Out,
             imp: None,
             func: None,
+            receiver_bindings: Rc::new(BTreeMap::new()),
             lp: Loop::None,
             place: None,
             typing: Within::In,
@@ -604,6 +613,31 @@ struct Walk {
 }
 
 impl Walk {
+    fn receiver_scope(&self) -> CfgScope {
+        CfgScope {
+            module: self
+                .cx
+                .module
+                .iter()
+                .map(|name| checks::cfg_key(name))
+                .collect(),
+            blocks: self.cfg_blocks.clone(),
+            names: self.env.cfg_names.clone(),
+        }
+    }
+
+    fn receiver_bindings(&mut self, bindings: BTreeMap<String, Owner>) {
+        self.cx.receiver_bindings = Rc::new(
+            self.cx
+                .receiver_bindings
+                .as_ref()
+                .clone()
+                .into_iter()
+                .chain(bindings)
+                .collect(),
+        );
+    }
+
     /// The context of the node at `node`.
     fn at(&self, node: Span) -> Cx {
         let at = key(node);
@@ -762,6 +796,13 @@ impl Walk {
         let func = Rc::new(checks::func(sig, block, &self.env));
         let cx = Cx {
             func: Some(func.clone()),
+            receiver_bindings: Rc::new(checks::receiver_params(
+                sig,
+                method,
+                &self.cx,
+                &self.env,
+                &self.receiver_scope(),
+            )),
             generics: checks::ask_build(vis, sig, method).map_or(Generics::Fn, |_| Generics::Ask),
             ..self.cx.clone()
         };
@@ -1118,12 +1159,14 @@ fn type_id(t: &Type, cx: &Cx) -> Option<(Span, String)> {
 
 impl<'ast> Visit<'ast> for Walk {
     fn visit_block(&mut self, block: &'ast syn::Block) {
+        let bindings = self.cx.receiver_bindings.clone();
         for span in checks::local_closures(block, &self.env) {
             self.slot(span, Slot::LocalClosure);
         }
         self.cfg_blocks.push(syntax::extent(block.span()));
         visit::visit_block(self, block);
         let _ = self.cfg_blocks.pop();
+        self.cx.receiver_bindings = bindings;
     }
 
     fn visit_file(&mut self, file: &'ast syn::File) {
@@ -1502,6 +1545,8 @@ impl<'ast> Visit<'ast> for Walk {
 
     fn visit_item_use(&mut self, i: &'ast syn::ItemUse) {
         let paths = use_paths(&i.tree, &Vec::new());
+        self.hits
+            .extend(checks::receiver_imports(i, &paths, &self.receiver_scope()));
         self.hits.extend(checks::globs(&i.tree, &Vec::new()));
         let named = paths
             .iter()
@@ -1994,28 +2039,39 @@ impl<'ast> Visit<'ast> for Walk {
             checks::library_value(&cx.slot),
             mark(node, Fixed::IfRestricted),
         ));
-        let rules = checks::expr(e, &cx, &self.env);
+        let rules = checks::expr(e, &cx, &self.env, &self.receiver_scope());
         self.hits.extend(rules);
         match e {
             Expr::Call(c) => {
-                let callee = match c.func.as_ref() {
-                    Expr::Path(p) => Callee {
-                        path: syntax::segments(&p.path),
-                        owner: ours(&p.path, &self.env),
-                    },
+                let callee = match checks::ungroup(&c.func) {
+                    Expr::Path(p) => {
+                        let receiver =
+                            checks::receiver_constructor(&p.path, &self.receiver_scope());
+                        Callee {
+                            path: syntax::segments(&p.path),
+                            owner: receiver
+                                .map_or_else(|| ours(&p.path, &self.env), |_| Owner::Theirs),
+                            receiver: receiver.map_or(Within::Out, |_| Within::In),
+                        }
+                    }
                     _ => Callee {
                         path: Vec::new(),
                         owner: Owner::Theirs,
+                        receiver: Within::Out,
                     },
                 };
                 self.hits.extend(checks::call(c, &callee, &cx));
+                self.slot(c.func.span(), Slot::CallCallee);
                 for a in c.args.iter() {
                     self.slot(a.span(), Slot::CallArg(callee.clone()));
                 }
                 visit::visit_expr(self, e);
             }
             Expr::MethodCall(m) => {
-                self.slot(m.receiver.span(), Slot::MethodReceiver);
+                self.slot(
+                    m.receiver.span(),
+                    checks::eager_find_map(m).map_or(Slot::MethodReceiver, |_| Slot::ReceiverDrain),
+                );
                 let method = m.method.to_string();
                 self.hits
                     .extend(
@@ -2105,7 +2161,7 @@ impl<'ast> Visit<'ast> for Walk {
                 for (at, name) in modifiers {
                     self.id(at, at, name);
                 }
-                self.hits.extend(checks::closure(c, &cx.slot, &self.env));
+                self.hits.extend(checks::closure(c, &cx, &self.env));
                 let predicate = match &cx.slot {
                     Slot::MethodArg { method, .. } => self
                         .env
@@ -2121,6 +2177,14 @@ impl<'ast> Visit<'ast> for Walk {
                 }
                 self.cx.in_predicate = predicate.map_or(self.cx.in_predicate, |_| Within::In);
                 self.slot(c.body.span(), Slot::ClosureBody(Box::new(cx.slot)));
+                let bindings = c
+                    .inputs
+                    .iter()
+                    .flat_map(|input| {
+                        checks::receiver_input(input, &self.cx, &self.env, &self.receiver_scope())
+                    })
+                    .collect();
+                self.receiver_bindings(bindings);
                 visit::visit_expr(self, e);
             }
             Expr::Reference(r) => {
@@ -2133,6 +2197,7 @@ impl<'ast> Visit<'ast> for Walk {
                     Slot::CallArg(_)
                     | Slot::MethodArg { .. }
                     | Slot::MethodReceiver
+                    | Slot::ReceiverDrain
                     | Slot::ConstInit,
                 ) = (r.mutability, &cx.slot)
                 {
@@ -2187,6 +2252,7 @@ impl<'ast> Visit<'ast> for Walk {
                 }
                 self.visit_pat(&f.pat);
                 self.visit_expr(&f.expr);
+                self.receiver_bindings(checks::receiver_shadow(&f.pat));
                 self.cx.lp = Loop::Other;
                 self.visit_block(&f.body);
             }
@@ -2212,7 +2278,10 @@ impl<'ast> Visit<'ast> for Walk {
                         flag(i.if_token.span, Rule::LiftMatched),
                     ));
                     self.let_head(&i.attrs, cond);
+                    let bindings = self.cx.receiver_bindings.clone();
+                    self.receiver_bindings(checks::receiver_shadow(&cond.pat));
                     self.visit_block(&i.then_branch);
+                    self.cx.receiver_bindings = bindings;
                     for (_, e) in i.else_branch.iter() {
                         self.visit_expr(e);
                     }
@@ -2229,6 +2298,7 @@ impl<'ast> Visit<'ast> for Walk {
                     Expr::Let(cond) => {
                         self.id(w.while_token.span, node, "expr.while_let");
                         self.let_head(&w.attrs, cond);
+                        self.receiver_bindings(checks::receiver_shadow(&cond.pat));
                         self.visit_block(&w.body);
                     }
                     _ => {
@@ -2243,10 +2313,13 @@ impl<'ast> Visit<'ast> for Walk {
     }
 
     fn visit_arm(&mut self, a: &'ast syn::Arm) {
+        let bindings = self.cx.receiver_bindings.clone();
+        self.receiver_bindings(checks::receiver_shadow(&a.pat));
         if let Some((token, guard)) = &a.guard {
             self.guard(token.span, guard);
         }
         visit::visit_arm(self, a);
+        self.cx.receiver_bindings = bindings;
     }
 
     fn visit_stmt(&mut self, s: &'ast Stmt) {
@@ -2281,6 +2354,8 @@ impl<'ast> Visit<'ast> for Walk {
         for i in local.init.iter() {
             self.visit_local_init(i);
         }
+        let bindings = checks::receiver_local(local, &self.cx, &self.env, &self.receiver_scope());
+        self.receiver_bindings(bindings);
     }
 
     fn visit_pat(&mut self, p: &'ast Pat) {

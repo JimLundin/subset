@@ -1,0 +1,19 @@
+$ check
+exit 1
+crates/daemon/src/a.rs:1:16: item.use: use the exact `std::iter::from_fn` callee in its immediately consumed receiver drain, never import or rename it (proposal 0058)
+crates/daemon/src/a.rs:1:24: item.use.rename: import renamed with `as`
+crates/daemon/src/a.rs:2:15: item.use.rename: import renamed with `as`
+crates/daemon/src/a.rs:3:9: item.use.rename: import renamed with `as`
+crates/daemon/src/a.rs:6:5: expr.call: `std::iter::from_fn` only as the direct receiver of inline eager `find_map`, with an inline synchronous zero-argument `receiver.try_recv().ok()` pull from a library receiver (proposal 0058)
+crates/daemon/src/a.rs:10:5: expr.call: `std::iter::from_fn` only as the direct receiver of inline eager `find_map`, with an inline synchronous zero-argument `receiver.try_recv().ok()` pull from a library receiver (proposal 0058)
+crates/daemon/src/a.rs:14:5: expr.call: `std::iter::from_fn` only as the direct receiver of inline eager `find_map`, with an inline synchronous zero-argument `receiver.try_recv().ok()` pull from a library receiver (proposal 0058)
+crates/daemon/src/a.rs:18:23: expr.path: `std::iter::from_fn` is called directly, never retained or passed as a function value (proposal 0058)
+crates/daemon/src/b.rs:1:16: item.use: use the exact `std::iter::from_fn` callee in its immediately consumed receiver drain, never import or rename it (proposal 0058)
+crates/daemon/src/b.rs:5:5: expr.call: `std::iter::from_fn` only as the direct receiver of inline eager `find_map`, with an inline synchronous zero-argument `receiver.try_recv().ok()` pull from a library receiver (proposal 0058)
+crates/daemon/src/b.rs:9:5: expr.call: `std::iter::from_fn` only as the direct receiver of inline eager `find_map`, with an inline synchronous zero-argument `receiver.try_recv().ok()` pull from a library receiver (proposal 0058)
+crates/daemon/src/c.rs:4:5: expr.call: `std::iter::from_fn` only as the direct receiver of inline eager `find_map`, with an inline synchronous zero-argument `receiver.try_recv().ok()` pull from a library receiver (proposal 0058)
+crates/daemon/src/c.rs:8:14: expr.path: `std::iter::from_fn` is called directly, never retained or passed as a function value (proposal 0058)
+crates/daemon/src/c.rs:12:5: expr.call: `std::iter::from_fn` only as the direct receiver of inline eager `find_map`, with an inline synchronous zero-argument `receiver.try_recv().ok()` pull from a library receiver (proposal 0058)
+crates/daemon/src/c.rs:16:14: expr.path: `std::iter::from_fn` is called directly, never retained or passed as a function value (proposal 0058)
+crates/daemon/src/d.rs:1:20: item.use: use the exact `std::iter::from_fn` callee in its immediately consumed receiver drain, never import or rename it (proposal 0058)
+crates/daemon/src/d.rs:4:5: expr.call: `std::iter::from_fn` only as the direct receiver of inline eager `find_map`, with an inline synchronous zero-argument `receiver.try_recv().ok()` pull from a library receiver (proposal 0058)

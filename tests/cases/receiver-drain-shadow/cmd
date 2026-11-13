@@ -1,0 +1,2 @@
+check
+score crates/daemon/src/b.rs --by construct
