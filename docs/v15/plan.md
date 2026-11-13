@@ -179,18 +179,18 @@ run in parallel once 3 has landed.
 
 | # | Package | Depends on | Done when |
 |---|---|---|---|
-| 0 | Gate: CI and a dated toolchain (issues #10, #11) | | the gate runs on every push |
-| 1 | Foundations: `pending`, `[limits]`, config validation and the version constant (#8) | 0 | `report --pending` works; a bad id or version is exit 2 |
-| 2 | Library names into config (#13) | 1 | no library name in `src/`; Conductor's output is unchanged |
-| 3 | Returned constructs and removed rules | 1 | the ids above are allowed; the removed rules and keys are gone; cases updated |
-| 4 | Rules: names and state | 3 | `name.shadow`, `assign.*`, `state.clone` exist with cases, pending |
-| 5 | Rules: choose | 3 | the `bool.*`, `if.*`, `choose.*`, `guard.only`, `match.catch_all`, `predicate.name`, `fail.unwrap` rules exist with cases, pending |
-| 6 | Rules: data | 3 | `tuple.ours`, `field.position` exist with cases, pending |
-| 7 | Rules: shape | 3 | `fn.*`, `name.words`, `closure.block` exist with cases, pending |
-| 8 | The score as a tie-breaker | 3 | `[weights]` holds only the overlaps; the report shows them |
-| 9 | Rewrite `src/` and empty `pending` | 4–8 | `pending = []` here; `version = 15`; tagged `v15` |
-| 10 | Spec and docs | 9 | `spec.md` is `docs/subset.md`; `examples.md` rewritten and tested; history in a changelog (#22, #17) |
-| 11 | Conductor | 9 | Conductor pins `v15` with its own `pending` list, then empties it |
+| 0 (#10, #11) | Gate: CI and a dated toolchain (issues #10, #11) | | the gate runs on every push |
+| 1 (#25) | Foundations: `pending`, `[limits]`, config validation and the version constant (#8) | 0 | `report --pending` works; a bad id or version is exit 2 |
+| 2 (#26) | Library names into config (#13) | 1 | no library name in `src/`; Conductor's output is unchanged |
+| 3 (#27) | Returned constructs and removed rules | 1 | the ids above are allowed; the removed rules and keys are gone; cases updated |
+| 4 (#28) | Rules: names and state | 3 | `name.shadow`, `assign.*`, `state.clone` exist with cases, pending |
+| 5 (#29) | Rules: choose | 3 | the `bool.*`, `if.*`, `choose.*`, `guard.only`, `match.catch_all`, `predicate.name`, `fail.unwrap` rules exist with cases, pending |
+| 6 (#30) | Rules: data | 3 | `tuple.ours`, `field.position` exist with cases, pending |
+| 7 (#31) | Rules: shape | 3 | `fn.*`, `name.words`, `closure.block` exist with cases, pending |
+| 8 (#32) | The score as a tie-breaker | 3 | `[weights]` holds only the overlaps; the report shows them |
+| 9 (#33) | Rewrite `src/` and empty `pending` | 4–8 | `pending = []` here; `version = 15`; tagged `v15` |
+| 10 (#34) | Spec and docs | 9 | `spec.md` is `docs/subset.md`; `examples.md` rewritten and tested; history in a changelog (#22, #17) |
+| 11 (#35) | Conductor | 9 | Conductor pins `v15` with its own `pending` list, then empties it |
 
 Suggested staffing: one pair on 0–3 in sequence, then one pair per package
 for 4–8, then all on 9. Package 11 runs in Conductor's repository under its
