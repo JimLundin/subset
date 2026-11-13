@@ -9,6 +9,9 @@ The tool is written in the subset it checks: `subset.toml` here is
 Conductor's allowlist with this repository's `src/` and `tests/*.rs` added to
 `include`, and a test keeps `subset check` clean on them.
 
+To report friction or propose a construct from such a project, see
+[Presenting a case](docs/presenting-a-case.md).
+
 ## Usage
 
 Install it with `cargo install --git https://github.com/JimLundin/subset --rev <sha>`,
