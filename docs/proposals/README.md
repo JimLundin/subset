@@ -44,7 +44,7 @@ follows [Presenting a case](../presenting-a-case.md).
   compiler and behavior checks. Its independent readiness review is
   recorded in [0058's review](../reviews/issue5-proposal-review.md).
 
-## Pending owner decision from issue #5
+## Deferred proposal from issue #5
 
 - [0059: path-error factory](0059-path-error-factory.md) shares a private
   concrete error adapter across functions, with a fresh callable passed
@@ -54,11 +54,13 @@ follows [Presenting a case](../presenting-a-case.md).
 
 0059 passed independent readiness review, recorded in
 [0059's review](../reviews/issue5-error-factory-review.md). Its status stays
-**proposed**; it does not change the active checker or allowlist.
+**proposed**, as the owner requested on 2026-11-13; it does not change the
+active checker or allowlist.
 
-The [consumer review](../reviews/issue5-consumer-review.md),
-[complete patch](../reviews/issue5-consumer/conductor.diff), and
-[verification record](../reviews/issue5-consumer/verification.md) retain the
-already-permitted v14 cleanup. Its end-to-end gate is awaiting recovery of
-the WSL kernel networking fault; the source has not been merged or committed
-in Conductor.
+The [v14 consumer review](../reviews/issue5-consumer-review.md),
+[baseline patch](../reviews/issue5-consumer/conductor.diff), and
+[initial verification record](../reviews/issue5-consumer/verification.md)
+retain the already-permitted cleanup. The [current issue-5
+status](../reviews/issue5-status.md) records adoption of 0058, WSL recovery,
+and consumer delivery. The [0058 implementation
+review](../reviews/issue5-from-fn-review.md) covers the version-15 checker.
