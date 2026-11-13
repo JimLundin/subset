@@ -239,3 +239,78 @@ mod imported_external {
         }
     }
 }
+
+mod owners {
+    pub(crate) struct Port(pub(crate) u8);
+}
+
+mod imported_module {
+    use super::owners;
+
+    #[cfg(unix)]
+    impl owners::Port {
+        fn socket(&self) -> Option<u8> {
+            Some(self.0)
+        }
+    }
+
+    #[cfg(not(unix))]
+    impl self::owners::Port {
+        fn socket(&self) -> Option<u8> {
+            None
+        }
+    }
+
+    impl owners::Port {
+        #[cfg(unix)]
+        fn connect(&self) -> Option<u8> {
+            Some(self.0)
+        }
+    }
+
+    impl self::owners::Port {
+        #[cfg(not(unix))]
+        fn connect(&self) -> Option<u8> {
+            None
+        }
+    }
+}
+
+fn local_alias() {
+    struct LocalPort<Id> {
+        value: Id,
+    }
+
+    #[cfg(unix)]
+    impl<Id> LocalPort<Id> {
+        fn socket(&self) -> &Id {
+            &self.value
+        }
+    }
+
+    #[cfg(not(unix))]
+    impl<Key> LocalPort<Key> {
+        fn socket(&self) -> &Key {
+            &self.value
+        }
+    }
+}
+
+struct Pair<First, Second> {
+    first: First,
+    second: Second,
+}
+
+impl<A, B> Pair<A, B> {
+    #[cfg(unix)]
+    fn first(&self) -> &A {
+        &self.first
+    }
+}
+
+impl<X, Y> Pair<Y, X> {
+    #[cfg(not(unix))]
+    fn first(&self) -> &Y {
+        &self.first
+    }
+}

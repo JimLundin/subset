@@ -15,7 +15,9 @@ use syn::{
     PathArguments, Stmt, Type, TypeParamBound, UnOp, Visibility,
 };
 
-use crate::facts::{CfgItem, CfgName, CfgOwner, CfgScope, Element, Fact, Facts, Lists};
+use crate::facts::{
+    CfgBindingKind, CfgItem, CfgName, CfgOwner, CfgScope, Element, Fact, Facts, Lists,
+};
 use crate::syntax;
 use crate::table::Rule;
 use crate::walk::{
@@ -347,23 +349,27 @@ pub(crate) fn from_once(variants: &Punctuated<syn::Variant, syn::token::Comma>) 
 
 /// Normalize module-relative owner paths and alpha-renamed type parameters.
 pub(crate) fn cfg_owner(i: &syn::ItemImpl, scope: &CfgScope) -> CfgOwner {
-    let parameters = i
+    let bound = i
         .generics
         .params
         .iter()
-        .enumerate()
-        .filter_map(|(index, p)| match p {
-            GenericParam::Type(t) => Some((
-                t.ident.to_string(),
-                format!("__subset_cfg_parameter_{index}"),
-            )),
-            GenericParam::Lifetime(l) => Some((
-                l.lifetime.to_string(),
-                format!("'__subset_cfg_lifetime_{index}"),
-            )),
+        .filter_map(|p| match p {
+            GenericParam::Type(t) => Some(t.ident.to_string()),
+            GenericParam::Lifetime(l) => Some(l.lifetime.to_string()),
             _ => None,
         })
-        .collect::<BTreeMap<String, String>>();
+        .collect();
+    let mut names = CfgOwnerNames {
+        scope: scope.clone(),
+        bound,
+        parameters: BTreeMap::new(),
+        path_blocks: Vec::new(),
+    };
+    names.visit_type(&i.self_ty);
+    if let Some((_, path, _)) = &i.trait_ {
+        names.visit_path(path);
+    }
+    let parameters = names.parameters;
     CfgOwner {
         self_ty: cfg_owner_type(&i.self_ty, scope, &parameters),
         trait_path: i
@@ -378,6 +384,66 @@ pub(crate) fn cfg_owner(i: &syn::ItemImpl, scope: &CfgScope) -> CfgOwner {
             .keys()
             .filter(|name| name.starts_with('\''))
             .count(),
+        path_blocks: names.path_blocks,
+    }
+}
+
+/// First occurrences define binder identities; path origins retain local type scopes.
+struct CfgOwnerNames {
+    scope: CfgScope,
+    bound: BTreeSet<String>,
+    parameters: BTreeMap<String, String>,
+    path_blocks: Vec<Vec<syntax::Extent>>,
+}
+
+impl CfgOwnerNames {
+    fn parameter(&mut self, name: &str) {
+        let fresh = self
+            .bound
+            .get(name)
+            .filter(|name| !self.parameters.contains_key(name.as_str()))
+            .cloned();
+        if let Some(name) = fresh {
+            let index = self.parameters.len();
+            let marker = match name.as_str().chars().next() {
+                Some('\'') => format!("'__subset_cfg_lifetime_{index}"),
+                _ => format!("__subset_cfg_parameter_{index}"),
+            };
+            let _ = self.parameters.insert(name, marker);
+        }
+    }
+}
+
+impl<'ast> Visit<'ast> for CfgOwnerNames {
+    fn visit_path(&mut self, path: &'ast syn::Path) {
+        let parameter = path
+            .segments
+            .first()
+            .and_then(|s| self.bound.get(&s.ident.to_string()))
+            .filter(|_| path.leading_colon.is_none())
+            .cloned();
+        let blocks = match parameter {
+            Some(name) => {
+                self.parameter(&name);
+                Vec::new()
+            }
+            None => {
+                cfg_path_base(
+                    &syntax::segments(path),
+                    &self.scope,
+                    path.leading_colon.map_or(Within::Out, |_| Within::In),
+                    self.scope.names.len().saturating_add(1),
+                )
+                .blocks
+            }
+        };
+        self.path_blocks.push(blocks);
+        visit::visit_path(self, path);
+    }
+
+    fn visit_lifetime(&mut self, lifetime: &'ast syn::Lifetime) {
+        self.parameter(&lifetime.to_string());
+        visit::visit_lifetime(self, lifetime);
     }
 }
 
@@ -449,6 +515,7 @@ fn cfg_owner_path(
     let base = match (path.leading_colon, parameter) {
         (None, Some(name)) => CfgPath {
             root: CfgRoot::Parameter,
+            blocks: Vec::new(),
             names: std::iter::once(name.clone())
                 .chain(names.iter().skip(1).cloned())
                 .collect(),
@@ -515,10 +582,31 @@ fn cfg_binding(scope: &CfgScope, module: &[String], name: &str) -> Option<CfgNam
         .cloned()
 }
 
+fn cfg_module_scope(scope: &CfgScope, module: &[String]) -> CfgScope {
+    let binding = module.split_last().and_then(|(name, parent)| {
+        scope
+            .names
+            .iter()
+            .filter(|binding| {
+                matches!(binding.kind, CfgBindingKind::Module)
+                    && binding.module == parent
+                    && binding.name.as_str() == name.as_str()
+                    && scope.blocks.starts_with(&binding.blocks)
+            })
+            .max_by_key(|binding| binding.blocks.len())
+    });
+    CfgScope {
+        module: module.to_vec(),
+        blocks: binding.map_or(Vec::new(), |binding| binding.blocks.clone()),
+        names: scope.names.clone(),
+    }
+}
+
 fn cfg_bound_path(binding: &CfgName, scope: &CfgScope, budget: usize) -> CfgPath {
     match &binding.target {
         None => CfgPath {
             root: CfgRoot::Local,
+            blocks: binding.blocks.clone(),
             names: std::iter::once(String::from("crate"))
                 .chain(binding.module.iter().cloned())
                 .chain(Some(binding.name.clone()))
@@ -537,30 +625,58 @@ fn cfg_bound_path(binding: &CfgName, scope: &CfgScope, budget: usize) -> CfgPath
     }
 }
 
+fn cfg_path_tail(base: CfgPath, rest: &[String], scope: &CfgScope, budget: usize) -> CfgPath {
+    match (rest.first(), base.root) {
+        (None, _) => base,
+        (Some(_), CfgRoot::Local) => {
+            let module = base.names.iter().skip(1).cloned().collect::<Vec<String>>();
+            cfg_local_path(
+                rest,
+                &module,
+                &CfgScope {
+                    module: module.clone(),
+                    blocks: base.blocks,
+                    names: scope.names.clone(),
+                },
+                budget.saturating_sub(1),
+            )
+        }
+        _ => CfgPath {
+            names: base.names.into_iter().chain(rest.iter().cloned()).collect(),
+            ..base
+        },
+    }
+}
+
 fn cfg_path_base(names: &[String], scope: &CfgScope, absolute: Within, budget: usize) -> CfgPath {
     match (budget, absolute, names.split_first()) {
         (0, _, _) | (_, Within::In, _) | (_, _, None) => CfgPath {
             root: CfgRoot::External,
             names: names.to_vec(),
+            blocks: Vec::new(),
         },
         (_, Within::Out, Some((first, rest))) => match first.as_str() {
-            "crate" => cfg_local_path(rest, &[], scope, budget),
-            "self" => cfg_local_path(rest, &scope.module, scope, budget),
-            "super" => cfg_local_path(names, &scope.module, scope, budget),
+            "crate" => cfg_local_path(rest, &[], &cfg_module_scope(scope, &[]), budget),
+            "self" => cfg_local_path(
+                rest,
+                &scope.module,
+                &cfg_module_scope(scope, &scope.module),
+                budget,
+            ),
+            "super" => cfg_local_path(
+                names,
+                &scope.module,
+                &cfg_module_scope(scope, &scope.module),
+                budget,
+            ),
             _ => match cfg_binding(scope, &scope.module, first) {
-                Some(binding) => match &binding.target {
-                    None => cfg_local_path(names, &scope.module, scope, budget),
-                    Some(_) => {
-                        let base = cfg_bound_path(&binding, scope, budget);
-                        CfgPath {
-                            names: base.names.into_iter().chain(rest.iter().cloned()).collect(),
-                            ..base
-                        }
-                    }
-                },
+                Some(binding) => {
+                    cfg_path_tail(cfg_bound_path(&binding, scope, budget), rest, scope, budget)
+                }
                 None => CfgPath {
                     root: CfgRoot::External,
                     names: names.to_vec(),
+                    blocks: Vec::new(),
                 },
             },
         },
@@ -568,39 +684,51 @@ fn cfg_path_base(names: &[String], scope: &CfgScope, absolute: Within, budget: u
 }
 
 fn cfg_local_path(names: &[String], module: &[String], scope: &CfgScope, budget: usize) -> CfgPath {
-    match (names.first().map(String::as_str), names.split_first()) {
-        (Some("super"), Some((_, rest))) => match module.split_last() {
-            Some((_, parent)) => cfg_local_path(rest, parent, scope, budget),
+    match (
+        budget,
+        names.first().map(String::as_str),
+        names.split_first(),
+    ) {
+        (0, _, _) | (_, _, None) => CfgPath {
+            root: CfgRoot::Local,
+            blocks: scope.blocks.clone(),
+            names: std::iter::once(String::from("crate"))
+                .chain(module.iter().cloned())
+                .chain(names.iter().cloned())
+                .collect(),
+        },
+        (_, Some("super"), Some((_, rest))) => match module.split_last() {
+            Some((_, parent)) => cfg_local_path(
+                rest,
+                parent,
+                &cfg_module_scope(scope, parent),
+                budget.saturating_sub(1),
+            ),
             None => CfgPath {
                 root: CfgRoot::Local,
                 names: names.to_vec(),
+                blocks: Vec::new(),
             },
         },
-        _ => {
-            let binding = names.split_last().and_then(|(last, prefix)| {
-                let module = module
-                    .iter()
-                    .cloned()
-                    .chain(prefix.iter().cloned())
-                    .collect::<Vec<String>>();
-                cfg_binding(scope, &module, last)
-            });
-            match binding {
-                Some(binding) => cfg_bound_path(&binding, scope, budget),
-                None => CfgPath {
-                    root: CfgRoot::Local,
-                    names: std::iter::once(String::from("crate"))
-                        .chain(module.iter().cloned())
-                        .chain(names.iter().cloned())
-                        .collect(),
-                },
+        (_, _, Some((first, rest))) => match cfg_binding(scope, module, first) {
+            Some(binding) => {
+                cfg_path_tail(cfg_bound_path(&binding, scope, budget), rest, scope, budget)
             }
-        }
+            None => CfgPath {
+                root: CfgRoot::Local,
+                blocks: scope.blocks.clone(),
+                names: std::iter::once(String::from("crate"))
+                    .chain(module.iter().cloned())
+                    .chain(names.iter().cloned())
+                    .collect(),
+            },
+        },
     }
 }
 
 struct CfgPath {
     root: CfgRoot,
+    blocks: Vec<syntax::Extent>,
     names: Vec<String>,
 }
 

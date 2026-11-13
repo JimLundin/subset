@@ -182,3 +182,58 @@ impl Wrapper<crate::syn::Ident> {
         &self.value
     }
 }
+
+fn block_shadow() {
+    struct Port(u16);
+
+    #[cfg(unix)]
+    impl Port {
+        fn socket() -> Option<u8> {
+            Some(1)
+        }
+    }
+
+    #[cfg(not(unix))]
+    impl crate::Port {
+        fn socket() -> Option<u8> {
+            None
+        }
+    }
+}
+
+fn block_self_shadow() {
+    struct Port(u16);
+
+    impl Port {
+        #[cfg(unix)]
+        fn socket() -> Option<u8> {
+            Some(1)
+        }
+    }
+
+    impl self::Port {
+        #[cfg(not(unix))]
+        fn socket() -> Option<u8> {
+            None
+        }
+    }
+}
+
+struct Pair<First, Second> {
+    first: First,
+    second: Second,
+}
+
+impl<A> Pair<A, A> {
+    #[cfg(unix)]
+    fn first(&self) -> &A {
+        &self.first
+    }
+}
+
+impl<X, Y> Pair<X, Y> {
+    #[cfg(not(unix))]
+    fn first(&self) -> &X {
+        &self.first
+    }
+}

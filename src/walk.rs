@@ -17,8 +17,8 @@ use syn::{
 
 use crate::checks;
 use crate::facts::{
-    CfgItem, CfgKind, CfgName, CfgOwner, CfgScope, Element, Fact, Facts, FileNames, Lists, Tables,
-    UsePath,
+    CfgBindingKind, CfgItem, CfgKind, CfgName, CfgOwner, CfgScope, Element, Fact, Facts, FileNames,
+    Lists, Tables, UsePath,
 };
 use crate::syntax::{self, Extent, Pos};
 use crate::table::{self, Rule};
@@ -485,6 +485,10 @@ impl<'ast> Visit<'ast> for CfgRoots {
                 name: name.to_string(),
                 target: None,
                 absolute: Within::Out,
+                kind: match item {
+                    Item::Mod(_) => CfgBindingKind::Module,
+                    _ => CfgBindingKind::Type,
+                },
             });
         }
         visit::visit_item(self, item);
@@ -512,6 +516,7 @@ impl<'ast> Visit<'ast> for CfgRoots {
                     name,
                     target: Some(path.segments),
                     absolute: item.leading_colon.map_or(Within::Out, |_| Within::In),
+                    kind: CfgBindingKind::Import,
                 })
             })
             .collect::<Vec<CfgName>>();

@@ -87,11 +87,18 @@ passes. Lookup uses the current module and visible enclosing blocks;
 explicit `self`, `super`, and `crate` prefixes resolve against that scope.
 An ordinary named import follows its recorded target, with a bounded
 lookup to avoid cycles. Unrelated sibling and block-local declarations
-cannot change external root interpretation. Bound type/lifetime names normalize separately;
+cannot change external root interpretation. Qualified `crate`, `self`, and
+`super` lookup begins in the actual module scope, excluding function-local
+shadows. Local declarations retain their defining block origins in the
+owner identity. Both bare and qualified paths walk intermediate imported
+module bindings. Bound type/lifetime names normalize separately;
 a bound type variable uses a private marker that cannot equal a concrete
 Rust type path. Token spans do not affect identity. This distinguishes
 different types and traits while preserving compatible spellings and
-separately written impl blocks for the same owner.
+separately written impl blocks for the same owner. Binder identities use
+first occurrence across the self type and trait path, so reordering blanket
+impl binders preserves identity while repeated-parameter constraints remain
+distinct.
 
 Positive regression coverage retains root and inline-module function
 pairs, nested pairs in the same body, methods split across inherent impls
@@ -108,8 +115,9 @@ three-friction-point threshold govern new constructs, not corrections
 that enforce accepted policy. The fixture and verbatim before/after
 outputs are included in the reproducible evidence.
 
-All 22 attributes in the negative fixture now produce missing-counterpart
+All 28 attributes in the negative fixture now produce missing-counterpart
 findings; the baseline produced none. The positive fixture produces none.
+It contains 42 allowed platform attributes plus one test-only re-export.
 The separate 16-case matrix confirms the predicate and host boundaries:
 
 | Form | Observed checker result |
@@ -277,9 +285,9 @@ resolution is limited to recorded ordinary imports and syntactically
 visible declarations in these files. Glob imports, conditional import
 ambiguities, macro-defined types, out-of-file module exports, associated
 type projections, and equivalence requiring compiler type analysis remain
-review/compiler checks. Generic normalization is positional alpha-renaming,
-not a proof that arbitrary generic bounds or reordered quantifiers are
-equivalent.
+review/compiler checks. Generic normalization preserves first-occurrence
+binder correspondence and repeated-variable constraints; it does not prove
+equivalence of arbitrary generic bounds or compiler-resolved types.
 
 Whole-file scores use the listed files' syntax/name context, not all other
 Conductor files; no whole-project saving is claimed. `subset measure`
@@ -287,8 +295,13 @@ counts nonempty code lines and ignores comments, so its lines are not
 physical source-file line numbers.
 
 Validation of the checker change: `cargo fmt --all`, `cargo test --offline`
-(all 10 integration test groups), `cargo clippy --offline --all-targets --
+(all 11 integration test groups, including all 95 CLI case directories), `cargo clippy --offline --all-targets --
 -D warnings`, and `subset check` pass. The evidence script compiles both
 actual sandbox rewrites natively and for wasm and confirms the four native
 PATH results are identical. This repository has no `tools/check.sh`; the
-Conductor full gate was not run for these exploratory rewrites.
+Conductor full gate was not run for these exploratory rewrites. The added
+compiler group extracts the actual self-contained positive fixture items
+for imported module owners, local generic owners, and reordered binders;
+those items compile on the native target. The cfg fixture retains explicit
+negative cases for local/global shadows and repeated-parameter versus
+blanket generic owners.

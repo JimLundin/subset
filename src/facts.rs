@@ -106,6 +106,7 @@ pub(crate) struct CfgOwner {
     pub(crate) trait_path: Option<syn::Path>,
     pub(crate) type_params: usize,
     pub(crate) lifetime_params: usize,
+    pub(crate) path_blocks: Vec<Vec<Extent>>,
 }
 
 #[derive(Clone)]
@@ -115,9 +116,18 @@ pub(crate) struct CfgName {
     pub(crate) name: String,
     pub(crate) target: Option<Vec<String>>,
     pub(crate) absolute: Within,
+    pub(crate) kind: CfgBindingKind,
+}
+
+#[derive(Clone, Copy)]
+pub(crate) enum CfgBindingKind {
+    Module,
+    Type,
+    Import,
 }
 
 /// The module, enclosing blocks, and pre-gathered bindings of one owner.
+#[derive(Clone)]
 pub(crate) struct CfgScope {
     pub(crate) module: Vec<String>,
     pub(crate) blocks: Vec<Extent>,
