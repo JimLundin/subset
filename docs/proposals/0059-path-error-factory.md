@@ -16,7 +16,13 @@ mutable parameters, generic bounds, explicit lifetime extensions, async
 body, returned trait kind, or error payload shape is admitted.
 
 Every callable is created fresh as the direct argument of
-`Result::map_err`: `.map_err(factory(path))`. It is never bound, stored,
+`Result::map_err`: `.map_err(factory(path))`. The context argument is either
+a plain existing binding holding `&Path`, or a shared borrow `&name` of an
+existing immutable `PathBuf` binding. No calls, method calls, field/index
+expressions, temporary construction, dereferencing or other computed
+arguments are permitted. This keeps the eagerly evaluated factory argument
+effect-free; the path rendering and error construction still happen only
+inside the returned closure on Err. The callable is never bound, stored,
 aliased, reused, returned further, captured, spawned, or passed through
 another helper. The across-function path-error adapter shape uses this
 one factory rather than repeated inline/local wrappers; 0046 still handles
@@ -126,13 +132,18 @@ not part of this candidate's compile experiment.
 
 v14 check rejects only `type.impl_trait.ret` and the factory's `expr.closure`.
 The checker needs definition-and-use recognition for this exact private
-factory contract, with immediate std Result `map_err` consumers and no
-other use. Broadly adding return `impl Trait` or allowing arbitrary returned
+factory contract, with immediate std Result `map_err` consumers, context
+arguments restricted to an existing `&Path` binding or `&name` of an
+existing immutable `PathBuf` binding, and no other use. Borrowed temporary
+calls such as `io_error(&make_path())` are rejected even when Rust accepts
+their lifetime: they can introduce work, side effects or a panic on Ok
+that the original closure did not perform. Broadly adding return `impl
+Trait` or allowing arbitrary returned
 closures would exceed this rule. Name resolution remains a review limit,
 as with the current closure-taking methods. No policy/config change is
 included in this proposal.
 
-Not measured: richer or mutable contexts, generic/stored/reusable factories,
+Not measured or admitted: computed path arguments, richer or mutable contexts, generic/stored/reusable factories,
 other callback consumers, generators or other projects. Download/lock and
 endpoint behavior does not change; no network installer test pass is claimed
 by the reduced harness.

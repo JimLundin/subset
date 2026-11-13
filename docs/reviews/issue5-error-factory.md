@@ -79,6 +79,18 @@ path expression. `hold` continues using `Err(io(path, error))` when its match
 already has the error. `io` continues constructing the same owned path
 String and retaining the same `std::io::Error` value.
 
+The actual context arguments are only existing `&Path` bindings (`parent`,
+`download`, `dir`, `binary`, `path`, `to`) or shared borrows of existing
+immutable `PathBuf` bindings (`&lock_path`, `&staging`). The proposed rule
+permits exactly those argument shapes. Constructing `factory(arg)` evaluates
+`arg` eagerly, including on Ok, whereas the original inline closure evaluated
+its body only on Err. These actual binding/borrow arguments add no effects
+or computed work; `io` still renders the path only on Err. Calls, method
+calls, fields, indexing, dereferences and temporary path construction are
+excluded as factory arguments. In particular, `.map_err(io_error(&make_path()))`
+would otherwise introduce eager work, possible side effects or a panic
+and is not admitted by this candidate.
+
 Rust 2024 implicitly captures the path lifetime in the return-position
 opaque type. The above signature compiles without an explicit `+ '_`;
 there is no proposed lifetime-syntax extension. The closure captures only
@@ -100,6 +112,9 @@ temporary `PathBuf`, two consecutive uses, mutation of the original
 that borrows a local path is rejected with E0597. No factory callable may
 be bound, stored, returned again, sent to a task, or passed through another
 closure under the proposed rule, even where Rust alone would allow it.
+The temporary-path test documents Rust's borrow behavior; temporary factory
+arguments themselves are outside the narrower policy. It is not evidence
+that every Rust-valid factory argument preserves evaluation behavior.
 
 ## Measurements with all changed callers
 
@@ -170,7 +185,10 @@ The checker change would recognize a private, nongeneric function with one
 shared `&Path` context parameter, the concrete
 `impl FnOnce(std::io::Error) -> OurErrorEnum` return, and a whole-body
 immutable `move |error| constructor(path, error)`. Its uses are direct,
-fresh arguments to `Result::map_err` only. All other return-position traits,
+fresh arguments to `Result::map_err` only. Each context argument must be
+an existing plain `&Path` binding or `&name` of an existing immutable
+`PathBuf` binding; call/method/field/index/deref/temporary expressions are
+rejected rather than inferred to be effect-free. All other return-position traits,
 capturing contexts, callable storage/reuse and generator shapes remain out.
 Function definition/use names must be linked; blindly allowing every
 return `impl FnOnce` or every closure body would not implement this rule.
@@ -187,7 +205,7 @@ Result adapter remain review checks, as for current closure methods.
 6. **One way: kept.** Across-function path-error adaptation uses this one factory; the old per-call wrappers and local copies of that shared shape are replaced. Direct error construction still calls `io` when an error value is already in hand.
 7. **Repetition is data: kept.** The variable path is the factory argument and the adapter shape occurs once; the concrete error construction itself is still written once.
 
-Unmeasured: other repositories, richer captured contexts, multiple context
+Unmeasured and excluded: computed path arguments, other repositories, richer captured contexts, multiple context
 arguments, stored/reusable callable APIs, generic factories, async closures,
 and new generator consumers. Full network installer endpoint tests are not
 part of the factory validation; no download, lock, await or process behavior
