@@ -1,0 +1,3 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:2:5: expr.struct.update: the base of `..base` is a path, a constructor call or a method call (proposals 0004, 0036)

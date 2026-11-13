@@ -1,0 +1,11 @@
+$ check
+exit 1
+crates/client/src/a_fail.rs:2:14: type.lifetime.static_str: `&'static str` only as a field type of a struct that is the row type of a `const` table and is built nowhere else (proposal 0042)
+crates/client/src/a_fail.rs:3:12: type.lifetime.static_str: `&'static str` only as a field type of a struct that is the row type of a `const` table and is built nowhere else (proposal 0042)
+crates/client/src/a_fail.rs:9:12: type.lifetime.static_str: `&'static str` only as a field type of a struct that is the row type of a `const` table and is built nowhere else (proposal 0042)
+crates/client/src/a_fail.rs:12:16: type.tuple: a `const` table whose rows hold a `&str` has a named row struct with `&'static str` fields, not a tuple row (proposal 0042, v8 review)
+crates/client/src/a_fail.rs:12:18: type.lifetime.static_str: `&'static str` only as a field type of a struct that is the row type of a `const` table and is built nowhere else (proposal 0042)
+crates/client/src/a_fail.rs:18:26: type.lifetime.static_str: `&'static str` only as a field type of a struct that is the row type of a `const` table and is built nowhere else (proposal 0042)
+crates/client/src/a_fail.rs:25:20: expr.method_call: a predicate on a `const` table that compares a row's string for equality with a value is a keyed lookup; write a `match` on the value, as in `match os { "macos" => .., _ => .. }` (proposal 0042)
+crates/client/src/a_fail.rs:29:20: expr.method_call: a predicate on a `const` table that compares a row's string for equality with a value is a keyed lookup; write a `match` on the value, as in `match os { "macos" => .., _ => .. }` (proposal 0042)
+crates/client/src/a_fail.rs:33:18: expr.method_call: a predicate on a `const` table that compares a row's string for equality with a value is a keyed lookup; write a `match` on the value, as in `match os { "macos" => .., _ => .. }` (proposal 0042)

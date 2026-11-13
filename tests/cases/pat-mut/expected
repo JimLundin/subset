@@ -1,0 +1,4 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:1:10: pat.ident.mut: a `mut` binding is never reassigned, only lent as `&mut` (proposal 0008)
+crates/daemon/src/a_fail.rs:2:7: expr.assign: assignment only to `self.field` in a `&mut self` method, or to the loop's state binding (proposal 0008)

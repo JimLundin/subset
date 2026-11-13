@@ -1,0 +1,3 @@
+version = 0
+include = ["*.rs"]
+allowed = ["item.fn"]

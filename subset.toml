@@ -3,11 +3,11 @@
 # grows only through accepted proposals in docs/proposals/. Each id is
 # documented in docs/subset.md.
 
-version = 8
+version = 9
 
 # All of our code is written in the subset. tools/ (the checker itself) and
 # vendor/ are outside it for now.
-include = ["crates/**/*.rs"]
+include = ["crates/**/*.rs", "src/**/*.rs", "tests/*.rs"]
 
 # Core: data as structs and enums, branching as `match`, iteration as adapters.
 allowed = [
@@ -80,6 +80,7 @@ allowed = [
   "pat.wild",                 # `_`, only in positions clippy's wildcard rules allow
   "pat.tuple",                # proposal 0001
   "pat.ident.mut",            # proposal 0008
+  "pat.ident.at",             # proposal 0044
 
   # Types
   "type.path",                # except `bool`
@@ -275,6 +276,7 @@ boundary = 1.0
 "type.field" = "encouraged"
 "expr.match" = "encouraged"
 "pat.ident" = "encouraged"
+"pat.ident.at" = "encouraged"       # 0044
 "pat.path" = "encouraged"
 "pat.struct" = "encouraged"
 "pat.tuple_struct" = "encouraged"

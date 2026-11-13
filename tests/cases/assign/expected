@@ -1,0 +1,3 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:3:18: expr.assign: assignment only to `self.field` in a `&mut self` method, or to the loop's state binding (proposal 0008)

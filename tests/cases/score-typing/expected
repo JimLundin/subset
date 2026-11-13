@@ -1,0 +1,10 @@
+$ score --by file
+exit 0
+     score   tokens   lines per token  boundary  share file
+       9.5       17       4     0.559       2.0  21.1% contained.rs
+       7.5        7       1     1.071       0.0   0.0% primitive.rs
+      16.0       15       4     1.067       5.0  31.2% proto/lib.rs
+       9.0       12       2     0.750       0.0   0.0% typed.rs
+       6.0        7       3     0.857       0.0   0.0% untyped.rs
+      13.0       15       4     0.867      11.0  84.6% wire/lib.rs
+      61.0       73      18     0.836      18.0  29.5% total

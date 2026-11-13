@@ -1,0 +1,3 @@
+$ check
+exit 1
+crates/app/src/a_fail.rs:1:15: type.unit: `()` as a type only in a type argument of a type we don't define, as in `Result<(), E>`, or as `fn main`'s return type (proposals 0005, 0023)

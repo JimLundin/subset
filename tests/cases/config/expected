@@ -1,0 +1,4 @@
+$ check
+exit 2
+stderr:
+subset: subset.toml: unknown field `allow`

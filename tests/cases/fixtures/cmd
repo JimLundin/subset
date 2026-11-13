@@ -1,0 +1,4 @@
+check
+report --config core.toml --json
+measure measure --json
+measure measure/two.rs

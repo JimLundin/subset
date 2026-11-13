@@ -1,0 +1,6 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:2:17: expr.closure.adapter: a closure passed to a method only to a method in `closure_methods` or `predicate_adapters`: the iterator, `Option` and `Result` methods and the library methods the config lists (proposals 0006, 0026, 0028, 0037)
+crates/daemon/src/a_fail.rs:2:29: expr.assign: assignment only to `self.field` in a `&mut self` method, or to the loop's state binding (proposal 0008)
+crates/daemon/src/a_fail.rs:6:30: expr.closure.adapter: a closure passed to a method only to a method in `closure_methods` or `predicate_adapters`: the iterator, `Option` and `Result` methods and the library methods the config lists (proposals 0006, 0026, 0028, 0037)
+crates/daemon/src/a_fail.rs:6:36: expr.binary.ne: a boolean expression (`matches!`, a comparison, `&&`, `||`, `!`) only as the body of a closure passed straight to a method in `predicate_adapters` (proposals 0028, 0037), or one comparison or `matches!` as a match guard (proposal 0040)

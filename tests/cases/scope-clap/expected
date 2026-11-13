@@ -1,0 +1,4 @@
+$ check
+exit 1
+crates/daemon/src/config.rs:1:1: attr.derive.Parser: clap only in a binary's main.rs and in examples/ (proposal 0019)
+crates/daemon/src/config.rs:3:5: attr.arg: clap only in a binary's main.rs and in examples/ (proposal 0019)

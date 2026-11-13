@@ -1,0 +1,9 @@
+$ check
+exit 1
+a.rs:2:46: expr.lit: literal other than `true` / `false`
+b.rs:1:12: item.use: a reader in `consuming_readers` changes its buffer on every read, so a tuple of reads means something only by evaluation order; split the bytes with `split_at_checked` and match them, as in the bootstrap review's §A7 (proposal 0039)
+b.rs:9:5: expr.path: a reader in `consuming_readers` changes its buffer on every read, so a tuple of reads means something only by evaluation order; split the bytes with `split_at_checked` and match them, as in the bootstrap review's §A7 (proposal 0039)
+b.rs:9:37: expr.index: indexing
+b.rs:9:38: expr.lit: literal other than `true` / `false`
+b.rs:9:39: expr.range: range expression
+c.rs:1:15: type.path: a reader in `consuming_readers` changes its buffer on every read, so a tuple of reads means something only by evaluation order; split the bytes with `split_at_checked` and match them, as in the bootstrap review's §A7 (proposal 0039)

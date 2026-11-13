@@ -1,0 +1,23 @@
+version = 0
+include = ["**/*.rs"]
+allowed = ["item.fn", "item.struct.named", "item.struct.newtype", "pat.ident", "type.path", "attr.derive.Serialize"]
+
+[weights]
+external_protocols = ["wire/**"]
+untyped = ["serde_json::Value"]
+
+[weights.tiers]
+encouraged = 0.5
+neutral = 1.0
+tolerated = 2.0
+costly = 3.0
+outside = 5.0
+boundary = 1.0
+
+[weights.ids]
+"item.struct.named" = "encouraged"
+"item.struct.newtype" = "encouraged"
+"pat.ident" = "encouraged"
+"type.field" = "encouraged"
+"type.primitive" = "tolerated"
+"type.untyped" = "costly"

@@ -1,0 +1,3 @@
+$ check
+exit 1
+crates/agents/src/wire.rs:2:5: attr.cfg: `cfg` only on a mod, use, fn or impl item, or as `#![cfg]` atop a test file (proposal 0016)

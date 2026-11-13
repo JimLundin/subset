@@ -1,0 +1,6 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:2:5: expr.for: a `for` body holds only calls, as `f(item);`, `f(item)?;`, `x.m(item).await?;` or `let _ = f(item);`, each building nothing; build or select values with the adapters (`map`, `filter`, `fold`, `try_fold`, ..) (proposal 0041)
+crates/daemon/src/a_fail.rs:11:14: expr.method_call: awaited effects run in order as `for item in list { f(item).await?; }`, not `stream::iter(..).then(..).try_collect()` into `()` (proposal 0041)
+crates/daemon/src/a_fail.rs:18:14: expr.method_call: awaited effects run in order as `for item in list { f(item).await?; }`, not `stream::iter(..).then(..).try_collect()` into `()` (proposal 0041)
+crates/daemon/src/a_fail.rs:22:14: expr.method_call: awaited effects run in order as `for item in list { f(item).await?; }`, not `stream::iter(..).then(..).try_collect()` into `()` (proposal 0041)

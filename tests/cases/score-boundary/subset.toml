@@ -1,0 +1,25 @@
+version = 0
+include = ["**/*.rs"]
+allowed = ["item.fn", "item.struct.named", "item.impl.trait", "item.fn.receiver.mut", "attr.derive.Serialize", "stmt.let.mut", "pat.ident", "expr.call", "expr.path", "expr.lit", "expr.lit.bool", "expr.method_call", "expr.struct", "expr.loop", "expr.assign", "type.path"]
+
+[weights]
+
+[weights.tiers]
+encouraged = 0.5
+neutral = 1.0
+tolerated = 2.0
+costly = 3.0
+outside = 5.0
+boundary = 1.0
+
+[weights.ids]
+"item.struct.named" = "encouraged"
+"type.field" = "encouraged"
+"pat.ident" = "encouraged"
+"item.impl.trait" = "tolerated"
+"expr.lit.bool" = "tolerated"
+"type.primitive" = "tolerated"
+"item.fn.receiver.mut" = "costly"
+"stmt.let.mut" = "costly"
+"expr.assign" = "costly"
+"expr.loop" = "costly"

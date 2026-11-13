@@ -1,0 +1,3 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:2:18: item.fn.receiver.mut: `mut self` only on a fn whose body is an actor loop (proposal 0008)

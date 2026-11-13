@@ -1,0 +1,3 @@
+struct Key([u8; 32]);
+
+const MAGIC: [u8; 4] = [0x63, 0x6f, 0x6e, 0x64];

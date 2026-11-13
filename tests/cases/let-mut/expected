@@ -1,0 +1,4 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:2:5: stmt.let.mut: `let mut` only for a loop's state just before the loop, or for a value never reassigned and only lent as `&mut` (proposal 0008)
+crates/daemon/src/a_fail.rs:3:11: expr.assign: assignment only to `self.field` in a `&mut self` method, or to the loop's state binding (proposal 0008)

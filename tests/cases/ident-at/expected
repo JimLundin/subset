@@ -1,0 +1,3 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:3:11: pat.ident.at: `name @ pattern` only binds a whole value matched by a struct, tuple-struct or path pattern, with no `mut` or `ref` (proposal 0044)

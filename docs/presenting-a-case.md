@@ -36,7 +36,7 @@ For each site:
   line `subset check` printed.
 
 Then, for the kind as a whole: how many sites the project has, with the
-command that finds them (`grep -rn "then_some" crates`), so the count can
+command that finds them (`rg -n "then_some" crates`), so the count can
 be checked.
 
 ## A candidate adds
@@ -49,24 +49,31 @@ be checked.
 3. **`subset check` on the after**, verbatim. It shows which ids the rule
    has to admit.
 4. **Measurements**, from `subset score --by file` and `subset measure`:
-   - the affected code alone, before and after;
+
+   - the affected code, including changed call sites and imports, before
+     and after; helper-only measurements may be shown separately;
    - the whole files, before and after, so the reader sees how much of
      the file the change touches;
-   - the after priced at the proposed tier. `subset score` prices a
-     construct that isn't allowed yet as outside (5.0), so show the
-     arithmetic that reprices it.
+   - the proposed tier and whether boundary use applies, with a reason;
+   - the after priced at that tier. `subset score` prices a construct
+     that isn't allowed yet as outside (5.0 by default), so show the
+     arithmetic that reprices it using the stated config's weights.
+
 5. **Which test it meets**: a drop of at least 15% in the weighted score
    of the affected code, or at least three friction points of one kind.
 6. **The seven qualities**, each kept or weakened with a one-line reason.
-   Say so plainly when one is weakened. That is the owner's call to make,
-   not a reason to leave the line out.
+   Say so plainly when one is weakened: under the current rules, a
+   proposal that weakens any quality is rejected, however much it saves.
 7. **The tool change** the rule needs in the checker.
 8. **What was not measured**: other crates, sites where the rewrite makes
    the code longer, anything assumed.
 
-A candidate that qualifies becomes a proposal in `docs/proposals/`, in the
-template in `.claude/skills/pair/SKILL.md`. Its sections are the same
-ones, so the issue's text moves over as it is.
+A candidate qualifies when it keeps all seven qualities and meets one of
+the two tests in item 5. It becomes a proposal in `docs/proposals/`, using
+the [proposal template](../.claude/skills/pair/SKILL.md#proposal-template)
+and retaining the issue's diff and measurements as evidence. The owner
+accepts or rejects the proposal; filing a candidate does not change the
+subset.
 
 ## What makes a case hard to evaluate
 
@@ -76,4 +83,5 @@ ones, so the issue's text moves over as it is.
 - Numbers without the command that reprints them.
 - A percentage of the helper alone, with the call sites left out.
 
-Issue #3 (one `ask` helper per crate) is a candidate written this way.
+[Issue #3](https://github.com/JimLundin/subset/issues/3) (one `ask` helper
+per crate) is a candidate written this way.

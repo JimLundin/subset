@@ -1,0 +1,3 @@
+$ check
+exit 1
+crates/daemon/src/a_fail.rs:2:5: vis.pub: a field of a `pub(crate)` struct is `pub(crate)`, never `pub` (proposal 0003)

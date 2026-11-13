@@ -1,0 +1,4 @@
+$ check
+exit 2
+stderr:
+subset: lib.rs:1:5: parse error: cannot parse string into token stream

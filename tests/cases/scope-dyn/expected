@@ -1,0 +1,3 @@
+$ check
+exit 1
+crates/client/src/link.rs:1:28: type.dyn: `dyn` only in crates/client/src/platform/ (proposal 0017)

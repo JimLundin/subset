@@ -1,0 +1,3 @@
+$ check
+exit 1
+crates/daemon/tests/a_fail.rs:1:1: attr.tokio::test: `#[tokio::test]` takes no arguments and marks an `async fn` (proposal 0020)

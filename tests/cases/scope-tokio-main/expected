@@ -1,0 +1,3 @@
+$ check
+exit 1
+crates/daemon/src/lib.rs:1:1: attr.tokio::main: `#[tokio::main]` only in a native binary (proposal 0006)
