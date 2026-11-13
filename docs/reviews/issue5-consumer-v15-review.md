@@ -68,3 +68,42 @@ Named states, explicit branching, immutable domain data flow, Result/Option erro
 At review time the consumer still had config version 14 and its old checker pin. In the Windows subset checkout, `main` at `de8da88c80f20909bd1a3758be0f6de5c1fe46c0` also still labelled proposal 0058 as proposed with owner decision pending. This review relies on the coordinator's explicit statement of owner acceptance; publication of that acceptance and the exact v15 rule/pin/config must be checked in the separate follow-up review. This stale text does not change the Rust assessment.
 
 No builds, compilation, cargo invocation, or tests were started by the reviewer. Read-only Linux git confirmed that the earlier native UNC observation of a deleted `CLAUDE.md` symlink was an artifact: actual Linux status lists only the 16 changed Rust files.
+
+## Final integrated consumer pin/docs review
+
+This section supersedes the earlier pending pin/publication status, while keeping the earlier Rust assessment scoped to its original base and patch.
+
+Worktree: `/home/jim/projects/apps/conductor-subset-v15-pin`.
+Branch: `subset-issue5-v15-pin`.
+Exact integrated base and worktree HEAD: `a9e607dd3c93b9e7e0da5bf8116641e777b01aae`.
+Scope: complete final diff against that base, changing only `tools/subset` and `docs/roadmap.md`.
+Complete final patch SHA-256: `833a2f722605790afbde5c0afbbf88db038ae7dac646755d198430c6662c51c4`.
+
+Reproduction:
+
+```sh
+git diff --no-ext-diff --no-color a9e607dd3c93b9e7e0da5bf8116641e777b01aae | sha256sum
+```
+
+**Required fixes: none. Approved for this exact pin/docs diff, subject to the complete integrated-source gate.**
+
+- `tools/subset:8` pins `b02997b97b1db70bdc12ad903ca433ca5dc094cc`. Independent `git ls-remote https://github.com/JimLundin/subset.git refs/heads/main` returned that exact published revision. The wrapper still uses the revision-specific target/install location and locked build; the update introduces no wrapper behavior change beyond selecting the published checker.
+- Published subset at this revision declares version 15, marks 0058 accepted by the owner on 2026-11-13, and explicitly keeps 0059 proposed. Its synchronous receiver rule remains the specific immediate `std::iter::from_fn(...try_recv().ok()).find_map(...)` form.
+- Existing consumer `subset.toml` already declares version 15 and mentions 0058 in its closure allowlist/weight comments. It does not admit returned `impl Trait` or add `from_fn` to the generic closure-method list. No config mutation or scope weakening is included in the final diff.
+- The roadmap now states the published v15 pin and accepted eager receiver drain, and explicitly records that 0059 remains proposed. It removes the obsolete owner-authorized interim v14-checker wording and presents v14 as historical adoption rather than the current pin. Actor setup and blocking-library friction remain documented.
+- `git status --short` lists only the two intended files. `git diff --exit-code a9e607dd3c93b9e7e0da5bf8116641e777b01aae -- crates subset.toml` exited 0 with no output. Thus this final update preserves all integrated Rust features and the existing config byte for byte; it does not reinstall the old cleanup over newer feature commits.
+- The integrated source still has the accepted eager drain at `crates/agents/src/claude/session.rs:523`, and the confined installer helpers at `crates/agents/src/install.rs:241`, `:242`, and `:315`. No 0059 error factory was introduced.
+
+This review is read-only and started no builds or live checks. The implementer owns the complete `tools/check.sh` run against the integrated source. The original 31 live checks belong to the original cleanup/0058 patch; this pin/docs review does not claim that those live checks were rerun after integration with newer features. The preserved original audit remains scoped to that original work.
+
+## Owner instruction for the pin-only delivery
+
+After this review, the owner explicitly directed that this pin-only change
+must not trigger the entire test suite. That instruction supersedes the repository's blanket gate
+requirement and the pending gate condition above. The running gate was
+stopped; no further tests or builds are authorized for this update.
+
+Delivery uses the existing independent two-file review, published revision
+verification, unchanged Rust/config comparison, and the already completed
+check of integrated Conductor with the built version-15 checker. It does
+not claim that the complete pinned-wrapper gate finished.

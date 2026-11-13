@@ -87,10 +87,20 @@ the consumer changes with newer feature work in Conductor
 `a9e607dd3c93b9e7e0da5bf8116641e777b01aae` and removed the original temporary
 worktree. That commit has version-15 configuration but retains the old
 checker pin. The newly built version-15 checker passes on that integrated
-main. The remaining consumer work is to publish and pin the checker, then
-run the complete gate on the integrated code. The earlier Rust review and
-31 live checks describe the original reviewed patch, not a claim that the
-later integrated gate has already passed.
+main.
+
+Conductor commit `6b462067af97769ad9c3295be015abb979df35f5` now pins published
+subset `b02997b97b1db70bdc12ad903ca433ca5dc094cc`. This final update changes
+only `tools/subset` and roadmap text; integrated Rust and configuration
+remain unchanged. The [pin review](issue5-consumer-v15-review.md) and
+[delivery record](issue5-consumer/v15-verification.md) record the result.
+
+The owner explicitly declined the full suite for this pin-only update.
+The running gate was stopped and no further tests or builds were run.
+Delivery uses the completed pin review, revision verification, and check
+of the integrated source with the version-15 checker. The full pinned
+wrapper gate did not finish. The earlier Rust review and 31 live checks
+remain evidence for the original reviewed patch.
 
 ## Extension decisions
 

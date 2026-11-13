@@ -27,6 +27,12 @@ rewrite and version-15 configuration, and ran the newly built checker
 against that checkout instead. It exited 0. No old consumer patch was
 reapplied and no integrated feature work was replaced.
 
-The consumer's published pin and full gate are recorded separately after
-the version-15 checker revision is available. Proposal 0059 remains
+Conductor commit `6b462067af97769ad9c3295be015abb979df35f5` now pins published
+subset `b02997b97b1db70bdc12ad903ca433ca5dc094cc`. The final two-file pin/docs
+update received independent review. The owner directed that this pin-only
+change must not trigger the full test suite, so the running gate was
+stopped and no further tests or builds were run. The completed focused
+checks above and pin review are the delivery evidence; the full pinned
+wrapper gate did not finish. See the [consumer delivery
+record](issue5-consumer/v15-verification.md). Proposal 0059 remains
 proposed at the owner's request.
