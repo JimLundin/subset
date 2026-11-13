@@ -1,0 +1,118 @@
+--- a/crates/agents/src/install.rs
++++ b/crates/agents/src/install.rs
+@@ -150,9 +150,9 @@
+ /// Installs `pin` in `parent`, holding `parent`'s lock throughout. An
+ /// installed binary was verified when it was put there.
+ async fn put(name: &str, pin: Pin, parent: &Path) -> Result<PathBuf, InstallError> {
+-    std::fs::create_dir_all(parent).map_err(|error| io(parent, error))?;
++    std::fs::create_dir_all(parent).map_err(io_error(parent))?;
+     let lock_path = parent.join("lock");
+-    let lock = File::create(&lock_path).map_err(|error| io(&lock_path, error))?;
++    let lock = File::create(&lock_path).map_err(io_error(&lock_path))?;
+     hold(&lock, &lock_path).await?;
+     remove_others(parent, &pin.version)?;
+     let dir = parent.join(&pin.version);
+@@ -212,7 +212,7 @@
+ /// versions, and downloads and unpacks a crash left behind.
+ fn remove_others(parent: &Path, keep: &str) -> Result<(), InstallError> {
+     let others = std::fs::read_dir(parent)
+-        .map_err(|error| io(parent, error))?
++        .map_err(io_error(parent))?
+         .filter_map(Result::ok)
+         .filter(|entry| entry.file_name() != keep && entry.file_name() != "lock")
+         .map(|entry| entry.path())
+@@ -227,7 +227,7 @@
+     tracing::info!(path = %path.display(), "removing an older pinned CLI");
+     std::fs::remove_dir_all(path)
+         .or_else(|_| std::fs::remove_file(path))
+-        .map_err(|error| io(path, error))
++        .map_err(io_error(path))
+ }
+ 
+ /// Moves the verified download into place as `dir`, with the binary at
+@@ -240,14 +240,14 @@
+ ) -> Result<(), InstallError> {
+     match package {
+         Package::Binary => {
+-            std::fs::create_dir_all(dir).map_err(|error| io(dir, error))?;
+-            make_executable(download).map_err(|error| io(download, error))?;
+-            std::fs::rename(download, binary).map_err(|error| io(binary, error))
++            std::fs::create_dir_all(dir).map_err(io_error(dir))?;
++            make_executable(download).map_err(io_error(download))?;
++            std::fs::rename(download, binary).map_err(io_error(binary))
+         }
+         Package::Archive => {
+             let staging = download.with_extension("unpack");
+             let _ = std::fs::remove_dir_all(&staging);
+-            std::fs::create_dir_all(&staging).map_err(|error| io(&staging, error))?;
++            std::fs::create_dir_all(&staging).map_err(io_error(&staging))?;
+             let status = tokio::process::Command::new("tar")
+                 .arg("-xzf")
+                 .arg(download)
+@@ -255,13 +255,13 @@
+                 .arg(&staging)
+                 .status()
+                 .await
+-                .map_err(|error| io(download, error))?;
++                .map_err(io_error(download))?;
+             match status.code() {
+                 Some(0) => {
+                     // An earlier run may have left the directory without its binary.
+                     let _ = std::fs::remove_dir_all(dir);
+-                    std::fs::rename(&staging, dir).map_err(|error| io(dir, error))?;
+-                    std::fs::remove_file(download).map_err(|error| io(download, error))
++                    std::fs::rename(&staging, dir).map_err(io_error(dir))?;
++                    std::fs::remove_file(download).map_err(io_error(download))
+                 }
+                 _ => Err(InstallError::Unpack {
+                     archive: download.display().to_string(),
+@@ -285,9 +285,7 @@
+         .send()
+         .await?
+         .error_for_status()?;
+-    let file = tokio::fs::File::create(to)
+-        .await
+-        .map_err(|error| io(to, error))?;
++    let file = tokio::fs::File::create(to).await.map_err(io_error(to))?;
+     drain(response, file, to).await
+ }
+ 
+@@ -299,23 +297,18 @@
+ ) -> Result<(), InstallError> {
+     loop {
+         match response.chunk().await? {
+-            Some(chunk) => file
+-                .write_all(&chunk)
+-                .await
+-                .map_err(|error| io(to, error))?,
+-            None => break file.sync_all().await.map_err(|error| io(to, error)),
++            Some(chunk) => file.write_all(&chunk).await.map_err(io_error(to))?,
++            None => break file.sync_all().await.map_err(io_error(to)),
+         }
+     }
+ }
+ 
+ /// The SHA-256 of the file at `path` as it is on disk, in hex.
+ async fn sha256(path: &Path) -> Result<String, InstallError> {
+-    let file = tokio::fs::File::open(path)
+-        .await
+-        .map_err(|error| io(path, error))?;
++    let file = tokio::fs::File::open(path).await.map_err(io_error(path))?;
+     digest(BufReader::with_capacity(READ_BUFFER, file), Sha256::new())
+         .await
+-        .map_err(|error| io(path, error))
++        .map_err(io_error(path))
+ }
+ 
+ async fn digest(
+@@ -338,6 +331,10 @@
+ fn absorb(hash: &mut Sha256, chunk: &[u8]) -> usize {
+     hash.update(chunk);
+     chunk.len()
++}
++
++fn io_error(path: &Path) -> impl FnOnce(std::io::Error) -> InstallError {
++    move |error| io(path, error)
+ }
+ 
+ fn io(path: &Path, error: std::io::Error) -> InstallError {
