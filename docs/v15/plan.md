@@ -210,8 +210,8 @@ every earlier rewrite changes fn sizes.
 ## Gaps found by the sufficiency trial
 
 [`sufficiency.md`](sufficiency.md) rewrote two pieces of `src/` in version
-15. Four points have no form in the spec as written and need an owner
-ruling before package 5 and package 9:
+15, including its three largest functions. Eight points need an owner
+ruling before packages 4 to 7 and package 9:
 
 | Gap | Recommendation | Package |
 |---|---|---|
@@ -219,6 +219,10 @@ ruling before package 5 and package 9:
 | G2. Ordering by a composite key | `Ord` on a named struct used only as a key | 3 |
 | G3. A predicate answering "no" in a fallback case | `matches!(v, P if cond)` is the form; drop the no-guard clause of `MatchesForm` | 5 |
 | G4. Method names a library trait fixes | name and parameter limits skip library trait impl signatures | 7 |
+| G5. `let mut` + `push` into a local collection | `let mut` never holds a std collection or `String` | 4 |
+| G6. `if let` and `if matches!` when nothing is bound | `if let` only when its pattern binds a name | 5 |
+| G7. Variants with more than 4 fields under a dispatcher | such a variant holds a named struct | 7 |
+| G8. Data tables against the line limit | lines inside a table literal of struct literals don't count | 7 |
 
 ## Details the rulings left open
 

@@ -33,7 +33,7 @@ the version 14 checker flags version 15 code (`if`, ranges, `bool`).
 | loop-turn predicates | 543 tokens, 60 lines | 479 tokens, 47 lines | −12% tokens, −22% lines |
 
 **Verdict: sufficient, with three gaps that need a ruling and one
-exemption.** Nothing the trial touched was impossible to express, but in
+exemption.** The large-function trial below adds four more (G5 to G8). Nothing the trial touched was impossible to express, but in
 three places the only available form is either a second way to do a job or
 something the spec forbids. Without rulings on those, package 9 would stall
 at the same points.
@@ -152,12 +152,127 @@ positional data. It is longer and, on reading, plainer.
   rules apply inside Conductor's 11 `select!` uses. This is the existing
   documented limit; it is worth restating in the spec.
 
+## The largest functions
+
+A second trial rewrote the checker's three longest functions, the ones the
+shape limits hit hardest: `Walk::visit_expr` (279 lines), `checks::ty`
+(136) and `Walk::visit_pat` (117). Before and after are in
+[`trial/`](trial/).
+
+**Behaviour is unchanged.** All 94 cases and the compile tests pass,
+clippy is clean, and `subset check` and `subset score` on Conductor print
+byte-identical output before and after. The version 14 checker's 151
+objections to the rewritten source are all constructs version 15 allows:
+`if`, `bool` predicates, boolean operators in conditions, `matches!` with
+a guard (G3) and ranges.
+
+| Function | Before | After | Tokens | Lines |
+|---|---|---|---|---|
+| `visit_expr` | 1 fn, 279 lines, indent depth 7 | 29 fns, longest 21 lines, depth 2 | +27% | +2% |
+| `visit_pat` | 1 fn, 117 lines, depth 5 | 15 fns, longest 21 lines, depth 1 | +16% | +6% |
+| `ty` | 1 fn, 136 lines, depth 5 | 27 fns, longest 12 lines, depth 2 | +30% | +10% |
+
+Depth here is an indentation proxy, not the checker's block count.
+
+**What made it work: the dispatcher.** Each monster became a short entry
+function, one dispatcher `match` whose arms are each one call, and a
+handler per arm named by its job (`walk_closure`, `walk_if_let`,
+`slice_type`). The dispatcher exemption in `fn.lines` is what lets a
+14-arm match stay one function. No helper needed more than 4 parameters,
+and no name needed more than 3 words.
+
+**Where the tokens went.** Line counts are nearly flat. The token growth is
+mostly the signatures of the new functions (about 25 tokens each), and
+named predicates in place of inline `Option<()>` chains. The bodies got
+shorter.
+
+**What the catch-all ban cost.** Nothing here. Every `match` over our own
+22-variant `Slot` enum with a `_` arm returned a yes or no, and became a
+`matches!` predicate, which needs no catch-all.
+
+### New gaps from the large functions
+
+**G5. Accumulating into a local collection.** `ty` used a helper
+`when(found: Option<()>, hit)` to include a hit conditionally. With `bool`
+banned as a parameter, there are two ways to write that, and they pull
+against each other:
+
+```rust
+// immutable: Option-returning helpers, chained (used in the trial)
+type_names(t, env).into_iter().chain(marks.into_iter().flatten()).chain(type_rules(t, cx, env)).collect()
+
+// mutable: allowed today by "let mut only to lend to a library"
+let mut hits = type_names(t, env);
+if is_fixed_slot(&cx.slot) { hits.push(mark(..)); }
+```
+
+The second is mutation of a local in all but name: `push` lends to `Vec`,
+so it passes the lending rule. **Recommendation:** `let mut` never holds a
+std collection or `String`; collections are built by adapters and
+literals. This is checkable by the binding's initializer
+(`Vec::new()`, `BTreeMap::new()`, `String::new()`, `Vec::from(..)`, …).
+
+**G6. `if let` and `if matches!` for a pattern that binds nothing.**
+`if let Slot::LocalClosure = cx.slot { .. }` and
+`if matches!(cx.slot, Slot::LocalClosure) { .. }` do the same job.
+**Recommendation:** `if let` only when its pattern binds a name; otherwise
+the condition is `matches!`. Mechanical.
+
+**G7. Variants with more than 4 fields.** A dispatcher hands each arm's
+fields to a handler. Conductor's `Step::Open` has 5 fields, so its handler
+would take 5 parameters. **Recommendation:** a variant with more than 4
+fields holds a named struct instead, `Step::Open(Open)`, and the handler
+takes that. A rule on variants, or guidance; either way it is the
+parameter limit seen from the other side.
+
+## Conductor's outliers
+
+Conductor has 85 functions over 40 lines. They are not like the checker's,
+so they were classified, not rewritten (Conductor was not built for this
+trial):
+
+| Kind | Count | Largest | What the rules do to it |
+|---|---|---|---|
+| test, logic | 28 | 126 lines | split into steps, as in the checker |
+| other production code | 24 | `main` 108, `step` 95, `spawn` 84 | the dispatcher pattern applies; `step` is a 9-arm match over `Step` |
+| **test, mostly a data table** | 17 | 193 lines (15 cases) | **conflict, G8** |
+| live-check script | 11 | `run` 280, `run` 225 | flat scripts; split per scenario |
+| Dioxus component | 4 | `NewSession` 169 | split into subcomponents; 5 props exceed 4 parameters |
+| production, mostly a data table | 1 | 51 lines | G8 |
+
+**G8. Data tables against the line limit.** Principle 7 of the old spec,
+and the pair skill, turn repeated cases into a table:
+`let cases = Vec::from([Case { .. }, ..]);` with one assertion. Those
+tables are long because the data is long: 18 of Conductor's 85 long
+functions are mostly a table literal. `fn.lines` would make the author
+split a table, which makes it worse. **Recommendation:** lines inside an
+array or `Vec::from([..])` literal whose elements are struct literals do
+not count toward `fn.lines`. Depth still applies inside the table.
+
+Smaller notes:
+
+- The live-check `run` functions reuse `s` and `t` for every scenario step
+  (`name.shadow`) and return `(live, interrupt)` pairs (`tuple.ours`).
+  Splitting per scenario removes both; the handle is threaded through a
+  named struct.
+- `NewSession` builds its three error messages as a 3-tuple from one
+  `match`; that becomes a named struct.
+- A Dioxus `#[component]` turns parameters into props, so 5 props exceed
+  `fn.params`. Dioxus's explicit `#[derive(Props)]` struct is the
+  alternative, and needs `Props` in the project's derive list.
+- `step` rebuilds a map with `.map(|(k, v)| (k, ..)).collect()` (G1) and
+  uses `std::mem::take` / `replace` on fields, which are fine under the
+  state rules.
+
 ## What this trial did not cover
 
-- About 4% of `src/` was rewritten. `walk.rs`'s visitor and the large
-  `checks.rs` dispatchers, which the shape limits will hit hardest, were
-  not.
-- Conductor's async and actor code was only counted, not rewritten. Its
+- About 12% of `src/` was rewritten, including its three largest
+  functions. `expr_id` (76 lines, the densest in tokens) has the same shape
+  as the rewritten `pat_id` and was not redone; it still returns a tuple.
+- `key()` returns a `(usize, usize)` position that keys three maps in
+  `walk.rs`. Under `tuple.ours` it becomes a named struct, which needs
+  `Ord` (G2). The trial left it.
+- Conductor's outliers were classified, not rewritten or built. Its
   benchmark is package 11.
 - The counts are line patterns. Package 1's `report --pending` gives real
   numbers.
